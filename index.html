@@ -1,0 +1,1140 @@
+<title>Comparativo Tributário</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: bancada de trabalho em coluna única. Faixa de abas no topo, três cartões de regime, tabelas largas em contêineres roláveis. */
+  :root {
+    --bg: #eef2ee;
+    --surface: #f8faf7;
+    --surface-2: #e6ece7;
+    --ink: #14231c;
+    --ink-2: #47594f;
+    --line: #cbd6cd;
+    --accent: #1d6b4f;
+    --accent-ink: #ffffff;
+    --accent-soft: #d9eadf;
+    --warn: #8a5200;
+    --warn-bg: #f8ecd3;
+    --bad: #a3322b;
+    --bad-bg: #f6dedb;
+    --info: #2b5d8a;
+    --info-bg: #dce9f5;
+    --c1: #2f7d63;
+    --c2: #c58a1b;
+    --c3: #3b6fa8;
+    --c4: #8a4f7d;
+    --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+    --f-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
+      --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
+      --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+      --c1: #5fc79b; --c2: #e0b04f; --c3: #78a8de; --c4: #c590b8;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
+    --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
+    --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+    --c1: #5fc79b; --c2: #e0b04f; --c3: #78a8de; --c4: #c590b8;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 var(--f-body);
+    padding-block: 20px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .shell { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+  h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 21px; font-weight: 700; }
+  h3 { font-size: 16px; font-weight: 700; }
+  p { margin: 0; max-width: 70ch; }
+  small, .muted { color: var(--ink-2); }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
+  .top .sub { color: var(--ink-2); margin-top: 4px; }
+  .meta-line { font: 12px/1.4 var(--f-mono); color: var(--ink-2); text-align: right; min-width: 0; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tab {
+    appearance: none; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px;
+    padding: 10px 14px; font: 600 14px var(--f-body); color: var(--ink-2); cursor: pointer; white-space: nowrap;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .btn {
+    appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    font: 500 13px var(--f-body); padding: 7px 12px; border-radius: 4px; cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn input { display: none; }
+
+  textarea.json {
+    width: 100%; min-width: 0; min-height: 360px; resize: vertical; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 4px; padding: 10px; font: 12.5px/1.5 var(--f-mono); tab-size: 2;
+  }
+  .chip { display: inline-block; font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; }
+  .chip.ok { background: var(--accent-soft); color: var(--accent); }
+  .chip.err { background: var(--bad-bg); color: var(--bad); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
+  .chip.info { background: var(--info-bg); color: var(--info); }
+
+  .msgs { display: flex; flex-direction: column; gap: 6px; }
+  .msg { font-size: 13px; padding: 7px 10px; border-radius: 4px; }
+  .msg.err { background: var(--bad-bg); color: var(--bad); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn); }
+  .msg.info { background: var(--info-bg); color: var(--info); }
+
+  .banner { padding: 10px 14px; border-radius: 4px; background: var(--info-bg); color: var(--info); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; align-items: center; }
+
+  .summary-line { display: flex; flex-wrap: wrap; gap: 6px 24px; color: var(--ink-2); font-size: 14px; }
+  .summary-line b { color: var(--ink); font-weight: 600; }
+
+  .rcard { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .rcard.best { border: 2px solid var(--accent); padding: 15px; }
+  .rcard.out { opacity: 0.75; }
+  .rcard .nome { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; font: 700 15px var(--f-display); }
+  .rcard .total { font: 700 30px/1.1 var(--f-display); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .rcard .pct { color: var(--ink-2); font-size: 14px; }
+  .rcard .det { color: var(--ink-2); font-size: 13px; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+
+  .bars { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: 130px 1fr auto; gap: 10px; align-items: center; }
+  .bar-row .lab { font-size: 13px; font-weight: 600; }
+  .bar-track { display: flex; height: 22px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+  .bar-seg { height: 100%; min-width: 0; }
+  .bar-row .val { font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .s1 { background: var(--c1); } .s2 { background: var(--c2); } .s3 { background: var(--c3); } .s4 { background: var(--c4); }
+  @media (max-width: 560px) { .bar-row { grid-template-columns: 1fr; gap: 4px; } }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 600 12px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); background: var(--surface-2); white-space: nowrap; }
+  td.num, th.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.total td { font-weight: 600; background: var(--surface-2); }
+  tr.best td.cell-best { color: var(--accent); font-weight: 700; }
+  td small { display: block; }
+  .cell-best { color: var(--accent); font-weight: 700; }
+
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+  details > summary { cursor: pointer; padding: 12px 16px; font: 600 14px var(--f-body); }
+  details[open] > summary { border-bottom: 1px solid var(--line); }
+  .det-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .caption { font-size: 13px; color: var(--ink-2); }
+  pre.code { margin: 0; padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; overflow: auto; max-height: 420px; font: 12px/1.5 var(--f-mono); }
+
+  .empty { padding: 28px 18px; border: 1px dashed var(--line); border-radius: 6px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .src { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+  ul.plain { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+</style>
+
+<div class="shell">
+  <header class="top">
+    <div>
+      <h1>Comparativo Tributário</h1>
+      <p class="sub">Simples Nacional, Lucro Presumido e Lucro Real a partir de dois arquivos JSON.</p>
+    </div>
+    <div class="meta-line" id="metaLine"></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Seções">
+    <button class="tab" role="tab" id="t-entradas" data-tab="entradas" aria-controls="tab-entradas">Entradas</button>
+    <button class="tab" role="tab" id="t-resultado" data-tab="resultado" aria-controls="tab-resultado">Resultado</button>
+    <button class="tab" role="tab" id="t-modelos" data-tab="modelos" aria-controls="tab-modelos">Modelos e divisão de tarefas</button>
+  </nav>
+
+  <main>
+    <!-- ENTRADAS -->
+    <section id="tab-entradas" role="tabpanel" aria-labelledby="t-entradas" class="stack" hidden>
+      <p class="muted">Cole ou carregue os dois JSON. O cálculo roda neste navegador e nada é enviado para fora da página. O resultado se atualiza ao editar.</p>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>1. Alíquotas e regras</h2>
+            <span class="chip ok" id="chipAliq">Válido</span>
+          </div>
+          <p class="caption">Muda pouco. Gerado pelo prompt 1 e validado pelo contador.</p>
+          <div class="toolbar">
+            <label class="btn">Carregar arquivo<input type="file" id="fileAliq" accept=".json,application/json"></label>
+            <button class="btn" id="resetAliq" type="button">Restaurar padrão</button>
+            <button class="btn" id="copyAliq" type="button">Copiar</button>
+          </div>
+          <textarea class="json" id="taAliq" spellcheck="false" aria-label="JSON de alíquotas e regras"></textarea>
+          <div class="msgs" id="msgAliq"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>2. Dados da empresa</h2>
+            <span class="chip ok" id="chipDados">Válido</span>
+          </div>
+          <p class="caption">Muda a cada cliente. Gerado pelo prompt 2 e revisado pelo contador.</p>
+          <div class="toolbar">
+            <label class="btn">Carregar arquivo<input type="file" id="fileDados" accept=".json,application/json"></label>
+            <button class="btn" id="exDados" type="button">Carregar exemplo</button>
+            <button class="btn" id="tplDados" type="button">Modelo em branco</button>
+            <button class="btn" id="copyDados" type="button">Copiar</button>
+          </div>
+          <textarea class="json" id="taDados" spellcheck="false" aria-label="JSON de dados da empresa"></textarea>
+          <div class="msgs" id="msgDados"></div>
+        </div>
+      </div>
+      <div><a class="btn primary" href="#resultado" style="display:inline-block;text-decoration:none">Ver resultado</a></div>
+    </section>
+
+    <!-- RESULTADO -->
+    <section id="tab-resultado" role="tabpanel" aria-labelledby="t-resultado" class="stack" hidden>
+      <div id="resultado"></div>
+    </section>
+
+    <!-- MODELOS -->
+    <section id="tab-modelos" role="tabpanel" aria-labelledby="t-modelos" class="stack" hidden>
+      <div class="stack">
+        <h2>Quem faz o quê</h2>
+        <p class="muted">A IA nunca faz conta. Ela monta os dois JSON, e o JavaScript desta página faz toda a aritmética.</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Camada</th><th>O que contém</th><th>Quem executa</th><th>Risco principal</th></tr></thead>
+            <tbody>
+              <tr><td><b>Cálculo puro</b></td><td>RBT12, faixa e alíquota efetiva do Simples, Fator R, bases do Presumido e do Real, IRPJ, CSLL, PIS, COFINS, CPP, retenção sobre lucros, totais e sensibilidade</td><td>JavaScript desta página, sempre o mesmo resultado para a mesma entrada</td><td>Regra que o motor não modela. A aba Resultado lista as exclusões</td></tr>
+              <tr><td><b>Regras</b> (JSON 1)</td><td>Alíquotas, faixas, limites, percentuais de presunção, vigências</td><td>IA consulta fonte oficial e preenche. Contador valida. Revisão a cada mudança de norma</td><td>Valor desatualizado ou tirado de fonte secundária</td></tr>
+              <tr><td><b>Dados deduzidos por IA</b> (JSON 2)</td><td>Anexo e tipo de atividade, ISS do município, RAT e terceiros, percentual com direito a crédito, premissas de crescimento</td><td>IA infere e registra origem, confiança e fonte em <code>meta</code>. Contador revisa o que não for "informado"</td><td>Inferência errada com cara de certeza</td></tr>
+              <tr><td><b>Dados do cliente</b> (JSON 2)</td><td>Receitas, folha, sócios, distribuição de lucros, custos</td><td>Vêm de documentos do cliente. A IA só organiza e converte para o formato, nunca estima</td><td>Número inventado ou digitado errado</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="stack">
+        <h2>Arquivos-modelo</h2>
+        <details>
+          <summary>aliquotas.json (valores padrão desta página)</summary>
+          <div class="det-body"><div class="toolbar"><button class="btn" data-copy="aliq" type="button">Copiar</button></div><pre class="code" id="preAliq"></pre></div>
+        </details>
+        <details>
+          <summary>dados-empresa.template.json (modelo em branco)</summary>
+          <div class="det-body"><div class="toolbar"><button class="btn" data-copy="tpl" type="button">Copiar</button></div><pre class="code" id="preTpl"></pre></div>
+        </details>
+        <details>
+          <summary>dados-empresa.exemplo.json (empresa fictícia)</summary>
+          <div class="det-body"><div class="toolbar"><button class="btn" data-copy="ex" type="button">Copiar</button></div><pre class="code" id="preEx"></pre></div>
+        </details>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/*
+ * Motor de cálculo do comparativo tributário (cálculo puro, sem IA).
+ * Entradas: aliquotas.json (regras estáveis) e dados-empresa.json (dados da empresa).
+ * Funciona no navegador (global CTEngine) e no Node (module.exports).
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.CTEngine = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  var VERSAO = '1.0.0';
+  var REGIMES = ['simples', 'presumido', 'real'];
+  var NOMES = { simples: 'Simples Nacional', presumido: 'Lucro Presumido', real: 'Lucro Real' };
+  var ROTULOS = {
+    das: 'DAS (tributos unificados)',
+    irpj: 'IRPJ e adicional',
+    csll: 'CSLL',
+    pis: 'PIS',
+    cofins: 'COFINS',
+    iss: 'ISS',
+    icms: 'ICMS líquido (estimado)',
+    cpp: 'CPP e RAT patronais',
+    terceiros: 'Contribuições a terceiros',
+    retencao_lucros: 'Retenção sobre lucros distribuídos'
+  };
+  var MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  function num(x, d) {
+    var dflt = d === undefined ? 0 : d;
+    if (x === null || x === undefined || x === '') return dflt;
+    var n = Number(x);
+    return isFinite(n) ? n : dflt;
+  }
+  function mv(x, i) { return Array.isArray(x) ? num(x[i]) : num(x); }
+  function sum(a) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]; return s; }
+  function vigente(ano, mes, v) {
+    if (!v) return true;
+    return ano > v.ano || (ano === v.ano && mes >= v.mes);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Normalização                                                         */
+  /* ------------------------------------------------------------------ */
+  function normalizar(dados) {
+    var emp = dados.empresa || {};
+    var rec = dados.receitas || {};
+    var sim = [];
+    for (var i = 0; i < 12; i++) sim.push(num((rec.simulacao_12_meses || [])[i]));
+    var h = (rec.historico_12_meses_anteriores || []).map(function (v) { return num(v); });
+    var hist = h.length >= 12 ? h.slice(h.length - 12) : new Array(12 - h.length).fill(0).concat(h);
+    var emAb = emp.situacao === 'em_abertura';
+    var primeiro = 0;
+    if (emAb) {
+      primeiro = sim.findIndex(function (v) { return v > 0; });
+      if (primeiro < 0) primeiro = 0;
+    }
+    var atividades = (dados.atividades || []).map(function (a, k) {
+      return {
+        id: a.id || ('atividade-' + (k + 1)),
+        descricao: a.descricao || '',
+        share: num(a.percentual_receita) / 100,
+        anexo: a.anexo_simples,
+        tipo: a.tipo_presumido,
+        iss: num(a.iss_percentual) / 100,
+        icms: num(a.icms_liquido_percentual_receita) / 100
+      };
+    });
+    var regimes = (dados.regimes_a_comparar && dados.regimes_a_comparar.length) ? dados.regimes_a_comparar : REGIMES.slice();
+    return {
+      ano: num(dados.ano_calendario, 2026),
+      emAb: emAb,
+      primeiro: primeiro,
+      sim: sim,
+      hist: hist,
+      histLen: h.length,
+      atividades: atividades,
+      custos: dados.custos || {},
+      folha: dados.folha || {},
+      socios: dados.socios || {},
+      lreal: dados.lucro_real || {},
+      regimes: regimes
+    };
+  }
+
+  function encargosMes(aliq, c, i) {
+    var E = aliq.encargos_folha || {};
+    var sal = mv(c.folha.salarios_empregados_mensal, i);
+    var prol = mv(c.folha.prolabore_total_mensal, i);
+    var rat = num(c.folha.rat_percentual) / 100;
+    var terc = num(c.folha.terceiros_percentual) / 100;
+    return {
+      sal: sal,
+      prol: prol,
+      fgts: sal * num(E.fgts),
+      cpp: (sal + prol) * num(E.cpp_patronal),
+      rat: sal * rat,
+      terc: sal * terc
+    };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Simples Nacional                                                     */
+  /* ------------------------------------------------------------------ */
+  function aliqEfetiva(anexo, rbt) {
+    var f = anexo.faixas;
+    var idx = -1;
+    for (var k = 0; k < f.length; k++) { if (rbt <= f[k].ate) { idx = k; break; } }
+    if (idx < 0) idx = f.length - 1;
+    var x = f[idx];
+    var ef = rbt > 0 ? (rbt * x.aliquota - x.deduzir) / rbt : f[0].aliquota;
+    return { faixa: idx, nominal: x.aliquota, deduzir: x.deduzir, efetiva: ef };
+  }
+
+  function calcSimples(aliq, c) {
+    var S = aliq.simples_nacional;
+    var avisos = [];
+    var motivos = [];
+    var i, e;
+    var fr = [];
+    for (i = 0; i < 12; i++) { e = encargosMes(aliq, c, i); fr.push(e.sal + e.prol + e.fgts); }
+    var histFR = num(c.folha.folha_historico_12m_fator_r);
+    var temFatorR = c.atividades.some(function (a) { return a.anexo === 'III_ou_V_fator_r'; });
+    if (temFatorR && !c.emAb && histFR === 0) {
+      avisos.push('Fator R: folha_historico_12m_fator_r não informada. O cálculo parte de folha zero nos 12 meses anteriores, o que tende a enquadrar no Anexo V nos primeiros meses.');
+    }
+    if (!c.emAb && c.histLen < 12) {
+      avisos.push('Histórico de receita com menos de 12 meses: RBT12 subestimado. Se a empresa começou há menos de 12 meses, use situacao "em_abertura".');
+    }
+    var serie = c.hist.concat(c.sim);
+    var meses = [];
+    var totalDas = 0, totalCpp = 0;
+    var vedado = false, estourou = false, avisouSub = false;
+    var rbtMax = 0;
+
+    for (i = 0; i < 12; i++) {
+      var rec = c.sim[i];
+      var rbt, folha12;
+      if (c.emAb) {
+        if (i < c.primeiro) {
+          meses.push({ mes: i, receita: 0, rbt12: 0, fator_r: 0, das: 0, cpp_fora: 0, atividades: [] });
+          continue;
+        }
+        if (i === c.primeiro) { rbt = rec * 12; folha12 = fr[i] * 12; }
+        else {
+          var n = i - c.primeiro;
+          rbt = sum(c.sim.slice(c.primeiro, i)) / n * 12;
+          folha12 = sum(fr.slice(c.primeiro, i)) / n * 12;
+        }
+      } else {
+        rbt = sum(serie.slice(i, i + 12));
+        folha12 = histFR * (12 - i) / 12 + sum(fr.slice(0, i));
+      }
+      if (rbt > rbtMax) rbtMax = rbt;
+      var fatorR = rbt > 0 ? folha12 / rbt : 0;
+      var das = 0, shareIV = 0, det = [];
+      c.atividades.forEach(function (a) {
+        var ra = rec * a.share;
+        var key = a.anexo;
+        if (key === 'vedado') { vedado = true; det.push({ id: a.id, anexo: 'vedado', receita: ra, das: 0 }); return; }
+        if (key === 'III_ou_V_fator_r') key = fatorR >= num(S.fator_r_minimo, 0.28) ? 'III' : 'V';
+        var anexo = S.anexos[key];
+        if (!anexo) throw new Error('Anexo do Simples inválido na atividade "' + a.id + '": ' + a.anexo);
+        var ap = aliqEfetiva(anexo, rbt);
+        var d = ra * ap.efetiva;
+        das += d;
+        if (key === 'IV') shareIV += a.share;
+        det.push({ id: a.id, anexo: key, faixa: ap.faixa + 1, nominal: ap.nominal, deduzir: ap.deduzir, efetiva: ap.efetiva, receita: ra, das: d });
+      });
+      e = encargosMes(aliq, c, i);
+      var cppFora = shareIV * (e.cpp + e.rat);
+      totalDas += das;
+      totalCpp += cppFora;
+      meses.push({ mes: i, receita: rec, rbt12: rbt, fator_r: fatorR, das: das, cpp_fora: cppFora, atividades: det });
+      if (rbt > S.limite_receita_anual) estourou = true;
+      if (rbt > S.sublimite_icms_iss && !avisouSub) {
+        avisouSub = true;
+        avisos.push('RBT12 acima do sublimite de ' + brl(S.sublimite_icms_iss) + ' em ' + MESES[i] + ': ICMS e ISS passam a ser recolhidos fora do DAS. O motor não modela essa partilha, então o DAS pode estar superestimado e ICMS/ISS subestimados.');
+      }
+    }
+
+    var receitaAnual = sum(c.sim);
+    if (estourou) motivos.push('RBT12 acima do limite de ' + brl(S.limite_receita_anual) + ' em algum mês.');
+    else if (receitaAnual > S.limite_receita_anual) avisos.push('Receita do ano acima de ' + brl(S.limite_receita_anual) + ': a exclusão do Simples vale a partir de 1º de janeiro do ano seguinte (ou retroativa, se o excesso passar de 20%). Conferir a Resolução CGSN 140/2018.');
+    if (vedado) motivos.push('Atividade marcada como vedada ao Simples Nacional.');
+
+    // Lucro distribuível isento (aproximado): presunção do IRPJ menos o DAS.
+    var P = aliq.lucro_presumido || { presuncao: {} };
+    var baseIsento = 0;
+    c.atividades.forEach(function (a) {
+      var t = P.presuncao[a.tipo];
+      if (t) baseIsento += receitaAnual * a.share * t.irpj;
+    });
+
+    return {
+      id: 'simples',
+      elegivel: motivos.length === 0,
+      motivos: motivos,
+      avisos: avisos,
+      itens: { das: totalDas, cpp: totalCpp },
+      detalhe: { meses: meses, rbt12_max: rbtMax },
+      lucro_isento_aprox: Math.max(0, baseIsento - totalDas),
+      lucro_isento_tipo: 'Presunção do IRPJ menos o DAS total (aproximação conservadora)'
+    };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Lucro Presumido                                                      */
+  /* ------------------------------------------------------------------ */
+  function calcPresumido(aliq, c) {
+    var P = aliq.lucro_presumido;
+    var ac = P.acrescimo_presuncao || {};
+    var avisos = [], motivos = [];
+    var pI = 0, pC = 0;
+    c.atividades.forEach(function (a) {
+      var t = P.presuncao[a.tipo];
+      if (!t) throw new Error('tipo_presumido inválido na atividade "' + a.id + '": ' + a.tipo);
+      pI += a.share * t.irpj;
+      pC += a.share * t.csll;
+    });
+    var issPct = 0, icmsPct = 0;
+    c.atividades.forEach(function (a) { issPct += a.share * a.iss; icmsPct += a.share * a.icms; });
+
+    var meses = [], cumPrev = 0, i;
+    var tot = { irpj: 0, csll: 0, pis: 0, cofins: 0, iss: 0, icms: 0, cpp: 0, terceiros: 0 };
+    for (i = 0; i < 12; i++) {
+      var rec = c.sim[i];
+      var cumNow = cumPrev + rec;
+      var lim = num(ac.limite_receita_anual);
+      var exced = ac.ativo === false ? 0 : Math.max(0, cumNow - lim) - Math.max(0, cumPrev - lim);
+      var acI = (ac.ativo !== false && vigente(c.ano, i + 1, ac.vigencia_irpj)) ? exced * pI * num(ac.percentual) : 0;
+      var acC = (ac.ativo !== false && vigente(c.ano, i + 1, ac.vigencia_csll)) ? exced * pC * num(ac.percentual) : 0;
+      var e = encargosMes(aliq, c, i);
+      meses.push({
+        mes: i, receita: rec, excedente: exced,
+        base_irpj: rec * pI + acI, base_csll: rec * pC + acC,
+        pis: rec * P.pis_aliquota, cofins: rec * P.cofins_aliquota,
+        iss: rec * issPct, icms: rec * icmsPct,
+        cpp: e.cpp + e.rat, terceiros: e.terc
+      });
+      cumPrev = cumNow;
+    }
+    var tri = [];
+    for (var q = 0; q < 4; q++) {
+      var ms = meses.slice(q * 3, q * 3 + 3);
+      var bI = sum(ms.map(function (m) { return m.base_irpj; }));
+      var bC = sum(ms.map(function (m) { return m.base_csll; }));
+      var ativos = 3;
+      if (c.emAb) ativos = ms.filter(function (m, k) { return q * 3 + k >= c.primeiro; }).length;
+      var irpjBase = P.irpj_aliquota * bI;
+      var adic = P.irpj_adicional_aliquota * Math.max(0, bI - P.irpj_adicional_limite_mensal * ativos);
+      var csll = P.csll_aliquota * bC;
+      tri.push({
+        tri: q + 1, receita: sum(ms.map(function (m) { return m.receita; })),
+        base_irpj: bI, irpj: irpjBase, adicional: adic, base_csll: bC, csll: csll
+      });
+      tot.irpj += irpjBase + adic;
+      tot.csll += csll;
+    }
+    meses.forEach(function (m) {
+      tot.pis += m.pis; tot.cofins += m.cofins; tot.iss += m.iss; tot.icms += m.icms;
+      tot.cpp += m.cpp; tot.terceiros += m.terceiros;
+    });
+
+    var receitaAnual = sum(c.sim);
+    if (receitaAnual > num(P.limite_opcao_receita_anual, 78000000)) motivos.push('Receita anual acima do limite de ' + brl(P.limite_opcao_receita_anual) + ' para opção pelo Lucro Presumido.');
+    if (sum(meses.map(function (m) { return m.excedente; })) > 0) {
+      avisos.push('Receita acima de ' + brl(ac.limite_receita_anual) + ' no ano: acréscimo de ' + (num(ac.percentual) * 100) + '% na presunção aplicado ao excedente (LC 224/2025, status a confirmar).');
+    }
+    var baseAnual = sum(tri.map(function (t) { return t.base_irpj; }));
+    var lucroIsento = baseAnual - tot.irpj - tot.csll - tot.pis - tot.cofins;
+
+    return {
+      id: 'presumido',
+      elegivel: motivos.length === 0,
+      motivos: motivos,
+      avisos: avisos,
+      itens: { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros },
+      detalhe: { meses: meses, trimestres: tri, presuncao_irpj_media: pI, presuncao_csll_media: pC },
+      lucro_isento_aprox: Math.max(0, lucroIsento),
+      lucro_isento_tipo: 'Base presumida do IRPJ menos IRPJ, CSLL, PIS e COFINS'
+    };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Lucro Real (apuração trimestral)                                     */
+  /* ------------------------------------------------------------------ */
+  function calcReal(aliq, c) {
+    var R = aliq.lucro_real;
+    var avisos = [], motivos = [];
+    var issPct = 0, icmsPct = 0;
+    c.atividades.forEach(function (a) { issPct += a.share * a.iss; icmsPct += a.share * a.icms; });
+    var meses = [], i;
+    var credExcedeu = false;
+    for (i = 0; i < 12; i++) {
+      var rec = c.sim[i];
+      var e = encargosMes(aliq, c, i);
+      var compras = mv(c.custos.compras_insumos_mensal, i);
+      var comprasCred = mv(c.custos.compras_com_direito_credito_pis_cofins_mensal, i);
+      var desp = mv(c.custos.outras_despesas_operacionais_mensal, i);
+      var despCred = mv(c.custos.despesas_com_direito_credito_pis_cofins_mensal, i);
+      var credBase = comprasCred + despCred;
+      var pisDeb = rec * R.pis_aliquota, cofDeb = rec * R.cofins_aliquota;
+      var pisCred = credBase * R.pis_aliquota, cofCred = credBase * R.cofins_aliquota;
+      if (pisCred > pisDeb || cofCred > cofDeb) credExcedeu = true;
+      var pis = Math.max(0, pisDeb - pisCred), cof = Math.max(0, cofDeb - cofCred);
+      var iss = rec * issPct, icms = rec * icmsPct;
+      var folhaCusto = e.sal + e.prol + e.fgts + e.cpp + e.rat + e.terc;
+      var ajuste = mv(c.lreal.ajustes_adicoes_exclusoes_mensal, i);
+      var lucro = rec - pis - cof - iss - icms - compras - desp - folhaCusto + ajuste;
+      meses.push({
+        mes: i, receita: rec, pis: pis, cofins: cof, iss: iss, icms: icms,
+        cpp: e.cpp + e.rat, terceiros: e.terc, folha_custo: folhaCusto, lucro_antes_ir: lucro
+      });
+    }
+    var prej = num(c.lreal.prejuizo_fiscal_acumulado);
+    var tri = [];
+    var tot = { irpj: 0, csll: 0, pis: 0, cofins: 0, iss: 0, icms: 0, cpp: 0, terceiros: 0 };
+    var lucroTotal = 0;
+    for (var q = 0; q < 4; q++) {
+      var ms = meses.slice(q * 3, q * 3 + 3);
+      var lq = sum(ms.map(function (m) { return m.lucro_antes_ir; }));
+      var ativos = 3;
+      if (c.emAb) ativos = ms.filter(function (m, k) { return q * 3 + k >= c.primeiro; }).length;
+      var comp = 0, base = 0;
+      if (lq <= 0) { prej += -lq; }
+      else {
+        comp = Math.min(prej, R.limite_compensacao_prejuizo * lq);
+        prej -= comp;
+        base = lq - comp;
+      }
+      var irpjBase = R.irpj_aliquota * base;
+      var adic = R.irpj_adicional_aliquota * Math.max(0, base - R.irpj_adicional_limite_mensal * ativos);
+      var csll = R.csll_aliquota * base;
+      tri.push({ tri: q + 1, lucro_antes_ir: lq, compensacao: comp, base: base, irpj: irpjBase, adicional: adic, csll: csll });
+      tot.irpj += irpjBase + adic; tot.csll += csll;
+      lucroTotal += lq;
+    }
+    meses.forEach(function (m) {
+      tot.pis += m.pis; tot.cofins += m.cofins; tot.iss += m.iss; tot.icms += m.icms;
+      tot.cpp += m.cpp; tot.terceiros += m.terceiros;
+    });
+    var custosVazios = ['compras_insumos_mensal', 'outras_despesas_operacionais_mensal'].every(function (k) { return sum(meses.map(function (_, ix) { return mv(c.custos[k], ix); })) === 0; });
+    if (custosVazios) avisos.push('Lucro Real sem custos e despesas informados: o lucro tende a ser superestimado e o resultado deste regime não é confiável.');
+    if (credExcedeu) avisos.push('Créditos de PIS/COFINS superam os débitos em algum mês. O motor limitou o PIS/COFINS a zero e não acumula o saldo credor.');
+    if (lucroTotal < 0) avisos.push('Prejuízo fiscal no ano: o motor não modela outras vedações ou obrigações do Lucro Real.');
+    var lucroApos = lucroTotal - tot.irpj - tot.csll;
+
+    return {
+      id: 'real',
+      elegivel: true,
+      motivos: motivos,
+      avisos: avisos,
+      itens: { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros },
+      detalhe: { meses: meses, trimestres: tri },
+      lucro_isento_aprox: Math.max(0, lucroApos),
+      lucro_isento_tipo: 'Lucro antes do IR menos IRPJ e CSLL'
+    };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Lucros distribuídos                                                  */
+  /* ------------------------------------------------------------------ */
+  function calcDividendos(aliq, c, key) {
+    var D = aliq.dividendos || {};
+    var n = num(c.socios.quantidade);
+    var calc = 0, totalDist = 0;
+    for (var i = 0; i < 12; i++) {
+      var d = mv(c.socios.distribuicao_mensal_por_socio, i);
+      var iso = mv(c.socios.isento_lucros_ate_2025_mensal_por_socio, i);
+      totalDist += d * n;
+      var sujeito = Math.max(0, d - iso);
+      if (c.ano >= num(D.vigencia_ano, 2026) && sujeito > num(D.limite_mensal_por_beneficiario)) {
+        calc += sujeito * num(D.retencao_aliquota) * n;
+      }
+    }
+    var aplica = key === 'simples' ? D.simples_sujeito_retencao === true : true;
+    return { calculada: calc, aplicada: aplica ? calc : 0, aplica: aplica, total_distribuido: totalDist };
+  }
+
+  function fechar(aliq, c, r, receitaAnual) {
+    var dv = calcDividendos(aliq, c, r.id);
+    var totalEmp = 0;
+    Object.keys(r.itens).forEach(function (k) { totalEmp += r.itens[k] || 0; });
+    r.nome = NOMES[r.id];
+    r.dividendos = dv;
+    r.total_empresa = totalEmp;
+    r.retencao_aplicada = dv.aplicada;
+    r.carga_total = totalEmp + dv.aplicada;
+    r.pct_receita = receitaAnual > 0 ? r.carga_total / receitaAnual : 0;
+    r.pct_empresa = receitaAnual > 0 ? totalEmp / receitaAnual : 0;
+    if (dv.total_distribuido > 0 && dv.total_distribuido > r.lucro_isento_aprox) {
+      r.avisos.push('Distribuição anual de ' + brl(dv.total_distribuido) + ' acima do lucro isento estimado de ' + brl(r.lucro_isento_aprox) + ' (base da estimativa: ' + r.lucro_isento_tipo + '). O excedente exige escrituração contábil completa que o comprove, ou pode ser tributado.');
+    }
+    if (r.id === 'simples' && dv.calculada > 0 && !dv.aplica) {
+      r.avisos.push('Retenção de ' + brl(dv.calculada) + ' sobre lucros calculada como hipótese e NÃO somada ao total, porque as alíquotas indicam que o Simples não está sujeito (ponto controvertido, a confirmar).');
+    }
+    return r;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Orquestração                                                         */
+  /* ------------------------------------------------------------------ */
+  function calcular(aliq, dados) {
+    var c = normalizar(dados);
+    var receitaAnual = sum(c.sim);
+    var res = { versao: VERSAO, ano: c.ano, receita_anual: receitaAnual, regimes: {}, avisos: [], ranking: [] };
+    var calcs = { simples: calcSimples, presumido: calcPresumido, real: calcReal };
+    c.regimes.forEach(function (k) {
+      if (calcs[k]) res.regimes[k] = fechar(aliq, c, calcs[k](aliq, c), receitaAnual);
+    });
+    res.ranking = Object.keys(res.regimes)
+      .filter(function (k) { return res.regimes[k].elegivel; })
+      .sort(function (a, b) { return res.regimes[a].carga_total - res.regimes[b].carga_total; })
+      .map(function (k) { return k; });
+
+    // Avisos gerais
+    var RC = aliq.reforma_consumo || {};
+    if (c.ano === num(RC.ano_teste, 2026)) {
+      res.avisos.push({ nivel: 'info', texto: 'Reforma do consumo: em ' + c.ano + ' as notas destacam CBS ' + (num(RC.cbs_teste) * 100).toFixed(1).replace('.', ',') + '% e IBS ' + (num(RC.ibs_teste) * 100).toFixed(1).replace('.', ',') + '% como teste. Segundo as fontes, sem carga adicional no ano. Não modelado.' });
+    } else if (c.ano > num(RC.ano_teste, 2026)) {
+      res.avisos.push({ nivel: 'atencao', texto: 'Ano-calendário ' + c.ano + ': CBS e IBS (que substituem PIS, COFINS, ICMS e ISS) NÃO estão modelados. Os resultados refletem as regras anteriores à reforma e podem estar defasados.' });
+    }
+    var D = aliq.dividendos || {};
+    var n = Math.max(1, num(c.socios.quantidade, 1));
+    var distAnual = 0, prolAnual = 0;
+    for (var i = 0; i < 12; i++) { distAnual += mv(c.socios.distribuicao_mensal_por_socio, i); prolAnual += mv(c.folha.prolabore_total_mensal, i) / n; }
+    if (distAnual + prolAnual > num(D.irpfm_limite_anual, 600000)) {
+      res.avisos.push({ nivel: 'atencao', texto: 'Renda estimada por sócio acima de ' + brl(D.irpfm_limite_anual) + ' no ano (pró-labore + lucros): pode haver tributação mínima de altas rendas (IRPFM), não calculada aqui.' });
+    }
+    res.avisos.push({ nivel: 'info', texto: 'Fora do escopo do motor: ICMS-ST, produtos monofásicos, exportação, incentivos fiscais, JCP, parcelamentos, retenções na fonte sobre serviços e a tributação do pró-labore (igual nos três regimes).' });
+    res.avisos.push({ nivel: 'info', texto: 'FGTS não entra na carga, pois é igual nos três regimes. Ele reduz o lucro apenas no cálculo do Lucro Real.' });
+    return res;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Sensibilidade                                                        */
+  /* ------------------------------------------------------------------ */
+  var CENARIOS_PADRAO = [
+    { id: 'base', nome: 'Cenário base', receita: 1, prolabore: 1 },
+    { id: 'rec_mais', nome: 'Receita +10%', receita: 1.1, prolabore: 1 },
+    { id: 'rec_menos', nome: 'Receita -10%', receita: 0.9, prolabore: 1 },
+    { id: 'prol_mais', nome: 'Pró-labore +20%', receita: 1, prolabore: 1.2 },
+    { id: 'prol_menos', nome: 'Pró-labore -20%', receita: 1, prolabore: 0.8 }
+  ];
+
+  function escalar(x, f) { return Array.isArray(x) ? x.map(function (v) { return num(v) * f; }) : num(x) * f; }
+
+  function sensibilidade(aliq, dados, cenarios) {
+    var lista = cenarios || CENARIOS_PADRAO;
+    return lista.map(function (cn) {
+      var d = JSON.parse(JSON.stringify(dados));
+      d.receitas = d.receitas || {};
+      d.receitas.simulacao_12_meses = escalar(d.receitas.simulacao_12_meses || [], cn.receita);
+      d.receitas.historico_12_meses_anteriores = escalar(d.receitas.historico_12_meses_anteriores || [], cn.receita);
+      if (d.folha) d.folha.prolabore_total_mensal = escalar(d.folha.prolabore_total_mensal, cn.prolabore);
+      var r = calcular(aliq, d);
+      var out = { id: cn.id, nome: cn.nome, totais: {}, melhor: r.ranking[0] || null };
+      Object.keys(r.regimes).forEach(function (k) { out.totais[k] = { carga_total: r.regimes[k].carga_total, elegivel: r.regimes[k].elegivel }; });
+      return out;
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Validação e listas de revisão                                        */
+  /* ------------------------------------------------------------------ */
+  function validar(aliq, dados) {
+    var erros = [], avisos = [];
+    if (!aliq || typeof aliq !== 'object') { erros.push('Alíquotas: JSON inválido.'); return { erros: erros, avisos: avisos }; }
+    if (!dados || typeof dados !== 'object') { erros.push('Dados da empresa: JSON inválido.'); return { erros: erros, avisos: avisos }; }
+    ['simples_nacional', 'lucro_presumido', 'lucro_real', 'encargos_folha', 'dividendos'].forEach(function (k) {
+      if (!aliq[k]) erros.push('Alíquotas: bloco "' + k + '" ausente.');
+    });
+    var S = aliq.simples_nacional;
+    if (S && (!S.anexos || ['I', 'II', 'III', 'IV', 'V'].some(function (k) { return !S.anexos[k] || !S.anexos[k].faixas || S.anexos[k].faixas.length === 0; }))) {
+      erros.push('Alíquotas: Simples Nacional precisa dos anexos I a V com faixas.');
+    }
+    var ano = dados.ano_calendario;
+    if (!(Number(ano) >= 2000)) erros.push('Dados: "ano_calendario" ausente ou inválido.');
+    var sim = (dados.receitas || {}).simulacao_12_meses;
+    if (!Array.isArray(sim) || sim.length !== 12) erros.push('Dados: "receitas.simulacao_12_meses" deve ter exatamente 12 valores (janeiro a dezembro).');
+    else {
+      if (sim.some(function (v) { return v === null || v === '' || !isFinite(Number(v)) || Number(v) < 0; })) erros.push('Dados: "receitas.simulacao_12_meses" tem valor vazio, não numérico ou negativo.');
+      else if (sum(sim.map(Number)) === 0) erros.push('Dados: receita simulada total é zero.');
+    }
+    var emAb = (dados.empresa || {}).situacao === 'em_abertura';
+    var hist = (dados.receitas || {}).historico_12_meses_anteriores;
+    if (!emAb && !Array.isArray(hist)) avisos.push('Dados: sem "historico_12_meses_anteriores". Para empresa ativa o RBT12 do Simples fica incompleto.');
+    var ats = dados.atividades;
+    if (!Array.isArray(ats) || ats.length === 0) erros.push('Dados: informe ao menos uma atividade em "atividades".');
+    else {
+      var soma = ats.reduce(function (s, a) { return s + num(a.percentual_receita); }, 0);
+      if (Math.abs(soma - 100) > 0.01) erros.push('Dados: "percentual_receita" das atividades soma ' + soma.toFixed(2) + ', deve somar 100.');
+      ats.forEach(function (a, k) {
+        var nome = a.id || ('atividade ' + (k + 1));
+        var anexos = S && S.anexos ? Object.keys(S.anexos).concat(['III_ou_V_fator_r', 'vedado']) : [];
+        if (anexos.indexOf(a.anexo_simples) < 0) erros.push('Dados: atividade "' + nome + '" com "anexo_simples" inválido (use I, II, III, IV, V, III_ou_V_fator_r ou vedado).');
+        var P = aliq.lucro_presumido;
+        if (P && P.presuncao && !P.presuncao[a.tipo_presumido]) erros.push('Dados: atividade "' + nome + '" com "tipo_presumido" inválido (' + Object.keys(P.presuncao).join(', ') + ').');
+        ['iss_percentual', 'icms_liquido_percentual_receita'].forEach(function (f) {
+          if (a[f] === null || a[f] === undefined) erros.push('Dados: atividade "' + nome + '" sem "' + f + '" (use 0 se não se aplica).');
+        });
+      });
+    }
+    var regs = dados.regimes_a_comparar;
+    if (regs && regs.some(function (r) { return REGIMES.indexOf(r) < 0; })) erros.push('Dados: "regimes_a_comparar" aceita simples, presumido e real.');
+    var f = dados.folha;
+    if (!f) erros.push('Dados: bloco "folha" ausente.');
+    else ['salarios_empregados_mensal', 'prolabore_total_mensal', 'rat_percentual', 'terceiros_percentual'].forEach(function (k) {
+      if (f[k] === null || f[k] === undefined) erros.push('Dados: "folha.' + k + '" vazio (use 0 se não se aplica).');
+    });
+    var regsAtivos = regs && regs.length ? regs : REGIMES;
+    if (regsAtivos.indexOf('real') >= 0) {
+      var cu = dados.custos;
+      if (!cu) erros.push('Dados: bloco "custos" ausente (necessário para o Lucro Real).');
+      else ['compras_insumos_mensal', 'compras_com_direito_credito_pis_cofins_mensal', 'outras_despesas_operacionais_mensal', 'despesas_com_direito_credito_pis_cofins_mensal'].forEach(function (k) {
+        if (cu[k] === null || cu[k] === undefined) erros.push('Dados: "custos.' + k + '" vazio (use 0 se não se aplica).');
+      });
+    }
+    var so = dados.socios;
+    if (!so || !(Number(so.quantidade) >= 1)) avisos.push('Dados: "socios.quantidade" ausente. A retenção sobre lucros distribuídos ficará zerada.');
+    else if (so.distribuicao_mensal_por_socio === null || so.distribuicao_mensal_por_socio === undefined) erros.push('Dados: "socios.distribuicao_mensal_por_socio" vazio (use 0 se não há distribuição).');
+    var pend = listarPendencias(aliq).length;
+    if (pend > 0) avisos.push('Alíquotas: ' + pend + ' bloco(s) com status a confirmar. Ver lista de pendências.');
+    return { erros: erros, avisos: avisos };
+  }
+
+  function listarPendencias(aliq) {
+    var out = [];
+    (function walk(o, path) {
+      if (o && typeof o === 'object') {
+        if (!Array.isArray(o) && typeof o.status === 'string' && o.status.indexOf('conferido') !== 0) {
+          out.push({ caminho: path.join('.'), status: o.status, nota: o.nota || o.simples_nota || '' });
+        }
+        Object.keys(o).forEach(function (k) { walk(o[k], path.concat(k)); });
+      }
+    })(aliq, []);
+    return out;
+  }
+
+  function listarRevisoes(dados) {
+    var meta = (dados && dados.meta) || {};
+    return Object.keys(meta).filter(function (k) { return meta[k] && meta[k].origem && meta[k].origem !== 'informado'; })
+      .map(function (k) { return Object.assign({ campo: k }, meta[k]); });
+  }
+
+  function brl(v) {
+    return 'R$ ' + num(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  return {
+    versao: VERSAO, calcular: calcular, validar: validar, sensibilidade: sensibilidade,
+    listarPendencias: listarPendencias, listarRevisoes: listarRevisoes,
+    NOMES: NOMES, ROTULOS: ROTULOS, MESES: MESES, CENARIOS_PADRAO: CENARIOS_PADRAO
+  };
+});
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var E = window.CTEngine;
+  var ALIQ_TXT = "{\n  \"schema_version\": \"1.0\",\n  \"metadata\": {\n    \"descricao\": \"Alíquotas e regras vigentes lidas pelo motor de cálculo. Percentuais em fração decimal (0.04 = 4%). Valores em R$. Atualizar somente quando a norma mudar.\",\n    \"ano_calendario\": 2026,\n    \"data_verificacao\": \"2026-10-29\",\n    \"verificado_por\": \"\",\n    \"status_geral\": \"rascunho_a_validar_pelo_contador\",\n    \"legenda_status\": {\n      \"conferido_fonte_oficial\": \"Valor conferido na norma primária ou em página oficial do órgão, com URL e data de acesso.\",\n      \"conferido_fonte_secundaria\": \"Valor encontrado em pelo menos uma fonte secundária (artigo técnico, portal contábil). Ainda não aberto na norma primária.\",\n      \"conhecimento_previo_a_confirmar\": \"Valor de conhecimento geral, não localizado nas fontes desta verificação. Confirmar na norma.\",\n      \"a_confirmar\": \"Ponto novo, controvertido ou com divergência entre fontes. Exige validação do contador antes do uso.\"\n    }\n  },\n\n  \"simples_nacional\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"LC 123/2006 (Anexos I a V, redação da LC 155/2016); Resolução CGSN 140/2018; Portaria CGSN 54/2025 (sublimite de 2026)\",\n    \"limite_receita_anual\": 4800000,\n    \"sublimite_icms_iss\": 3600000,\n    \"fator_r_minimo\": 0.28,\n    \"formula_aliquota_efetiva\": \"(RBT12 x aliquota_nominal - parcela_a_deduzir) / RBT12\",\n    \"anexos\": {\n      \"I\": {\n        \"nome\": \"Comércio\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.04, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.073, \"deduzir\": 5940 },\n          { \"ate\": 720000, \"aliquota\": 0.095, \"deduzir\": 13860 },\n          { \"ate\": 1800000, \"aliquota\": 0.107, \"deduzir\": 22500 },\n          { \"ate\": 3600000, \"aliquota\": 0.143, \"deduzir\": 87300 },\n          { \"ate\": 4800000, \"aliquota\": 0.19, \"deduzir\": 378000 }\n        ]\n      },\n      \"II\": {\n        \"nome\": \"Indústria\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.045, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.078, \"deduzir\": 5940 },\n          { \"ate\": 720000, \"aliquota\": 0.1, \"deduzir\": 13860 },\n          { \"ate\": 1800000, \"aliquota\": 0.112, \"deduzir\": 22500 },\n          { \"ate\": 3600000, \"aliquota\": 0.147, \"deduzir\": 85500 },\n          { \"ate\": 4800000, \"aliquota\": 0.3, \"deduzir\": 720000 }\n        ]\n      },\n      \"III\": {\n        \"nome\": \"Serviços (locação, instalação, manutenção, atividades com Fator R >= 28%)\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.06, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.112, \"deduzir\": 9360 },\n          { \"ate\": 720000, \"aliquota\": 0.135, \"deduzir\": 17640 },\n          { \"ate\": 1800000, \"aliquota\": 0.16, \"deduzir\": 35640 },\n          { \"ate\": 3600000, \"aliquota\": 0.21, \"deduzir\": 125640 },\n          { \"ate\": 4800000, \"aliquota\": 0.33, \"deduzir\": 648000 }\n        ]\n      },\n      \"IV\": {\n        \"nome\": \"Serviços (construção, vigilância, limpeza, advocacia); CPP fora do DAS\",\n        \"cpp_incluida_no_das\": false,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.045, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.09, \"deduzir\": 8100 },\n          { \"ate\": 720000, \"aliquota\": 0.102, \"deduzir\": 12420 },\n          { \"ate\": 1800000, \"aliquota\": 0.14, \"deduzir\": 39780 },\n          { \"ate\": 3600000, \"aliquota\": 0.22, \"deduzir\": 183780 },\n          { \"ate\": 4800000, \"aliquota\": 0.33, \"deduzir\": 828000 }\n        ]\n      },\n      \"V\": {\n        \"nome\": \"Serviços intelectuais e técnicos com Fator R < 28%\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.155, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.18, \"deduzir\": 4500 },\n          { \"ate\": 720000, \"aliquota\": 0.195, \"deduzir\": 9900 },\n          { \"ate\": 1800000, \"aliquota\": 0.205, \"deduzir\": 17100 },\n          { \"ate\": 3600000, \"aliquota\": 0.23, \"deduzir\": 62100 },\n          { \"ate\": 4800000, \"aliquota\": 0.305, \"deduzir\": 540000 }\n        ]\n      }\n    },\n    \"fontes\": [\n      \"Anexos I, III e V: https://agilize.com.br/artigos/tabela-anexos-simples-nacional-2026/\",\n      \"Anexos II e IV: https://www.contabilizei.com.br/contabilidade-online/tabela-simples-nacional/\",\n      \"Limite e sublimite 2026: https://noticias.iob.com.br/?p=423\",\n      \"Oficial para conferir: Portal do Simples Nacional (www8.receita.fazenda.gov.br/simplesnacional) e LC 123/2006 no Planalto\"\n    ]\n  },\n\n  \"lucro_presumido\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"Leis 9.249/1995 e 9.430/1996; RIR (Decreto 9.580/2018); LC 224/2025 (acréscimo de 10% na presunção)\",\n    \"limite_opcao_receita_anual\": 78000000,\n    \"irpj_aliquota\": 0.15,\n    \"irpj_adicional_aliquota\": 0.1,\n    \"irpj_adicional_limite_mensal\": 20000,\n    \"csll_aliquota\": 0.09,\n    \"pis_aliquota\": 0.0065,\n    \"cofins_aliquota\": 0.03,\n    \"presuncao\": {\n      \"comercio_industria\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Comércio, indústria e atividades não listadas abaixo\", \"status\": \"conferido_fonte_secundaria\" },\n      \"servicos_gerais\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Prestação de serviços em geral (não hospitalares, não transporte)\", \"status\": \"conferido_fonte_secundaria\" },\n      \"intermediacao_negocios\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Intermediação de negócios, administração, locação e cessão de bens\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"locacao_cessao_bens\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Locação ou cessão de bens e direitos\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"servicos_transporte_cargas\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Transporte de cargas\", \"status\": \"conferido_fonte_secundaria\" },\n      \"servicos_transporte_passageiros\": { \"irpj\": 0.16, \"csll\": 0.12, \"descricao\": \"Transporte de passageiros\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"servicos_hospitalares\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Serviços hospitalares e equiparados, se cumpridas as exigências (sociedade empresária, normas da Anvisa)\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"revenda_combustiveis\": { \"irpj\": 0.016, \"csll\": 0.12, \"descricao\": \"Revenda de combustíveis e gás natural\", \"status\": \"conferido_fonte_secundaria\" }\n    },\n    \"acrescimo_presuncao\": {\n      \"status\": \"a_confirmar\",\n      \"ativo\": true,\n      \"base_legal\": \"LC 224/2025, art. 12; IN RFB 2.306/2026 (citada em fonte secundária)\",\n      \"percentual\": 0.1,\n      \"limite_receita_anual\": 5000000,\n      \"criterio\": \"Acréscimo de 10% sobre o percentual de presunção, aplicado à parcela da receita bruta acumulada no ano que ultrapassar o limite.\",\n      \"vigencia_irpj\": { \"ano\": 2026, \"mes\": 1 },\n      \"vigencia_csll\": { \"ano\": 2026, \"mes\": 4 },\n      \"nota\": \"Datas de vigência vêm de fontes secundárias. O critério de apuração trimestral do excedente deve ser conferido na IN RFB. Fonte secundária informa que a regra é contestada na Justiça.\"\n    },\n    \"fontes\": [\n      \"Alíquotas e presunção: https://triviumcontabil.com.br/lucro-presumido-como-funciona/\",\n      \"Cálculo e alíquotas: https://www.contabilidadezen.com.br/blog/lucro-presumido-aliquotas-calculo-2026/\",\n      \"Acréscimo LC 224/2025 (Receita Federal, texto do art. 12): https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/estudos/notas-cetad/notas-tecnicas/2026/nota-cetad-coest-no-009-2026\",\n      \"Datas e IN 2.306/2026: https://contadores.cnt.br/projetos/46/noticias/tecnicas/2026/05/12/lucro-presumido-em-2026-o-que-muda-com-a-in-2-306-2026-e-como-calcular-o-impacto-no-seu-cliente.html\"\n    ]\n  },\n\n  \"lucro_real\": {\n    \"status\": \"conhecimento_previo_a_confirmar\",\n    \"base_legal\": \"Leis 9.249/1995, 9.430/1996, 10.637/2002 e 10.833/2003; RIR (Decreto 9.580/2018)\",\n    \"apuracao\": \"trimestral\",\n    \"irpj_aliquota\": 0.15,\n    \"irpj_adicional_aliquota\": 0.1,\n    \"irpj_adicional_limite_mensal\": 20000,\n    \"csll_aliquota\": 0.09,\n    \"pis_aliquota\": 0.0165,\n    \"cofins_aliquota\": 0.076,\n    \"limite_compensacao_prejuizo\": 0.3,\n    \"nota\": \"A soma de PIS e COFINS (9,25%) aparece em fontes secundárias. As alíquotas separadas e o limite de 30% de compensação são de conhecimento prévio.\"\n  },\n\n  \"encargos_folha\": {\n    \"status\": \"conhecimento_previo_a_confirmar\",\n    \"base_legal\": \"Lei 8.212/1991, art. 22; Lei 8.036/1990 (FGTS); LC 123/2006, art. 13, §3º (Simples dispensa contribuições a terceiros)\",\n    \"cpp_patronal\": 0.2,\n    \"fgts\": 0.08,\n    \"nota\": \"RAT/FAP e percentual de terceiros dependem do CNAE e do FPAS da empresa e são informados em dados-empresa.json.\"\n  },\n\n  \"dividendos\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"Lei 15.270/2025\",\n    \"vigencia_ano\": 2026,\n    \"retencao_aliquota\": 0.1,\n    \"limite_mensal_por_beneficiario\": 50000,\n    \"regra\": \"Retenção de IRRF de 10% sobre o total pago no mês quando uma mesma PJ paga mais que o limite a uma mesma pessoa física residente. A retenção é antecipação sujeita a ajuste na declaração anual.\",\n    \"simples_sujeito_retencao\": false,\n    \"simples_status\": \"a_confirmar\",\n    \"simples_nota\": \"Ponto controvertido nas fontes: a LC 123/2006 prevê isenção de lucros distribuídos pelo Simples e a Lei 15.270/2025 é lei ordinária. O motor calcula o valor hipotético e só soma ao total se este campo for true.\",\n    \"irpfm_limite_anual\": 600000,\n    \"irpfm_nota\": \"Tributação mínima anual de altas rendas (renda acima de R$ 600.000 por ano). Não calculada pelo motor; gera apenas aviso.\",\n    \"fontes\": [\n      \"https://www.contabeis.com.br/artigos/76397/entenda-sobre-a-tributacao-de-dividendos-em-2026/\",\n      \"https://www.portaltributario.com.br/noticias/instituido-tributacao-irpf-lucros-dividendos.htm\"\n    ]\n  },\n\n  \"reforma_consumo\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"EC 132/2023; LC 214/2025\",\n    \"ano_teste\": 2026,\n    \"cbs_teste\": 0.009,\n    \"ibs_teste\": 0.001,\n    \"gera_carga_adicional_no_ano_teste\": false,\n    \"cronograma\": \"2026 teste (CBS 0,9% + IBS 0,1% informados nas notas). 2027 CBS passa a valer e PIS/COFINS são extintos. 2029 a 2032 transição do IBS substitui ICMS e ISS.\",\n    \"nota\": \"O motor não modela CBS/IBS a partir de 2027. Alíquota cheia depende de resolução do Senado.\",\n    \"fontes\": [\n      \"https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf\",\n      \"https://investnews.com.br/guias/ibs-e-cbs/\"\n    ]\n  }\n}\n";
+  var EX_TXT = "{\n  \"schema_version\": \"1.0\",\n  \"_aviso\": \"EXEMPLO FICTÍCIO para demonstração. Nenhum valor abaixo pertence a uma empresa real. Substitua tudo pelos dados do cliente.\",\n  \"ano_calendario\": 2026,\n  \"empresa\": {\n    \"identificacao\": \"Exemplo Serviços de Tecnologia Ltda (fictícia)\",\n    \"situacao\": \"ativa\",\n    \"uf\": \"RS\",\n    \"municipio\": \"Porto Alegre\",\n    \"cnae_principal\": \"6201-5/01\"\n  },\n  \"regimes_a_comparar\": [\"simples\", \"presumido\", \"real\"],\n  \"atividades\": [\n    {\n      \"id\": \"desenvolvimento_software\",\n      \"descricao\": \"Desenvolvimento de software sob encomenda\",\n      \"cnae\": \"6201-5/01\",\n      \"percentual_receita\": 100,\n      \"anexo_simples\": \"III_ou_V_fator_r\",\n      \"tipo_presumido\": \"servicos_gerais\",\n      \"iss_percentual\": 3,\n      \"icms_liquido_percentual_receita\": 0\n    }\n  ],\n  \"receitas\": {\n    \"historico_12_meses_anteriores\": [40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000],\n    \"simulacao_12_meses\": [42000, 42000, 42000, 45000, 45000, 45000, 48000, 48000, 48000, 50000, 50000, 50000]\n  },\n  \"custos\": {\n    \"compras_insumos_mensal\": 0,\n    \"compras_com_direito_credito_pis_cofins_mensal\": 0,\n    \"outras_despesas_operacionais_mensal\": 6000,\n    \"despesas_com_direito_credito_pis_cofins_mensal\": 2000\n  },\n  \"folha\": {\n    \"salarios_empregados_mensal\": 12000,\n    \"prolabore_total_mensal\": 8000,\n    \"rat_percentual\": 1,\n    \"terceiros_percentual\": 5.8,\n    \"folha_historico_12m_fator_r\": 251520\n  },\n  \"socios\": {\n    \"quantidade\": 2,\n    \"distribuicao_mensal_por_socio\": 4000,\n    \"isento_lucros_ate_2025_mensal_por_socio\": 0\n  },\n  \"lucro_real\": {\n    \"prejuizo_fiscal_acumulado\": 0,\n    \"ajustes_adicoes_exclusoes_mensal\": 0\n  },\n  \"meta\": {\n    \"atividades[0].anexo_simples\": {\n      \"origem\": \"inferido_ia\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"Desenvolvimento de software sob encomenda tende a ser Anexo V, com migração ao Anexo III se o Fator R for de 28% ou mais.\",\n      \"fonte\": \"Resolução CGSN 140/2018 (ilustrativo neste exemplo)\"\n    },\n    \"atividades[0].iss_percentual\": {\n      \"origem\": \"inferido_ia\",\n      \"confianca\": \"baixa\",\n      \"justificativa\": \"Valor ilustrativo. A alíquota de ISS do município deve ser conferida na lei municipal.\",\n      \"fonte\": \"Lei municipal de ISS (a consultar)\"\n    },\n    \"folha.rat_percentual\": {\n      \"origem\": \"inferido_ia\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"RAT de 1% (grau de risco leve) e FAP 1,0 assumidos para o CNAE. Conferir o FAP da empresa.\",\n      \"fonte\": \"Decreto 3.048/1999, Anexo V (ilustrativo neste exemplo)\"\n    },\n    \"folha.terceiros_percentual\": {\n      \"origem\": \"premissa\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"5,8% assumido para o enquadramento de FPAS usual em serviços. Conferir o código FPAS da empresa.\",\n      \"fonte\": \"Tabela de FPAS (a consultar)\"\n    },\n    \"receitas.simulacao_12_meses\": {\n      \"origem\": \"premissa\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"Crescimento escalonado de 42 mil a 50 mil por mês, ilustrativo.\",\n      \"fonte\": \"\"\n    }\n  }\n}\n";
+  var TPL_TXT = "{\n  \"schema_version\": \"1.0\",\n  \"_instrucoes\": \"Preencha todos os campos com null ou 0. Percentuais em unidades de percentual (2 = 2%). Valores em R$. Campos mensais aceitam um número (vale para os 12 meses) ou uma lista com 12 números. Em 'meta', registre a origem de cada campo que não veio direto de documento do cliente.\",\n  \"ano_calendario\": null,\n  \"empresa\": {\n    \"identificacao\": \"\",\n    \"situacao\": \"ativa\",\n    \"uf\": \"\",\n    \"municipio\": \"\",\n    \"cnae_principal\": \"\"\n  },\n  \"regimes_a_comparar\": [\"simples\", \"presumido\", \"real\"],\n  \"atividades\": [\n    {\n      \"id\": \"\",\n      \"descricao\": \"\",\n      \"cnae\": \"\",\n      \"percentual_receita\": 100,\n      \"anexo_simples\": \"I | II | III | IV | V | III_ou_V_fator_r | vedado\",\n      \"tipo_presumido\": \"comercio_industria | servicos_gerais | intermediacao_negocios | locacao_cessao_bens | servicos_transporte_cargas | servicos_transporte_passageiros | servicos_hospitalares | revenda_combustiveis\",\n      \"iss_percentual\": null,\n      \"icms_liquido_percentual_receita\": null\n    }\n  ],\n  \"receitas\": {\n    \"historico_12_meses_anteriores\": [null, null, null, null, null, null, null, null, null, null, null, null],\n    \"simulacao_12_meses\": [null, null, null, null, null, null, null, null, null, null, null, null]\n  },\n  \"custos\": {\n    \"compras_insumos_mensal\": null,\n    \"compras_com_direito_credito_pis_cofins_mensal\": null,\n    \"outras_despesas_operacionais_mensal\": null,\n    \"despesas_com_direito_credito_pis_cofins_mensal\": null\n  },\n  \"folha\": {\n    \"salarios_empregados_mensal\": null,\n    \"prolabore_total_mensal\": null,\n    \"rat_percentual\": null,\n    \"terceiros_percentual\": null,\n    \"folha_historico_12m_fator_r\": null\n  },\n  \"socios\": {\n    \"quantidade\": null,\n    \"distribuicao_mensal_por_socio\": null,\n    \"isento_lucros_ate_2025_mensal_por_socio\": 0\n  },\n  \"lucro_real\": {\n    \"prejuizo_fiscal_acumulado\": 0,\n    \"ajustes_adicoes_exclusoes_mensal\": 0\n  },\n  \"meta\": {\n    \"caminho.do.campo\": {\n      \"origem\": \"informado | extraido_de_documento | inferido_ia | premissa\",\n      \"confianca\": \"alta | media | baixa\",\n      \"justificativa\": \"\",\n      \"fonte\": \"\"\n    }\n  }\n}\n";
+
+  var BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  function brl(v) { return BRL.format(v || 0); }
+  function pct(v, d) {
+    var n = d == null ? 2 : d;
+    return ((v || 0) * 100).toLocaleString('pt-BR', { minimumFractionDigits: n, maximumFractionDigits: n }) + '%';
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function $(id) { return document.getElementById(id); }
+
+  var ta = { aliq: $('taAliq'), dados: $('taDados') };
+  var state = { res: null, sens: null, aliq: null, dados: null, erros: 0 };
+  var timer = null;
+
+  /* ---------- abas ---------- */
+  var TABS = ['entradas', 'resultado', 'modelos'];
+  function showTab() {
+    var h = (location.hash || '').replace('#', '');
+    if (TABS.indexOf(h) < 0) h = 'resultado';
+    TABS.forEach(function (t) {
+      $('tab-' + t).hidden = t !== h;
+      $('t-' + t).setAttribute('aria-selected', t === h ? 'true' : 'false');
+    });
+  }
+  TABS.forEach(function (t) {
+    $('t-' + t).addEventListener('click', function () { location.hash = t; });
+  });
+  window.addEventListener('hashchange', showTab);
+
+  /* ---------- cópia ---------- */
+  function copyText(text, btn, srcEl) {
+    var label = btn.textContent;
+    function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = label; }, 1600); }
+    function fallback() {
+      try {
+        var el = srcEl;
+        if (el && el.select) { el.select(); }
+        else if (el) { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+        done('Selecionado, use Ctrl+C');
+      } catch (e) { done('Não foi possível copiar'); }
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { done('Copiado'); }, fallback);
+    } catch (e) { fallback(); }
+  }
+  $('copyAliq').addEventListener('click', function (e) { copyText(ta.aliq.value, e.currentTarget, ta.aliq); });
+  $('copyDados').addEventListener('click', function (e) { copyText(ta.dados.value, e.currentTarget, ta.dados); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
+    b.addEventListener('click', function (e) {
+      var k = b.getAttribute('data-copy');
+      var map = { aliq: [ALIQ_TXT, 'preAliq'], tpl: [TPL_TXT, 'preTpl'], ex: [EX_TXT, 'preEx'] }[k];
+      copyText(map[0], e.currentTarget, $(map[1]));
+    });
+  });
+
+  /* ---------- carregar arquivos e atalhos ---------- */
+  function lerArquivo(input, destino) {
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () { destino.value = String(rd.result); input.value = ''; agendar(0); };
+      rd.readAsText(f);
+    });
+  }
+  lerArquivo($('fileAliq'), ta.aliq);
+  lerArquivo($('fileDados'), ta.dados);
+  $('resetAliq').addEventListener('click', function () { ta.aliq.value = ALIQ_TXT; agendar(0); });
+  $('exDados').addEventListener('click', function () { ta.dados.value = EX_TXT; agendar(0); });
+  $('tplDados').addEventListener('click', function () { ta.dados.value = TPL_TXT; agendar(0); });
+  ta.aliq.addEventListener('input', function () { agendar(350); });
+  ta.dados.addEventListener('input', function () { agendar(350); });
+
+  function agendar(ms) { clearTimeout(timer); timer = setTimeout(atualizar, ms); }
+
+  /* ---------- atualização ---------- */
+  function parse(txt) {
+    try { return { v: JSON.parse(txt) }; } catch (e) { return { err: e.message }; }
+  }
+  function msgsHtml(list) {
+    return list.map(function (m) { return '<div class="msg ' + m.t + '">' + esc(m.x) + '</div>'; }).join('');
+  }
+  function chip(el, msgs) {
+    var nErr = msgs.filter(function (m) { return m.t === 'err'; }).length;
+    var nWarn = msgs.filter(function (m) { return m.t === 'warn'; }).length;
+    el.className = 'chip ' + (nErr ? 'err' : nWarn ? 'warn' : 'ok');
+    el.textContent = nErr ? nErr + (nErr === 1 ? ' erro' : ' erros') : nWarn ? 'Válido, ' + nWarn + (nWarn === 1 ? ' aviso' : ' avisos') : 'Válido';
+  }
+
+  function atualizar() {
+    var pa = parse(ta.aliq.value), pd = parse(ta.dados.value);
+    var mA = [], mD = [];
+    state.res = null; state.sens = null; state.erros = 0;
+    if (pa.err) mA.push({ t: 'err', x: 'JSON inválido: ' + pa.err });
+    if (pd.err) mD.push({ t: 'err', x: 'JSON inválido: ' + pd.err });
+    if (!pa.err) { state.aliq = pa.v; }
+    if (!pd.err) { state.dados = pd.v; }
+    if (!pa.err && !pd.err) {
+      var val = E.validar(pa.v, pd.v);
+      val.erros.forEach(function (x) { (x.indexOf('Alíquotas') === 0 ? mA : mD).push({ t: 'err', x: x }); });
+      val.avisos.forEach(function (x) { (x.indexOf('Alíquotas') === 0 ? mA : mD).push({ t: 'warn', x: x }); });
+      if (!val.erros.length) {
+        try {
+          state.res = E.calcular(pa.v, pd.v);
+          state.sens = E.sensibilidade(pa.v, pd.v);
+        } catch (e) {
+          mD.push({ t: 'err', x: 'Falha no cálculo: ' + e.message });
+        }
+      }
+    }
+    state.erros = mA.concat(mD).filter(function (m) { return m.t === 'err'; }).length;
+    $('msgAliq').innerHTML = msgsHtml(mA);
+    $('msgDados').innerHTML = msgsHtml(mD);
+    chip($('chipAliq'), mA);
+    chip($('chipDados'), mD);
+    metaLinha();
+    renderResultado();
+  }
+
+  function metaLinha() {
+    var el = $('metaLine');
+    var a = state.aliq;
+    if (!a || !a.metadata) { el.textContent = 'Motor v' + E.versao; return; }
+    var p = E.listarPendencias(a).length;
+    var d = String(a.metadata.data_verificacao || '').split('-').reverse().join('/');
+    el.innerHTML = 'Motor v' + esc(E.versao) + '<br>Alíquotas verificadas em ' + esc(d) + ', ' + p + (p === 1 ? ' pendência' : ' pendências');
+  }
+
+  /* ---------- tabelas ---------- */
+  function tabela(heads, rows, numCols, totalLast) {
+    var h = heads.map(function (t, i) { return '<th class="' + (numCols.indexOf(i) >= 0 ? 'num' : '') + '">' + esc(t) + '</th>'; }).join('');
+    var b = rows.map(function (r, ri) {
+      var tot = totalLast && ri === rows.length - 1;
+      return '<tr class="' + (tot ? 'total' : '') + '">' + r.map(function (c, i) {
+        return '<td class="' + (numCols.indexOf(i) >= 0 ? 'num' : '') + '">' + c + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    return '<div class="tablewrap"><table><thead><tr>' + h + '</tr></thead><tbody>' + b + '</tbody></table></div>';
+  }
+  function sumBy(arr, f) { return arr.reduce(function (s, x) { return s + f(x); }, 0); }
+
+  /* ---------- memória de cálculo ---------- */
+  function detSimples(r) {
+    var usaFR = (state.dados.atividades || []).some(function (a) { return a.anexo_simples === 'III_ou_V_fator_r'; });
+    var ms = r.detalhe.meses;
+    var heads = ['Mês', 'Receita', 'RBT12'];
+    if (usaFR) heads.push('Fator R');
+    heads = heads.concat(['Anexo', 'Faixa', 'Alíq. efetiva', 'DAS', 'CPP fora do DAS']);
+    var num = [1, 2]; if (usaFR) num.push(3);
+    var base = usaFR ? 4 : 3;
+    num = num.concat([base + 2, base + 3, base + 4]);
+    var rows = ms.map(function (m) {
+      var a = m.atividades;
+      var row = [E.MESES[m.mes], brl(m.receita), brl(m.rbt12)];
+      if (usaFR) row.push(pct(m.fator_r, 1));
+      row.push(a.map(function (x) { return esc(x.anexo); }).join('<br>') || '—');
+      row.push(a.map(function (x) { return x.faixa || '—'; }).join('<br>') || '—');
+      row.push(a.map(function (x) { return x.efetiva != null ? pct(x.efetiva) : '—'; }).join('<br>') || '—');
+      row.push(brl(m.das)); row.push(brl(m.cpp_fora));
+      return row;
+    });
+    var tot = ['Total', brl(sumBy(ms, function (m) { return m.receita; })), ''];
+    if (usaFR) tot.push('');
+    tot = tot.concat(['', '', '', brl(r.itens.das), brl(r.itens.cpp)]);
+    rows.push(tot);
+    var anexos = {};
+    ms.forEach(function (m) { m.atividades.forEach(function (x) { anexos[x.anexo] = 1; }); });
+    return '<p class="caption">Alíquota efetiva = (RBT12 × alíquota nominal − parcela a deduzir) ÷ RBT12. DAS do mês = receita do mês × alíquota efetiva. O RBT12 soma a receita dos 12 meses anteriores ao mês calculado.</p>' +
+      tabela(heads, rows, num, true);
+  }
+  function detPresumido(r) {
+    var P = state.aliq.lucro_presumido;
+    var tr = r.detalhe.trimestres;
+    var rows = tr.map(function (t) {
+      return ['T' + t.tri, brl(t.receita), brl(t.base_irpj), brl(t.irpj), brl(t.adicional), brl(t.base_csll), brl(t.csll)];
+    });
+    rows.push(['Total', brl(sumBy(tr, function (t) { return t.receita; })), brl(sumBy(tr, function (t) { return t.base_irpj; })), brl(sumBy(tr, function (t) { return t.irpj; })), brl(sumBy(tr, function (t) { return t.adicional; })), brl(sumBy(tr, function (t) { return t.base_csll; })), brl(sumBy(tr, function (t) { return t.csll; }))]);
+    return '<p class="caption">Presunção média ponderada pelas atividades: IRPJ ' + pct(r.detalhe.presuncao_irpj_media) + ' e CSLL ' + pct(r.detalhe.presuncao_csll_media) + ' da receita. Base = receita × presunção, com acréscimo sobre o excedente acumulado no ano acima do limite da LC 224/2025. Adicional de ' + pct(P.irpj_adicional_aliquota, 0) + ' sobre a base trimestral acima de ' + brl(P.irpj_adicional_limite_mensal * 3) + '.</p>' +
+      tabela(['Trimestre', 'Receita', 'Base IRPJ', 'IRPJ ' + pct(P.irpj_aliquota, 0), 'Adicional', 'Base CSLL', 'CSLL ' + pct(P.csll_aliquota, 0)], rows, [1, 2, 3, 4, 5, 6], true) +
+      '<p class="caption">No ano: PIS ' + brl(r.itens.pis) + ' (' + pct(P.pis_aliquota) + ' da receita), COFINS ' + brl(r.itens.cofins) + ' (' + pct(P.cofins_aliquota, 0) + '), ISS ' + brl(r.itens.iss) + ', ICMS líquido informado ' + brl(r.itens.icms) + ', CPP e RAT ' + brl(r.itens.cpp) + ', terceiros ' + brl(r.itens.terceiros) + '.</p>';
+  }
+  function detReal(r) {
+    var R = state.aliq.lucro_real;
+    var tr = r.detalhe.trimestres;
+    var rows = tr.map(function (t) {
+      return ['T' + t.tri, brl(t.lucro_antes_ir), brl(t.compensacao), brl(t.base), brl(t.irpj), brl(t.adicional), brl(t.csll)];
+    });
+    rows.push(['Total', brl(sumBy(tr, function (t) { return t.lucro_antes_ir; })), brl(sumBy(tr, function (t) { return t.compensacao; })), brl(sumBy(tr, function (t) { return t.base; })), brl(sumBy(tr, function (t) { return t.irpj; })), brl(sumBy(tr, function (t) { return t.adicional; })), brl(sumBy(tr, function (t) { return t.csll; }))]);
+    return '<p class="caption">Lucro antes do IR = receita − PIS e COFINS líquidos de créditos − ISS − ICMS − compras − despesas − custo da folha (salários, pró-labore, FGTS e encargos patronais) ± ajustes. Apuração trimestral, compensação de prejuízo limitada a ' + pct(R.limite_compensacao_prejuizo, 0) + ' do lucro do trimestre.</p>' +
+      tabela(['Trimestre', 'Lucro antes do IR', 'Compensação', 'Base', 'IRPJ ' + pct(R.irpj_aliquota, 0), 'Adicional', 'CSLL ' + pct(R.csll_aliquota, 0)], rows, [1, 2, 3, 4, 5, 6], true) +
+      '<p class="caption">No ano: PIS líquido ' + brl(r.itens.pis) + ', COFINS líquida ' + brl(r.itens.cofins) + ', ISS ' + brl(r.itens.iss) + ', ICMS líquido informado ' + brl(r.itens.icms) + ', CPP e RAT ' + brl(r.itens.cpp) + ', terceiros ' + brl(r.itens.terceiros) + '.</p>';
+  }
+
+  /* ---------- resultado ---------- */
+  var STATUS_TXT = {
+    conhecimento_previo_a_confirmar: 'Conhecimento prévio, confirmar na norma',
+    a_confirmar: 'Confirmar antes de usar'
+  };
+  var ORIGEM_TXT = { inferido_ia: 'Inferido por IA', premissa: 'Premissa', extraido_de_documento: 'Extraído de documento', informado: 'Informado' };
+
+  function renderResultado() {
+    var box = $('resultado');
+    var res = state.res;
+    if (!res) {
+      box.innerHTML = '<div class="empty"><h2>Entradas com erro</h2><p class="muted">Há ' + state.erros + (state.erros === 1 ? ' erro' : ' erros') + ' nos JSON. Corrija na aba Entradas para ver o comparativo.</p><a class="btn primary" href="#entradas" style="text-decoration:none">Ir para Entradas</a></div>';
+      return;
+    }
+    var dados = state.dados;
+    var keys = Object.keys(res.regimes);
+    var best = res.ranking[0];
+    var min = best ? res.regimes[best].carga_total : 0;
+    var isEx = ta.dados.value.trim() === EX_TXT.trim();
+    var h = [];
+
+    if (isEx) {
+      h.push('<div class="banner"><span><b>Exemplo fictício carregado.</b> Troque os dados na aba Entradas.</span><a href="#entradas">Editar dados</a></div>');
+    }
+    var emp = (dados.empresa || {});
+    h.push('<div class="summary-line"><span><b>' + esc(emp.identificacao || 'Empresa sem nome') + '</b></span><span>Ano-calendário <b>' + esc(res.ano) + '</b></span><span>Receita simulada <b>' + brl(res.receita_anual) + '</b></span><span>' + (emp.situacao === 'em_abertura' ? 'Em abertura' : 'Empresa ativa') + '</span></div>');
+
+    // cartões
+    h.push('<div class="grid-3">' + keys.map(function (k) {
+      var r = res.regimes[k];
+      var badge = !r.elegivel ? '<span class="chip err">Inelegível</span>' : k === best ? '<span class="chip ok">Menor carga</span>' : '<span class="chip info">+ ' + esc(brl(r.carga_total - min)) + '</span>';
+      var det = 'Empresa ' + brl(r.total_empresa) + ' · Retenção sobre lucros ' + brl(r.retencao_aplicada);
+      if (!r.elegivel) det = r.motivos.map(esc).join(' ');
+      return '<div class="rcard ' + (k === best ? 'best' : '') + (r.elegivel ? '' : ' out') + '"><div class="nome"><span>' + esc(r.nome) + '</span>' + badge + '</div><div class="total">' + brl(r.carga_total) + '</div><div class="pct">' + pct(r.pct_receita) + ' da receita no ano</div><div class="det">' + det + '</div></div>';
+    }).join('') + '</div>');
+
+    // barras
+    var max = Math.max.apply(null, keys.map(function (k) { return res.regimes[k].carga_total; })) || 1;
+    function seg(cls, v, nome) { return v > 0 ? '<div class="bar-seg ' + cls + '" style="width:' + (v / max * 100).toFixed(3) + '%" title="' + esc(nome + ': ' + brl(v)) + '"></div>' : ''; }
+    h.push('<div class="panel"><h2>Composição da carga no ano</h2><div class="bars">' + keys.map(function (k) {
+      var r = res.regimes[k], i = r.itens;
+      var s1 = i.das || 0, s2 = (i.irpj || 0) + (i.csll || 0), s3 = (i.pis || 0) + (i.cofins || 0) + (i.iss || 0) + (i.icms || 0), s4 = (i.cpp || 0) + (i.terceiros || 0) + r.retencao_aplicada;
+      return '<div class="bar-row"><div class="lab">' + esc(r.nome) + '</div><div class="bar-track">' + seg('s1', s1, 'DAS') + seg('s2', s2, 'IRPJ e CSLL') + seg('s3', s3, 'PIS, COFINS, ISS e ICMS') + seg('s4', s4, 'Folha patronal e retenção sobre lucros') + '</div><div class="val">' + brl(r.carga_total) + '</div></div>';
+    }).join('') + '</div><div class="legend"><span><i class="s1"></i>DAS</span><span><i class="s2"></i>IRPJ e CSLL</span><span><i class="s3"></i>PIS, COFINS, ISS e ICMS</span><span><i class="s4"></i>CPP, RAT, terceiros e retenção sobre lucros</span></div></div>');
+
+    // tabela comparativa
+    var linhas = ['das', 'irpj', 'csll', 'pis', 'cofins', 'iss', 'icms', 'cpp', 'terceiros', 'retencao_lucros'];
+    var heads = ['Item'].concat(keys.map(function (k) { return res.regimes[k].nome; }));
+    var rows = linhas.map(function (l) {
+      var row = [esc(E.ROTULOS[l])];
+      keys.forEach(function (k) {
+        var r = res.regimes[k];
+        if (l === 'retencao_lucros') {
+          var c = brl(r.retencao_aplicada);
+          if (!r.dividendos.aplica && r.dividendos.calculada > 0) c += '<small>hipótese não somada: ' + esc(brl(r.dividendos.calculada)) + '</small>';
+          row.push(c);
+        } else if (r.itens[l] == null) row.push('—');
+        else row.push(brl(r.itens[l]));
+      });
+      return row;
+    });
+    rows.push(['Carga da empresa'].concat(keys.map(function (k) { return brl(res.regimes[k].total_empresa); })));
+    rows.push(['% da receita (empresa)'].concat(keys.map(function (k) { return pct(res.regimes[k].pct_empresa); })));
+    rows.push(['Carga total, com retenção'].concat(keys.map(function (k) { return brl(res.regimes[k].carga_total); })));
+    h.push('<div class="stack"><h2>Comparativo anual</h2>' + tabela(heads, rows, keys.map(function (_, i) { return i + 1; }), true) + '<p class="caption">No Simples, IRPJ, CSLL, PIS, COFINS, ISS e ICMS estão dentro do DAS. A retenção sobre lucros é antecipação do IRPF do sócio, sujeita a ajuste na declaração anual.</p></div>');
+
+    // avisos
+    var av = [];
+    res.avisos.forEach(function (a) { av.push({ t: a.nivel === 'atencao' ? 'warn' : 'info', x: a.texto }); });
+    keys.forEach(function (k) { res.regimes[k].avisos.forEach(function (x) { av.push({ t: 'warn', x: res.regimes[k].nome + ': ' + x }); }); });
+    if (av.length) h.push('<div class="stack"><h2>Avisos e limites do cálculo</h2><div class="msgs">' + msgsHtml(av) + '</div></div>');
+
+    // memória
+    var det = { simples: detSimples, presumido: detPresumido, real: detReal };
+    h.push('<div class="stack"><h2>Memória de cálculo</h2>' + keys.map(function (k) {
+      return '<details><summary>' + esc(res.regimes[k].nome) + '</summary><div class="det-body">' + det[k](res.regimes[k]) + '</div></details>';
+    }).join('') + '</div>');
+
+    // sensibilidade
+    if (state.sens) {
+      var sh = ['Cenário'].concat(keys.map(function (k) { return res.regimes[k].nome; })).concat(['Menor carga']);
+      var sr = state.sens.map(function (s) {
+        var row = [esc(s.nome)];
+        keys.forEach(function (k) {
+          var t = s.totais[k];
+          var isBest = s.melhor === k;
+          row.push('<span class="' + (isBest ? 'cell-best' : '') + '">' + (t ? brl(t.carga_total) : '—') + (t && !t.elegivel ? ' (inelegível)' : '') + '</span>');
+        });
+        row.push(s.melhor ? esc(res.regimes[s.melhor].nome) : '—');
+        return row;
+      });
+      h.push('<div class="stack"><h2>Sensibilidade</h2><p class="muted">Receita varia no histórico e na simulação. Pró-labore varia na simulação e muda o Fator R e a folha patronal. A distribuição de lucros fica fixa.</p>' + tabela(sh, sr, keys.map(function (_, i) { return i + 1; }), false) + '</div>');
+    }
+
+    // revisões
+    var rev = E.listarRevisoes(dados);
+    if (rev.length) {
+      var rrows = rev.map(function (x) {
+        return [esc(x.campo), esc(ORIGEM_TXT[x.origem] || x.origem), esc(x.confianca || ''), esc(x.justificativa || ''), esc(x.fonte || '')];
+      });
+      h.push('<div class="stack"><h2>Campos a revisar antes de confiar</h2><p class="muted">Valores que não vieram direto de documento do cliente.</p>' + tabela(['Campo', 'Origem', 'Confiança', 'Justificativa', 'Fonte'], rrows, [], false) + '</div>');
+    }
+
+    // pendências das alíquotas
+    var pend = E.listarPendencias(state.aliq);
+    if (pend.length) {
+      h.push('<div class="stack"><h2>Pendências nas alíquotas</h2><ul class="plain">' + pend.map(function (p) {
+        return '<li><code>' + esc(p.caminho) + '</code>: ' + esc(STATUS_TXT[p.status] || p.status) + (p.nota ? '. <span class="muted">' + esc(p.nota) + '</span>' : '') + '</li>';
+      }).join('') + '</ul></div>');
+    }
+    h.push('<p class="src">Resultado é rascunho técnico para revisão do contador responsável. Não substitui parecer.</p>');
+    box.innerHTML = h.join('');
+  }
+
+  /* ---------- início ---------- */
+  $('preAliq').textContent = ALIQ_TXT;
+  $('preTpl').textContent = TPL_TXT;
+  $('preEx').textContent = EX_TXT;
+  ta.aliq.value = ALIQ_TXT;
+  ta.dados.value = EX_TXT;
+  showTab();
+  atualizar();
+})();
+</script>
