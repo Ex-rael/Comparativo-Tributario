@@ -84,9 +84,18 @@
   fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   legend { font: 700 14px var(--f-display); padding: 0 6px; }
   .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 10px; }
-  .ativ { display: grid; grid-template-columns: 1.1fr 2fr .8fr .8fr .8fr auto; gap: 6px; align-items: end; padding-bottom: 8px; border-bottom: 1px dashed var(--line); margin-bottom: 8px; }
-  .ativ .field label { font-size: 12px; }
-  @media (max-width: 700px) { .ativ { grid-template-columns: 1fr 1fr; } }
+  .ativ { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: end; padding-bottom: 10px; border-bottom: 1px dashed var(--line); margin-bottom: 10px; }
+  .ativ .span2 { grid-column: span 2; }
+  .ativ .field label { font-size: 12.5px; }
+  .ativ .btn { width: 100%; }
+  @media (max-width: 480px) { .ativ { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  input::placeholder, textarea::placeholder { color: var(--ink-2); opacity: .75; }
+  input[type="text"], input[type="number"], input[type="date"], select { min-height: 38px; text-overflow: ellipsis; }
+  .guia { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+  .guia > summary { cursor: pointer; padding: 10px 14px; font: 600 14px var(--f-body); }
+  .guia[open] > summary { border-bottom: 1px solid var(--line); }
+  .guia ol { margin: 0; padding: 12px 14px 12px 34px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+  .guia .note { padding: 0 14px 12px; font-size: 13px; color: var(--ink-2); max-width: none; }
   .hint { font: 12px var(--f-mono); color: var(--ink-2); }
   .hint.warn { color: var(--warn); }
   .banner.info { background: var(--info-bg); color: var(--info); }
@@ -120,7 +129,19 @@
 
   <main>
     <section id="tab-p1" role="tabpanel" aria-labelledby="t-p1" hidden>
-      <p class="muted" style="margin-bottom:16px">Use quando uma norma mudar e a cada virada de ano. Exige um assistente com acesso à web.</p>
+      <p class="muted" style="margin-bottom:12px">Use quando uma norma mudar e a cada virada de ano. Exige um assistente com acesso à web.</p>
+      <details class="guia" open>
+        <summary>Como usar, em 5 passos</summary>
+        <ol>
+          <li>Confira a <b>data</b> e o <b>ano-calendário</b>. O <b>aliquotas.json</b> atual já vem carregado. Se o escritório tem uma versão própria, use <b>Carregar arquivo</b>.</li>
+          <li>Veja no painel à direita o <b>prompt pronto</b>. Os campos em amarelo ainda estão vazios.</li>
+          <li>Clique em <b>Copiar prompt</b> e cole num assistente de IA <b>com acesso à web</b> (o prompt manda consultar fontes oficiais).</li>
+          <li>Copie o JSON que a IA devolver e salve como <code>aliquotas.json</code>, ou cole no campo 1 da aba <b>Entradas</b> do <a href="index.html#entradas">Comparativo</a>.</li>
+          <li>O contador valida os blocos marcados <code>a_confirmar</code> antes de usar o resultado.</li>
+        </ol>
+        <p class="note">Use quando uma norma mudar e a cada virada de ano. A IA só confere e atualiza valores; não calcula nada.</p>
+      </details>
+      <div style="height:16px"></div>
       <div class="grid-2">
         <div class="panel">
           <h2>Campos</h2>
@@ -146,7 +167,20 @@
     </section>
 
     <section id="tab-p2" role="tabpanel" aria-labelledby="t-p2" hidden>
-      <p class="muted" style="margin-bottom:16px">Use uma vez por cliente e a cada nova simulação. Os dois JSON vêm preenchidos com os modelos do projeto.</p>
+      <p class="muted" style="margin-bottom:12px">Use uma vez por cliente e a cada nova simulação. Os dois JSON vêm preenchidos com os modelos do projeto.</p>
+      <details class="guia" open>
+        <summary>Como usar, em 6 passos</summary>
+        <ol>
+          <li>Escolha o <b>ano</b> e a <b>situação</b> (ATIVA ou EM_ABERTURA).</li>
+          <li>Preencha a <b>ficha</b> com <b>totais e códigos</b>, tirados da folha, do faturamento e do balancete. Não cole documentos, CNPJ, nomes nem CPFs.</li>
+          <li>Cole listas direto do Excel (uma coluna de 12 meses). A página confere a contagem e a soma.</li>
+          <li>Campos em branco viram "não informado" e a IA devolve como pendência. Confira o resumo no topo da ficha.</li>
+          <li>Clique em <b>Copiar prompt</b> e cole num assistente de IA. Os dois JSON (alíquotas e modelo) já vão junto.</li>
+          <li>Cole o JSON devolvido no campo 2 da aba <b>Entradas</b> do <a href="index.html#entradas">Comparativo</a>. Revise as pendências e os campos de confiança baixa antes de olhar o <b>Resultado</b>.</li>
+        </ol>
+        <p class="note">Sem Lucro Real na comparação, os campos de custos podem ficar em branco.</p>
+      </details>
+      <div style="height:16px"></div>
       <div class="grid-2">
         <div class="panel">
           <h2>Campos</h2>
@@ -194,12 +228,13 @@
           </fieldset>
 
           <fieldset><legend>Custos e Lucro Real (R$ por mês: um valor ou 12)</legend>
-            <p class="caption">Só importam se o Lucro Real estiver na comparação.</p>
+            <p class="caption">Só importam se o Lucro Real estiver na comparação. Tire os totais do balancete ou da DRE.</p>
+            <div class="banner info"><b>Crédito de PIS/COFINS é decisão do contador</b>, conta a conta (ex.: insumos, energia, aluguel de PJ, frete na compra). A IA não estima esse valor. Se não souber, deixe em branco: vira pendência.</div>
             <div class="row">
               <div class="field"><label for="f-compras">Compras de insumos</label><input type="text" id="f-compras" data-f="compras" data-n="1|12"></div>
-              <div class="field"><label for="f-comprascred">Dessas, com direito a crédito de PIS/COFINS</label><input type="text" id="f-comprascred" data-f="comprascred" data-n="1|12"></div>
+              <div class="field"><label for="f-comprascred">Dessas, com direito a crédito de PIS/COFINS <code>decisão do contador</code></label><input type="text" id="f-comprascred" data-f="comprascred" data-n="1|12"></div>
               <div class="field"><label for="f-desp">Outras despesas operacionais</label><input type="text" id="f-desp" data-f="desp" data-n="1|12"></div>
-              <div class="field"><label for="f-despcred">Dessas, com direito a crédito de PIS/COFINS</label><input type="text" id="f-despcred" data-f="despcred" data-n="1|12"></div>
+              <div class="field"><label for="f-despcred">Dessas, com direito a crédito de PIS/COFINS <code>decisão do contador</code></label><input type="text" id="f-despcred" data-f="despcred" data-n="1|12"></div>
               <div class="field"><label for="f-prej">Prejuízo fiscal acumulado</label><input type="text" id="f-prej" data-f="prej"></div>
               <div class="field"><label for="f-ajustes">Adições e exclusões (mensal)</label><input type="text" id="f-ajustes" data-f="ajustes" data-n="1|12"></div>
             </div>
@@ -286,11 +321,11 @@
     var d = document.createElement('div');
     d.className = 'ativ';
     d.innerHTML =
-      '<div class="field"><label>CNAE</label><input type="text" data-a="cnae" placeholder="6201-5/01"></div>' +
-      '<div class="field"><label>Descrição curta</label><input type="text" data-a="desc" data-free></div>' +
-      '<div class="field"><label>% da receita</label><input type="text" data-a="pct" inputmode="decimal" value="' + (pct || '') + '"></div>' +
-      '<div class="field"><label>ISS %</label><input type="text" data-a="iss" inputmode="decimal"></div>' +
-      '<div class="field"><label>ICMS líq. %</label><input type="text" data-a="icms" inputmode="decimal"></div>' +
+      '<div class="field span2"><label>CNAE</label><input type="text" data-a="cnae" placeholder="Ex.: 6201-5/01"></div>' +
+      '<div class="field"><label>% da receita</label><input type="text" data-a="pct" inputmode="decimal" placeholder="100" value="' + (pct || '') + '"></div>' +
+      '<div class="field"><label>ISS %</label><input type="text" data-a="iss" inputmode="decimal" placeholder="Ex.: 3"></div>' +
+      '<div class="field span2"><label>Descrição curta</label><input type="text" data-a="desc" data-free placeholder="Ex.: Software sob encomenda"></div>' +
+      '<div class="field"><label>ICMS líquido %</label><input type="text" data-a="icms" inputmode="decimal" placeholder="Serviço: 0"></div>' +
       '<button class="btn" type="button" data-del-ativ aria-label="Remover atividade">Remover</button>';
     ativsEl.appendChild(d);
   }

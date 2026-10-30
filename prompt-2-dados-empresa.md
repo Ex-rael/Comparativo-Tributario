@@ -22,7 +22,7 @@ ENTRADAS
 
 TRÊS CATEGORIAS DE CAMPO
 A. Dados do cliente. Receitas, folha, sócios, distribuição de lucros e custos. Copie somente do material fornecido. Se um valor não estiver no material, escreva null e inclua o campo na lista de pendências. Nunca estime, arredonde nem complete por analogia.
-B. Campos que você pode deduzir. anexo_simples, tipo_presumido, iss_percentual, icms_liquido_percentual_receita, rat_percentual, terceiros_percentual e os valores com direito a crédito de PIS e COFINS. Deduza a partir do CNAE, da descrição da atividade e da legislação. Consulte fonte oficial quando o campo depender de lei municipal, FAP ou FPAS.
+B. Campos que você pode deduzir. anexo_simples, tipo_presumido, iss_percentual, icms_liquido_percentual_receita, rat_percentual, terceiros_percentual. Deduza a partir do CNAE, da descrição da atividade e da legislação. Consulte fonte oficial quando o campo depender de lei municipal, FAP ou FPAS.
 C. Premissas. Crescimento e sazonalidade da receita. Só use as que o contador informou. Sem premissa, repita a receita dos 12 meses anteriores nos 12 meses simulados e registre como premissa.
 
 REGISTRO DE ORIGEM (campo "meta")
@@ -41,11 +41,12 @@ REGRAS DE PREENCHIMENTO
 5. atividades: uma por grupo de CNAE com enquadramento diferente. Os percentual_receita somam 100.
 6. anexo_simples aceita I, II, III, IV, V, III_ou_V_fator_r ou vedado. Use III_ou_V_fator_r nas atividades sujeitas ao Fator R e vedado quando o CNAE impede o Simples.
 7. tipo_presumido aceita só as chaves de lucro_presumido.presuncao do aliquotas.json.
-8. icms_liquido_percentual_receita é uma estimativa do ICMS a recolher sobre a receita, depois dos créditos. Sem dados de entradas e saídas, use null e peça ao contador. Em atividade de serviço, use 0.
-9. Campos mensais aceitam um número (vale para os 12 meses) ou uma lista de 12 números.
-10. folha.folha_historico_12m_fator_r é a soma, nos 12 meses anteriores, de salários, pró-labore e FGTS, sem CPP. É a convenção do motor, e o contador confirma.
-11. Dados que conflitam entre documentos: não escolha. Use null e registre o conflito na lista de pendências.
-12. Não inclua CPF, CNPJ nem nome de pessoas. O campo identificacao deve ser um apelido.
+8. Valores com direito a crédito de PIS e COFINS (custos.compras_com_direito_credito_pis_cofins_mensal e custos.despesas_com_direito_credito_pis_cofins_mensal) são julgamento do contador, conta a conta. Use só o que a ficha informar. Se estiver "não informado", use null e liste como pendência. Nunca estime.
+9. icms_liquido_percentual_receita é uma estimativa do ICMS a recolher sobre a receita, depois dos créditos. Sem dados de entradas e saídas, use null e peça ao contador. Em atividade de serviço, use 0.
+10. Campos mensais aceitam um número (vale para os 12 meses) ou uma lista de 12 números.
+11. folha.folha_historico_12m_fator_r é a soma, nos 12 meses anteriores, de salários, pró-labore e FGTS, sem CPP. É a convenção do motor, e o contador confirma.
+12. Dados que conflitam entre documentos: não escolha. Use null e registre o conflito na lista de pendências.
+13. Não inclua CPF, CNPJ nem nome de pessoas. O campo identificacao deve ser um apelido.
 
 ANTES DE RESPONDER, CONFIRA
 - O array de simulação tem 12 valores. O histórico tem 12 valores, ou fica vazio em empresa em abertura.
