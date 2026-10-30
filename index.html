@@ -115,6 +115,11 @@
 
   .banner { padding: 10px 14px; border-radius: 4px; background: var(--info-bg); color: var(--info); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; align-items: center; }
 
+  .cbs-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  .cbs-bar .modo { font-size: 14px; font-weight: 600; flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+  .cbs-bar .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .cbs-bar .hint { flex: 1 1 100%; font-size: 13px; color: var(--ink-2); }
+  .cbs-bar.on { border-color: var(--warn); }
   .summary-line { display: flex; flex-wrap: wrap; gap: 6px 24px; color: var(--ink-2); font-size: 14px; }
   .summary-line b { color: var(--ink); font-weight: 600; }
 
@@ -302,6 +307,8 @@
     cofins: 'COFINS',
     iss: 'ISS',
     icms: 'ICMS líquido (estimado)',
+    cbs: 'CBS (reforma, em definição)',
+    ibs: 'IBS (reforma, em definição)',
     cpp: 'CPP e RAT patronais',
     terceiros: 'Contribuições a terceiros',
     retencao_lucros: 'Retenção sobre lucros distribuídos'
@@ -380,6 +387,45 @@
       terc: sal * terc
     };
   }
+
+  /* ------------------------------------------------------------------ */
+  /* CBS e IBS (opcional, alíquotas em definição)                         */
+  /*                                                                      */
+  /* Mecânica adotada (hipótese a validar pelo contador; ver calculos.md): */
+  /*  - Base de cálculo: receita bruta mensal, sem créditos nem exclusões. */
+  /*  - CBS = receita x cbs_aplicar.aliquota; IBS = receita x ibs_aplicar.aliquota. */
+  /*  - Alíquotas só vêm do aliquotas.json (reforma_consumo). Se cbs_aplicar */
+  /*    ou ibs_aplicar faltarem, usa cbs_teste / ibs_teste e avisa.         */
+  /*  - Presumido e Real: CBS e IBS somam à carga. No Real também reduzem   */
+  /*    o lucro antes do IR (como PIS, COFINS, ISS e ICMS). No Presumido     */
+  /*    não alteram a base de IRPJ e CSLL (receita x presunção).             */
+  /*  - Simples: só recebe CBS/IBS se simples_por_fora_do_das.aplicar for    */
+  /*    true no JSON; senão o regime fica sem CBS/IBS e o motor avisa.       */
+  /*  - Compensação com PIS, COFINS, ICMS e ISS na transição NÃO é modelada: */
+  /*    esses tributos seguem calculados integralmente (pode haver dupla     */
+  /*    contagem) e o motor avisa.                                           */
+  /* ------------------------------------------------------------------ */
+  function paramsCbsIbs(aliq) {
+    var RC = aliq.reforma_consumo || {};
+    var avisos = [], origem = 'cbs_aplicar e ibs_aplicar';
+    function le(campo, teste, nome) {
+      var o = RC[campo];
+      var v = o && typeof o === 'object' ? o.aliquota : undefined;
+      if (v === undefined || v === null || v === '') {
+        v = RC[teste];
+        origem = 'cbs_teste e ibs_teste (campos novos ausentes)';
+        avisos.push('Alíquotas: "reforma_consumo.' + campo + '" ausente; usando "' + teste + '" para ' + nome + '.');
+      }
+      v = Number(v);
+      if (!isFinite(v) || v < 0 || v > 1) throw new Error('Alíquota de ' + nome + ' inválida em reforma_consumo (esperado fração entre 0 e 1).');
+      return v;
+    }
+    var cbs = le('cbs_aplicar', 'cbs_teste', 'CBS');
+    var ibs = le('ibs_aplicar', 'ibs_teste', 'IBS');
+    var sp = RC.simples_por_fora_do_das;
+    return { cbs: cbs, ibs: ibs, simples: !!(sp && sp.aplicar === true), origem: origem, avisos: avisos };
+  }
+  function pctTxt(v) { return (v * 100).toFixed(2).replace('.', ',') + '%'; }
 
   /* ------------------------------------------------------------------ */
   /* Simples Nacional                                                     */
@@ -474,14 +520,25 @@
       if (t) baseIsento += receitaAnual * a.share * t.irpj;
     });
 
+    var itens = { das: totalDas, cpp: totalCpp };
+    var cbsIbsTot = 0;
+    if (c.cbsIbs) {
+      if (c.cbsIbs.simples) {
+        itens.cbs = receitaAnual * c.cbsIbs.cbs;
+        itens.ibs = receitaAnual * c.cbsIbs.ibs;
+        cbsIbsTot = itens.cbs + itens.ibs;
+      } else {
+        avisos.push('CBS e IBS NÃO somados ao Simples: o aliquotas.json não traz regra clara para cobrança por fora do DAS (reforma_consumo.simples_por_fora_do_das.aplicar). Valem só para Presumido e Real.');
+      }
+    }
     return {
       id: 'simples',
       elegivel: motivos.length === 0,
       motivos: motivos,
       avisos: avisos,
-      itens: { das: totalDas, cpp: totalCpp },
+      itens: itens,
       detalhe: { meses: meses, rbt12_max: rbtMax },
-      lucro_isento_aprox: Math.max(0, baseIsento - totalDas),
+      lucro_isento_aprox: Math.max(0, baseIsento - totalDas - cbsIbsTot),
       lucro_isento_tipo: 'Presunção do IRPJ menos o DAS total (aproximação conservadora)'
     };
   }
@@ -505,6 +562,7 @@
 
     var meses = [], cumPrev = 0, i;
     var tot = { irpj: 0, csll: 0, pis: 0, cofins: 0, iss: 0, icms: 0, cpp: 0, terceiros: 0 };
+    if (c.cbsIbs) { tot.cbs = 0; tot.ibs = 0; }
     for (i = 0; i < 12; i++) {
       var rec = c.sim[i];
       var cumNow = cumPrev + rec;
@@ -513,13 +571,15 @@
       var acI = (ac.ativo !== false && vigente(c.ano, i + 1, ac.vigencia_irpj)) ? exced * pI * num(ac.percentual) : 0;
       var acC = (ac.ativo !== false && vigente(c.ano, i + 1, ac.vigencia_csll)) ? exced * pC * num(ac.percentual) : 0;
       var e = encargosMes(aliq, c, i);
-      meses.push({
+      var mp = {
         mes: i, receita: rec, excedente: exced,
         base_irpj: rec * pI + acI, base_csll: rec * pC + acC,
         pis: rec * P.pis_aliquota, cofins: rec * P.cofins_aliquota,
         iss: rec * issPct, icms: rec * icmsPct,
         cpp: e.cpp + e.rat, terceiros: e.terc
-      });
+      };
+      if (c.cbsIbs) { mp.cbs = rec * c.cbsIbs.cbs; mp.ibs = rec * c.cbsIbs.ibs; }
+      meses.push(mp);
       cumPrev = cumNow;
     }
     var tri = [];
@@ -542,6 +602,7 @@
     meses.forEach(function (m) {
       tot.pis += m.pis; tot.cofins += m.cofins; tot.iss += m.iss; tot.icms += m.icms;
       tot.cpp += m.cpp; tot.terceiros += m.terceiros;
+      if (c.cbsIbs) { tot.cbs += m.cbs; tot.ibs += m.ibs; }
     });
 
     var receitaAnual = sum(c.sim);
@@ -551,13 +612,15 @@
     }
     var baseAnual = sum(tri.map(function (t) { return t.base_irpj; }));
     var lucroIsento = baseAnual - tot.irpj - tot.csll - tot.pis - tot.cofins;
+    var itens = { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros };
+    if (c.cbsIbs) { itens.cbs = tot.cbs; itens.ibs = tot.ibs; lucroIsento = lucroIsento - tot.cbs - tot.ibs; }
 
     return {
       id: 'presumido',
       elegivel: motivos.length === 0,
       motivos: motivos,
       avisos: avisos,
-      itens: { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros },
+      itens: itens,
       detalhe: { meses: meses, trimestres: tri, presuncao_irpj_media: pI, presuncao_csll_media: pC },
       lucro_isento_aprox: Math.max(0, lucroIsento),
       lucro_isento_tipo: 'Base presumida do IRPJ menos IRPJ, CSLL, PIS e COFINS'
@@ -590,14 +653,19 @@
       var folhaCusto = e.sal + e.prol + e.fgts + e.cpp + e.rat + e.terc;
       var ajuste = mv(c.lreal.ajustes_adicoes_exclusoes_mensal, i);
       var lucro = rec - pis - cof - iss - icms - compras - desp - folhaCusto + ajuste;
-      meses.push({
+      var cbsM = c.cbsIbs ? rec * c.cbsIbs.cbs : 0, ibsM = c.cbsIbs ? rec * c.cbsIbs.ibs : 0;
+      if (c.cbsIbs) lucro = lucro - cbsM - ibsM; // CBS e IBS são dedutíveis como os demais tributos sobre a receita (hipótese)
+      var mr = {
         mes: i, receita: rec, pis: pis, cofins: cof, iss: iss, icms: icms,
         cpp: e.cpp + e.rat, terceiros: e.terc, folha_custo: folhaCusto, lucro_antes_ir: lucro
-      });
+      };
+      if (c.cbsIbs) { mr.cbs = cbsM; mr.ibs = ibsM; }
+      meses.push(mr);
     }
     var prej = num(c.lreal.prejuizo_fiscal_acumulado);
     var tri = [];
     var tot = { irpj: 0, csll: 0, pis: 0, cofins: 0, iss: 0, icms: 0, cpp: 0, terceiros: 0 };
+    if (c.cbsIbs) { tot.cbs = 0; tot.ibs = 0; }
     var lucroTotal = 0;
     for (var q = 0; q < 4; q++) {
       var ms = meses.slice(q * 3, q * 3 + 3);
@@ -621,6 +689,7 @@
     meses.forEach(function (m) {
       tot.pis += m.pis; tot.cofins += m.cofins; tot.iss += m.iss; tot.icms += m.icms;
       tot.cpp += m.cpp; tot.terceiros += m.terceiros;
+      if (c.cbsIbs) { tot.cbs += m.cbs; tot.ibs += m.ibs; }
     });
     var custosVazios = ['compras_insumos_mensal', 'outras_despesas_operacionais_mensal'].every(function (k) { return sum(meses.map(function (_, ix) { return mv(c.custos[k], ix); })) === 0; });
     if (custosVazios) avisos.push('Lucro Real sem custos e despesas informados: o lucro tende a ser superestimado e o resultado deste regime não é confiável.');
@@ -628,12 +697,15 @@
     if (lucroTotal < 0) avisos.push('Prejuízo fiscal no ano: o motor não modela outras vedações ou obrigações do Lucro Real.');
     var lucroApos = lucroTotal - tot.irpj - tot.csll;
 
+    var itens = { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros };
+    if (c.cbsIbs) { itens.cbs = tot.cbs; itens.ibs = tot.ibs; }
+
     return {
       id: 'real',
       elegivel: true,
       motivos: motivos,
       avisos: avisos,
-      itens: { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros },
+      itens: itens,
       detalhe: { meses: meses, trimestres: tri },
       lucro_isento_aprox: Math.max(0, lucroApos),
       lucro_isento_tipo: 'Lucro antes do IR menos IRPJ e CSLL'
@@ -683,10 +755,14 @@
   /* ------------------------------------------------------------------ */
   /* Orquestração                                                         */
   /* ------------------------------------------------------------------ */
-  function calcular(aliq, dados) {
+  // opcoes.aplicarCbsIbs (padrão false): inclui CBS e IBS na carga. Desligado, o resultado é o de sempre.
+  function calcular(aliq, dados, opcoes) {
     var c = normalizar(dados);
     var receitaAnual = sum(c.sim);
     var res = { versao: VERSAO, ano: c.ano, receita_anual: receitaAnual, regimes: {}, avisos: [], ranking: [] };
+    var pc = (opcoes && opcoes.aplicarCbsIbs === true) ? paramsCbsIbs(aliq) : null;
+    c.cbsIbs = pc;
+    if (pc) res.cbs_ibs = { aplicado: true, cbs: pc.cbs, ibs: pc.ibs, simples_incluido: pc.simples, origem: pc.origem };
     var calcs = { simples: calcSimples, presumido: calcPresumido, real: calcReal };
     c.regimes.forEach(function (k) {
       if (calcs[k]) res.regimes[k] = fechar(aliq, c, calcs[k](aliq, c), receitaAnual);
@@ -698,7 +774,14 @@
 
     // Avisos gerais
     var RC = aliq.reforma_consumo || {};
-    if (c.ano === num(RC.ano_teste, 2026)) {
+    if (pc) {
+      pc.avisos.forEach(function (t) { res.avisos.push({ nivel: 'atencao', texto: t }); });
+      res.avisos.push({ nivel: 'atencao', texto: 'CBS ' + pctTxt(pc.cbs) + ' e IBS ' + pctTxt(pc.ibs) + ' aplicados sobre a receita bruta, com valores AINDA EM DEFINIÇÃO (hipótese do operador, lidos de reforma_consumo no aliquotas.json). ' + (pc.simples ? 'Também somados ao Simples, conforme o aliquotas.json.' : 'Somados apenas ao Presumido e ao Real; o Simples fica sem CBS/IBS por falta de regra clara no aliquotas.json.') });
+      res.avisos.push({ nivel: 'atencao', texto: 'Compensação na transição não modelada: PIS, COFINS, ICMS e ISS continuam calculados integralmente e CBS/IBS entram por cima, sem créditos nem exclusões de base. Pode haver dupla contagem e carga superestimada.' });
+      if (c.ano === num(RC.ano_teste, 2026) && RC.gera_carga_adicional_no_ano_teste === false) {
+        res.avisos.push({ nivel: 'info', texto: 'Segundo as fontes do aliquotas.json, em ' + c.ano + ' (ano de teste) não há carga adicional de CBS/IBS. Este modo é uma simulação hipotética.' });
+      }
+    } else if (c.ano === num(RC.ano_teste, 2026)) {
       res.avisos.push({ nivel: 'info', texto: 'Reforma do consumo: em ' + c.ano + ' as notas destacam CBS ' + (num(RC.cbs_teste) * 100).toFixed(1).replace('.', ',') + '% e IBS ' + (num(RC.ibs_teste) * 100).toFixed(1).replace('.', ',') + '% como teste. Segundo as fontes, sem carga adicional no ano. Não modelado.' });
     } else if (c.ano > num(RC.ano_teste, 2026)) {
       res.avisos.push({ nivel: 'atencao', texto: 'Ano-calendário ' + c.ano + ': CBS e IBS (que substituem PIS, COFINS, ICMS e ISS) NÃO estão modelados. Os resultados refletem as regras anteriores à reforma e podem estar defasados.' });
@@ -728,7 +811,7 @@
 
   function escalar(x, f) { return Array.isArray(x) ? x.map(function (v) { return num(v) * f; }) : num(x) * f; }
 
-  function sensibilidade(aliq, dados, cenarios) {
+  function sensibilidade(aliq, dados, cenarios, opcoes) {
     var lista = cenarios || CENARIOS_PADRAO;
     return lista.map(function (cn) {
       var d = JSON.parse(JSON.stringify(dados));
@@ -736,7 +819,7 @@
       d.receitas.simulacao_12_meses = escalar(d.receitas.simulacao_12_meses || [], cn.receita);
       d.receitas.historico_12_meses_anteriores = escalar(d.receitas.historico_12_meses_anteriores || [], cn.receita);
       if (d.folha) d.folha.prolabore_total_mensal = escalar(d.folha.prolabore_total_mensal, cn.prolabore);
-      var r = calcular(aliq, d);
+      var r = calcular(aliq, d, opcoes);
       var out = { id: cn.id, nome: cn.nome, totais: {}, melhor: r.ranking[0] || null };
       Object.keys(r.regimes).forEach(function (k) { out.totais[k] = { carga_total: r.regimes[k].carga_total, elegivel: r.regimes[k].elegivel }; });
       return out;
@@ -842,7 +925,7 @@
 (function () {
   'use strict';
   var E = window.CTEngine;
-  var ALIQ_TXT = "{\n  \"schema_version\": \"1.0\",\n  \"metadata\": {\n    \"descricao\": \"Alíquotas e regras vigentes lidas pelo motor de cálculo. Percentuais em fração decimal (0.04 = 4%). Valores em R$. Atualizar somente quando a norma mudar.\",\n    \"ano_calendario\": 2026,\n    \"data_verificacao\": \"2026-10-29\",\n    \"verificado_por\": \"\",\n    \"status_geral\": \"rascunho_a_validar_pelo_contador\",\n    \"legenda_status\": {\n      \"conferido_fonte_oficial\": \"Valor conferido na norma primária ou em página oficial do órgão, com URL e data de acesso.\",\n      \"conferido_fonte_secundaria\": \"Valor encontrado em pelo menos uma fonte secundária (artigo técnico, portal contábil). Ainda não aberto na norma primária.\",\n      \"conhecimento_previo_a_confirmar\": \"Valor de conhecimento geral, não localizado nas fontes desta verificação. Confirmar na norma.\",\n      \"a_confirmar\": \"Ponto novo, controvertido ou com divergência entre fontes. Exige validação do contador antes do uso.\"\n    }\n  },\n\n  \"simples_nacional\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"LC 123/2006 (Anexos I a V, redação da LC 155/2016); Resolução CGSN 140/2018; Portaria CGSN 54/2025 (sublimite de 2026)\",\n    \"limite_receita_anual\": 4800000,\n    \"sublimite_icms_iss\": 3600000,\n    \"fator_r_minimo\": 0.28,\n    \"formula_aliquota_efetiva\": \"(RBT12 x aliquota_nominal - parcela_a_deduzir) / RBT12\",\n    \"anexos\": {\n      \"I\": {\n        \"nome\": \"Comércio\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.04, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.073, \"deduzir\": 5940 },\n          { \"ate\": 720000, \"aliquota\": 0.095, \"deduzir\": 13860 },\n          { \"ate\": 1800000, \"aliquota\": 0.107, \"deduzir\": 22500 },\n          { \"ate\": 3600000, \"aliquota\": 0.143, \"deduzir\": 87300 },\n          { \"ate\": 4800000, \"aliquota\": 0.19, \"deduzir\": 378000 }\n        ]\n      },\n      \"II\": {\n        \"nome\": \"Indústria\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.045, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.078, \"deduzir\": 5940 },\n          { \"ate\": 720000, \"aliquota\": 0.1, \"deduzir\": 13860 },\n          { \"ate\": 1800000, \"aliquota\": 0.112, \"deduzir\": 22500 },\n          { \"ate\": 3600000, \"aliquota\": 0.147, \"deduzir\": 85500 },\n          { \"ate\": 4800000, \"aliquota\": 0.3, \"deduzir\": 720000 }\n        ]\n      },\n      \"III\": {\n        \"nome\": \"Serviços (locação, instalação, manutenção, atividades com Fator R >= 28%)\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.06, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.112, \"deduzir\": 9360 },\n          { \"ate\": 720000, \"aliquota\": 0.135, \"deduzir\": 17640 },\n          { \"ate\": 1800000, \"aliquota\": 0.16, \"deduzir\": 35640 },\n          { \"ate\": 3600000, \"aliquota\": 0.21, \"deduzir\": 125640 },\n          { \"ate\": 4800000, \"aliquota\": 0.33, \"deduzir\": 648000 }\n        ]\n      },\n      \"IV\": {\n        \"nome\": \"Serviços (construção, vigilância, limpeza, advocacia); CPP fora do DAS\",\n        \"cpp_incluida_no_das\": false,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.045, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.09, \"deduzir\": 8100 },\n          { \"ate\": 720000, \"aliquota\": 0.102, \"deduzir\": 12420 },\n          { \"ate\": 1800000, \"aliquota\": 0.14, \"deduzir\": 39780 },\n          { \"ate\": 3600000, \"aliquota\": 0.22, \"deduzir\": 183780 },\n          { \"ate\": 4800000, \"aliquota\": 0.33, \"deduzir\": 828000 }\n        ]\n      },\n      \"V\": {\n        \"nome\": \"Serviços intelectuais e técnicos com Fator R < 28%\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.155, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.18, \"deduzir\": 4500 },\n          { \"ate\": 720000, \"aliquota\": 0.195, \"deduzir\": 9900 },\n          { \"ate\": 1800000, \"aliquota\": 0.205, \"deduzir\": 17100 },\n          { \"ate\": 3600000, \"aliquota\": 0.23, \"deduzir\": 62100 },\n          { \"ate\": 4800000, \"aliquota\": 0.305, \"deduzir\": 540000 }\n        ]\n      }\n    },\n    \"fontes\": [\n      \"Anexos I, III e V: https://agilize.com.br/artigos/tabela-anexos-simples-nacional-2026/\",\n      \"Anexos II e IV: https://www.contabilizei.com.br/contabilidade-online/tabela-simples-nacional/\",\n      \"Limite e sublimite 2026: https://noticias.iob.com.br/?p=423\",\n      \"Oficial para conferir: Portal do Simples Nacional (www8.receita.fazenda.gov.br/simplesnacional) e LC 123/2006 no Planalto\"\n    ]\n  },\n\n  \"lucro_presumido\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"Leis 9.249/1995 e 9.430/1996; RIR (Decreto 9.580/2018); LC 224/2025 (acréscimo de 10% na presunção)\",\n    \"limite_opcao_receita_anual\": 78000000,\n    \"irpj_aliquota\": 0.15,\n    \"irpj_adicional_aliquota\": 0.1,\n    \"irpj_adicional_limite_mensal\": 20000,\n    \"csll_aliquota\": 0.09,\n    \"pis_aliquota\": 0.0065,\n    \"cofins_aliquota\": 0.03,\n    \"presuncao\": {\n      \"comercio_industria\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Comércio, indústria e atividades não listadas abaixo\", \"status\": \"conferido_fonte_secundaria\" },\n      \"servicos_gerais\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Prestação de serviços em geral (não hospitalares, não transporte)\", \"status\": \"conferido_fonte_secundaria\" },\n      \"intermediacao_negocios\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Intermediação de negócios, administração, locação e cessão de bens\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"locacao_cessao_bens\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Locação ou cessão de bens e direitos\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"servicos_transporte_cargas\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Transporte de cargas\", \"status\": \"conferido_fonte_secundaria\" },\n      \"servicos_transporte_passageiros\": { \"irpj\": 0.16, \"csll\": 0.12, \"descricao\": \"Transporte de passageiros\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"servicos_hospitalares\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Serviços hospitalares e equiparados, se cumpridas as exigências (sociedade empresária, normas da Anvisa)\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"revenda_combustiveis\": { \"irpj\": 0.016, \"csll\": 0.12, \"descricao\": \"Revenda de combustíveis e gás natural\", \"status\": \"conferido_fonte_secundaria\" }\n    },\n    \"acrescimo_presuncao\": {\n      \"status\": \"a_confirmar\",\n      \"ativo\": true,\n      \"base_legal\": \"LC 224/2025, art. 12; IN RFB 2.306/2026 (citada em fonte secundária)\",\n      \"percentual\": 0.1,\n      \"limite_receita_anual\": 5000000,\n      \"criterio\": \"Acréscimo de 10% sobre o percentual de presunção, aplicado à parcela da receita bruta acumulada no ano que ultrapassar o limite.\",\n      \"vigencia_irpj\": { \"ano\": 2026, \"mes\": 1 },\n      \"vigencia_csll\": { \"ano\": 2026, \"mes\": 4 },\n      \"nota\": \"Datas de vigência vêm de fontes secundárias. O critério de apuração trimestral do excedente deve ser conferido na IN RFB. Fonte secundária informa que a regra é contestada na Justiça.\"\n    },\n    \"fontes\": [\n      \"Alíquotas e presunção: https://triviumcontabil.com.br/lucro-presumido-como-funciona/\",\n      \"Cálculo e alíquotas: https://www.contabilidadezen.com.br/blog/lucro-presumido-aliquotas-calculo-2026/\",\n      \"Acréscimo LC 224/2025 (Receita Federal, texto do art. 12): https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/estudos/notas-cetad/notas-tecnicas/2026/nota-cetad-coest-no-009-2026\",\n      \"Datas e IN 2.306/2026: https://contadores.cnt.br/projetos/46/noticias/tecnicas/2026/05/12/lucro-presumido-em-2026-o-que-muda-com-a-in-2-306-2026-e-como-calcular-o-impacto-no-seu-cliente.html\"\n    ]\n  },\n\n  \"lucro_real\": {\n    \"status\": \"conhecimento_previo_a_confirmar\",\n    \"base_legal\": \"Leis 9.249/1995, 9.430/1996, 10.637/2002 e 10.833/2003; RIR (Decreto 9.580/2018)\",\n    \"apuracao\": \"trimestral\",\n    \"irpj_aliquota\": 0.15,\n    \"irpj_adicional_aliquota\": 0.1,\n    \"irpj_adicional_limite_mensal\": 20000,\n    \"csll_aliquota\": 0.09,\n    \"pis_aliquota\": 0.0165,\n    \"cofins_aliquota\": 0.076,\n    \"limite_compensacao_prejuizo\": 0.3,\n    \"nota\": \"A soma de PIS e COFINS (9,25%) aparece em fontes secundárias. As alíquotas separadas e o limite de 30% de compensação são de conhecimento prévio.\"\n  },\n\n  \"encargos_folha\": {\n    \"status\": \"conhecimento_previo_a_confirmar\",\n    \"base_legal\": \"Lei 8.212/1991, art. 22; Lei 8.036/1990 (FGTS); LC 123/2006, art. 13, §3º (Simples dispensa contribuições a terceiros)\",\n    \"cpp_patronal\": 0.2,\n    \"fgts\": 0.08,\n    \"nota\": \"RAT/FAP e percentual de terceiros dependem do CNAE e do FPAS da empresa e são informados em dados-empresa.json.\"\n  },\n\n  \"dividendos\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"Lei 15.270/2025\",\n    \"vigencia_ano\": 2026,\n    \"retencao_aliquota\": 0.1,\n    \"limite_mensal_por_beneficiario\": 50000,\n    \"regra\": \"Retenção de IRRF de 10% sobre o total pago no mês quando uma mesma PJ paga mais que o limite a uma mesma pessoa física residente. A retenção é antecipação sujeita a ajuste na declaração anual.\",\n    \"simples_sujeito_retencao\": false,\n    \"simples_status\": \"a_confirmar\",\n    \"simples_nota\": \"Ponto controvertido nas fontes: a LC 123/2006 prevê isenção de lucros distribuídos pelo Simples e a Lei 15.270/2025 é lei ordinária. O motor calcula o valor hipotético e só soma ao total se este campo for true.\",\n    \"irpfm_limite_anual\": 600000,\n    \"irpfm_nota\": \"Tributação mínima anual de altas rendas (renda acima de R$ 600.000 por ano). Não calculada pelo motor; gera apenas aviso.\",\n    \"fontes\": [\n      \"https://www.contabeis.com.br/artigos/76397/entenda-sobre-a-tributacao-de-dividendos-em-2026/\",\n      \"https://www.portaltributario.com.br/noticias/instituido-tributacao-irpf-lucros-dividendos.htm\"\n    ]\n  },\n\n  \"reforma_consumo\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"EC 132/2023; LC 214/2025\",\n    \"ano_teste\": 2026,\n    \"cbs_teste\": 0.009,\n    \"ibs_teste\": 0.001,\n    \"gera_carga_adicional_no_ano_teste\": false,\n    \"cronograma\": \"2026 teste (CBS 0,9% + IBS 0,1% informados nas notas). 2027 CBS passa a valer e PIS/COFINS são extintos. 2029 a 2032 transição do IBS substitui ICMS e ISS.\",\n    \"nota\": \"O motor não modela CBS/IBS a partir de 2027. Alíquota cheia depende de resolução do Senado.\",\n    \"fontes\": [\n      \"https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf\",\n      \"https://investnews.com.br/guias/ibs-e-cbs/\"\n    ]\n  }\n}\n";
+  var ALIQ_TXT = "{\n  \"schema_version\": \"1.0\",\n  \"metadata\": {\n    \"descricao\": \"Alíquotas e regras vigentes lidas pelo motor de cálculo. Percentuais em fração decimal (0.04 = 4%). Valores em R$. Atualizar somente quando a norma mudar.\",\n    \"ano_calendario\": 2026,\n    \"data_verificacao\": \"2026-10-29\",\n    \"verificado_por\": \"\",\n    \"status_geral\": \"rascunho_a_validar_pelo_contador\",\n    \"legenda_status\": {\n      \"conferido_fonte_oficial\": \"Valor conferido na norma primária ou em página oficial do órgão, com URL e data de acesso.\",\n      \"conferido_fonte_secundaria\": \"Valor encontrado em pelo menos uma fonte secundária (artigo técnico, portal contábil). Ainda não aberto na norma primária.\",\n      \"conhecimento_previo_a_confirmar\": \"Valor de conhecimento geral, não localizado nas fontes desta verificação. Confirmar na norma.\",\n      \"a_confirmar\": \"Ponto novo, controvertido ou com divergência entre fontes. Exige validação do contador antes do uso.\"\n    }\n  },\n\n  \"simples_nacional\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"LC 123/2006 (Anexos I a V, redação da LC 155/2016); Resolução CGSN 140/2018; Portaria CGSN 54/2025 (sublimite de 2026)\",\n    \"limite_receita_anual\": 4800000,\n    \"sublimite_icms_iss\": 3600000,\n    \"fator_r_minimo\": 0.28,\n    \"formula_aliquota_efetiva\": \"(RBT12 x aliquota_nominal - parcela_a_deduzir) / RBT12\",\n    \"anexos\": {\n      \"I\": {\n        \"nome\": \"Comércio\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.04, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.073, \"deduzir\": 5940 },\n          { \"ate\": 720000, \"aliquota\": 0.095, \"deduzir\": 13860 },\n          { \"ate\": 1800000, \"aliquota\": 0.107, \"deduzir\": 22500 },\n          { \"ate\": 3600000, \"aliquota\": 0.143, \"deduzir\": 87300 },\n          { \"ate\": 4800000, \"aliquota\": 0.19, \"deduzir\": 378000 }\n        ]\n      },\n      \"II\": {\n        \"nome\": \"Indústria\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.045, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.078, \"deduzir\": 5940 },\n          { \"ate\": 720000, \"aliquota\": 0.1, \"deduzir\": 13860 },\n          { \"ate\": 1800000, \"aliquota\": 0.112, \"deduzir\": 22500 },\n          { \"ate\": 3600000, \"aliquota\": 0.147, \"deduzir\": 85500 },\n          { \"ate\": 4800000, \"aliquota\": 0.3, \"deduzir\": 720000 }\n        ]\n      },\n      \"III\": {\n        \"nome\": \"Serviços (locação, instalação, manutenção, atividades com Fator R >= 28%)\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.06, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.112, \"deduzir\": 9360 },\n          { \"ate\": 720000, \"aliquota\": 0.135, \"deduzir\": 17640 },\n          { \"ate\": 1800000, \"aliquota\": 0.16, \"deduzir\": 35640 },\n          { \"ate\": 3600000, \"aliquota\": 0.21, \"deduzir\": 125640 },\n          { \"ate\": 4800000, \"aliquota\": 0.33, \"deduzir\": 648000 }\n        ]\n      },\n      \"IV\": {\n        \"nome\": \"Serviços (construção, vigilância, limpeza, advocacia); CPP fora do DAS\",\n        \"cpp_incluida_no_das\": false,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.045, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.09, \"deduzir\": 8100 },\n          { \"ate\": 720000, \"aliquota\": 0.102, \"deduzir\": 12420 },\n          { \"ate\": 1800000, \"aliquota\": 0.14, \"deduzir\": 39780 },\n          { \"ate\": 3600000, \"aliquota\": 0.22, \"deduzir\": 183780 },\n          { \"ate\": 4800000, \"aliquota\": 0.33, \"deduzir\": 828000 }\n        ]\n      },\n      \"V\": {\n        \"nome\": \"Serviços intelectuais e técnicos com Fator R < 28%\",\n        \"cpp_incluida_no_das\": true,\n        \"faixas\": [\n          { \"ate\": 180000, \"aliquota\": 0.155, \"deduzir\": 0 },\n          { \"ate\": 360000, \"aliquota\": 0.18, \"deduzir\": 4500 },\n          { \"ate\": 720000, \"aliquota\": 0.195, \"deduzir\": 9900 },\n          { \"ate\": 1800000, \"aliquota\": 0.205, \"deduzir\": 17100 },\n          { \"ate\": 3600000, \"aliquota\": 0.23, \"deduzir\": 62100 },\n          { \"ate\": 4800000, \"aliquota\": 0.305, \"deduzir\": 540000 }\n        ]\n      }\n    },\n    \"fontes\": [\n      \"Anexos I, III e V: https://agilize.com.br/artigos/tabela-anexos-simples-nacional-2026/\",\n      \"Anexos II e IV: https://www.contabilizei.com.br/contabilidade-online/tabela-simples-nacional/\",\n      \"Limite e sublimite 2026: https://noticias.iob.com.br/?p=423\",\n      \"Oficial para conferir: Portal do Simples Nacional (www8.receita.fazenda.gov.br/simplesnacional) e LC 123/2006 no Planalto\"\n    ]\n  },\n\n  \"lucro_presumido\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"Leis 9.249/1995 e 9.430/1996; RIR (Decreto 9.580/2018); LC 224/2025 (acréscimo de 10% na presunção)\",\n    \"limite_opcao_receita_anual\": 78000000,\n    \"irpj_aliquota\": 0.15,\n    \"irpj_adicional_aliquota\": 0.1,\n    \"irpj_adicional_limite_mensal\": 20000,\n    \"csll_aliquota\": 0.09,\n    \"pis_aliquota\": 0.0065,\n    \"cofins_aliquota\": 0.03,\n    \"presuncao\": {\n      \"comercio_industria\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Comércio, indústria e atividades não listadas abaixo\", \"status\": \"conferido_fonte_secundaria\" },\n      \"servicos_gerais\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Prestação de serviços em geral (não hospitalares, não transporte)\", \"status\": \"conferido_fonte_secundaria\" },\n      \"intermediacao_negocios\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Intermediação de negócios, administração, locação e cessão de bens\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"locacao_cessao_bens\": { \"irpj\": 0.32, \"csll\": 0.32, \"descricao\": \"Locação ou cessão de bens e direitos\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"servicos_transporte_cargas\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Transporte de cargas\", \"status\": \"conferido_fonte_secundaria\" },\n      \"servicos_transporte_passageiros\": { \"irpj\": 0.16, \"csll\": 0.12, \"descricao\": \"Transporte de passageiros\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"servicos_hospitalares\": { \"irpj\": 0.08, \"csll\": 0.12, \"descricao\": \"Serviços hospitalares e equiparados, se cumpridas as exigências (sociedade empresária, normas da Anvisa)\", \"status\": \"conhecimento_previo_a_confirmar\" },\n      \"revenda_combustiveis\": { \"irpj\": 0.016, \"csll\": 0.12, \"descricao\": \"Revenda de combustíveis e gás natural\", \"status\": \"conferido_fonte_secundaria\" }\n    },\n    \"acrescimo_presuncao\": {\n      \"status\": \"a_confirmar\",\n      \"ativo\": true,\n      \"base_legal\": \"LC 224/2025, art. 12; IN RFB 2.306/2026 (citada em fonte secundária)\",\n      \"percentual\": 0.1,\n      \"limite_receita_anual\": 5000000,\n      \"criterio\": \"Acréscimo de 10% sobre o percentual de presunção, aplicado à parcela da receita bruta acumulada no ano que ultrapassar o limite.\",\n      \"vigencia_irpj\": { \"ano\": 2026, \"mes\": 1 },\n      \"vigencia_csll\": { \"ano\": 2026, \"mes\": 4 },\n      \"nota\": \"Datas de vigência vêm de fontes secundárias. O critério de apuração trimestral do excedente deve ser conferido na IN RFB. Fonte secundária informa que a regra é contestada na Justiça.\"\n    },\n    \"fontes\": [\n      \"Alíquotas e presunção: https://triviumcontabil.com.br/lucro-presumido-como-funciona/\",\n      \"Cálculo e alíquotas: https://www.contabilidadezen.com.br/blog/lucro-presumido-aliquotas-calculo-2026/\",\n      \"Acréscimo LC 224/2025 (Receita Federal, texto do art. 12): https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/estudos/notas-cetad/notas-tecnicas/2026/nota-cetad-coest-no-009-2026\",\n      \"Datas e IN 2.306/2026: https://contadores.cnt.br/projetos/46/noticias/tecnicas/2026/05/12/lucro-presumido-em-2026-o-que-muda-com-a-in-2-306-2026-e-como-calcular-o-impacto-no-seu-cliente.html\"\n    ]\n  },\n\n  \"lucro_real\": {\n    \"status\": \"conhecimento_previo_a_confirmar\",\n    \"base_legal\": \"Leis 9.249/1995, 9.430/1996, 10.637/2002 e 10.833/2003; RIR (Decreto 9.580/2018)\",\n    \"apuracao\": \"trimestral\",\n    \"irpj_aliquota\": 0.15,\n    \"irpj_adicional_aliquota\": 0.1,\n    \"irpj_adicional_limite_mensal\": 20000,\n    \"csll_aliquota\": 0.09,\n    \"pis_aliquota\": 0.0165,\n    \"cofins_aliquota\": 0.076,\n    \"limite_compensacao_prejuizo\": 0.3,\n    \"nota\": \"A soma de PIS e COFINS (9,25%) aparece em fontes secundárias. As alíquotas separadas e o limite de 30% de compensação são de conhecimento prévio.\"\n  },\n\n  \"encargos_folha\": {\n    \"status\": \"conhecimento_previo_a_confirmar\",\n    \"base_legal\": \"Lei 8.212/1991, art. 22; Lei 8.036/1990 (FGTS); LC 123/2006, art. 13, §3º (Simples dispensa contribuições a terceiros)\",\n    \"cpp_patronal\": 0.2,\n    \"fgts\": 0.08,\n    \"nota\": \"RAT/FAP e percentual de terceiros dependem do CNAE e do FPAS da empresa e são informados em dados-empresa.json.\"\n  },\n\n  \"dividendos\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"Lei 15.270/2025\",\n    \"vigencia_ano\": 2026,\n    \"retencao_aliquota\": 0.1,\n    \"limite_mensal_por_beneficiario\": 50000,\n    \"regra\": \"Retenção de IRRF de 10% sobre o total pago no mês quando uma mesma PJ paga mais que o limite a uma mesma pessoa física residente. A retenção é antecipação sujeita a ajuste na declaração anual.\",\n    \"simples_sujeito_retencao\": false,\n    \"simples_status\": \"a_confirmar\",\n    \"simples_nota\": \"Ponto controvertido nas fontes: a LC 123/2006 prevê isenção de lucros distribuídos pelo Simples e a Lei 15.270/2025 é lei ordinária. O motor calcula o valor hipotético e só soma ao total se este campo for true.\",\n    \"irpfm_limite_anual\": 600000,\n    \"irpfm_nota\": \"Tributação mínima anual de altas rendas (renda acima de R$ 600.000 por ano). Não calculada pelo motor; gera apenas aviso.\",\n    \"fontes\": [\n      \"https://www.contabeis.com.br/artigos/76397/entenda-sobre-a-tributacao-de-dividendos-em-2026/\",\n      \"https://www.portaltributario.com.br/noticias/instituido-tributacao-irpf-lucros-dividendos.htm\"\n    ]\n  },\n\n  \"reforma_consumo\": {\n    \"status\": \"conferido_fonte_secundaria\",\n    \"base_legal\": \"EC 132/2023; LC 214/2025\",\n    \"ano_teste\": 2026,\n    \"cbs_teste\": 0.009,\n    \"ibs_teste\": 0.001,\n    \"gera_carga_adicional_no_ano_teste\": false,\n    \"cronograma\": \"2026 teste (CBS 0,9% + IBS 0,1% informados nas notas). 2027 CBS passa a valer e PIS/COFINS são extintos. 2029 a 2032 transição do IBS substitui ICMS e ISS.\",\n    \"nota\": \"Por padrão o motor não aplica CBS/IBS. Só os aplica quando o operador liga o botão 'Aplicar CBS e IBS' (usa cbs_aplicar, ibs_aplicar e simples_por_fora_do_das abaixo). Alíquota cheia depende de resolução do Senado.\",\n    \"cbs_aplicar\": {\n      \"status\": \"a_confirmar\",\n      \"aliquota\": 0.009,\n      \"base_calculo\": \"receita_bruta\",\n      \"nota\": \"Alíquota de CBS usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: receita bruta mensal, sem créditos nem exclusões. Valor inicial copiado de cbs_teste.\",\n      \"fontes\": [\n        \"https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf\"\n      ]\n    },\n    \"ibs_aplicar\": {\n      \"status\": \"a_confirmar\",\n      \"aliquota\": 0.001,\n      \"base_calculo\": \"receita_bruta\",\n      \"nota\": \"Alíquota de IBS usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: receita bruta mensal, sem créditos nem exclusões. Valor inicial copiado de ibs_teste.\",\n      \"fontes\": [\n        \"https://investnews.com.br/guias/ibs-e-cbs/\"\n      ]\n    },\n    \"simples_por_fora_do_das\": {\n      \"status\": \"a_confirmar\",\n      \"aplicar\": false,\n      \"nota\": \"false: CBS e IBS não são somados ao Simples (o motor avisa e aplica só ao Presumido e ao Real). Mude para true somente se houver regra clara de cobrança por fora do DAS; então a mesma alíquota sobre a receita é somada ao Simples.\"\n    },\n    \"fontes\": [\n      \"https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf\",\n      \"https://investnews.com.br/guias/ibs-e-cbs/\"\n    ]\n  }\n}\n";
   var EX_TXT = "{\n  \"schema_version\": \"1.0\",\n  \"_aviso\": \"EXEMPLO FICTÍCIO para demonstração. Nenhum valor abaixo pertence a uma empresa real. Substitua tudo pelos dados do cliente.\",\n  \"ano_calendario\": 2026,\n  \"empresa\": {\n    \"identificacao\": \"Exemplo Serviços de Tecnologia Ltda (fictícia)\",\n    \"situacao\": \"ativa\",\n    \"uf\": \"RS\",\n    \"municipio\": \"Porto Alegre\",\n    \"cnae_principal\": \"6201-5/01\"\n  },\n  \"regimes_a_comparar\": [\"simples\", \"presumido\", \"real\"],\n  \"atividades\": [\n    {\n      \"id\": \"desenvolvimento_software\",\n      \"descricao\": \"Desenvolvimento de software sob encomenda\",\n      \"cnae\": \"6201-5/01\",\n      \"percentual_receita\": 100,\n      \"anexo_simples\": \"III_ou_V_fator_r\",\n      \"tipo_presumido\": \"servicos_gerais\",\n      \"iss_percentual\": 3,\n      \"icms_liquido_percentual_receita\": 0\n    }\n  ],\n  \"receitas\": {\n    \"historico_12_meses_anteriores\": [40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000],\n    \"simulacao_12_meses\": [42000, 42000, 42000, 45000, 45000, 45000, 48000, 48000, 48000, 50000, 50000, 50000]\n  },\n  \"custos\": {\n    \"compras_insumos_mensal\": 0,\n    \"compras_com_direito_credito_pis_cofins_mensal\": 0,\n    \"outras_despesas_operacionais_mensal\": 6000,\n    \"despesas_com_direito_credito_pis_cofins_mensal\": 2000\n  },\n  \"folha\": {\n    \"salarios_empregados_mensal\": 12000,\n    \"prolabore_total_mensal\": 8000,\n    \"rat_percentual\": 1,\n    \"terceiros_percentual\": 5.8,\n    \"folha_historico_12m_fator_r\": 251520\n  },\n  \"socios\": {\n    \"quantidade\": 2,\n    \"distribuicao_mensal_por_socio\": 4000,\n    \"isento_lucros_ate_2025_mensal_por_socio\": 0\n  },\n  \"lucro_real\": {\n    \"prejuizo_fiscal_acumulado\": 0,\n    \"ajustes_adicoes_exclusoes_mensal\": 0\n  },\n  \"meta\": {\n    \"atividades[0].anexo_simples\": {\n      \"origem\": \"inferido_ia\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"Desenvolvimento de software sob encomenda tende a ser Anexo V, com migração ao Anexo III se o Fator R for de 28% ou mais.\",\n      \"fonte\": \"Resolução CGSN 140/2018 (ilustrativo neste exemplo)\"\n    },\n    \"atividades[0].iss_percentual\": {\n      \"origem\": \"inferido_ia\",\n      \"confianca\": \"baixa\",\n      \"justificativa\": \"Valor ilustrativo. A alíquota de ISS do município deve ser conferida na lei municipal.\",\n      \"fonte\": \"Lei municipal de ISS (a consultar)\"\n    },\n    \"folha.rat_percentual\": {\n      \"origem\": \"inferido_ia\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"RAT de 1% (grau de risco leve) e FAP 1,0 assumidos para o CNAE. Conferir o FAP da empresa.\",\n      \"fonte\": \"Decreto 3.048/1999, Anexo V (ilustrativo neste exemplo)\"\n    },\n    \"folha.terceiros_percentual\": {\n      \"origem\": \"premissa\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"5,8% assumido para o enquadramento de FPAS usual em serviços. Conferir o código FPAS da empresa.\",\n      \"fonte\": \"Tabela de FPAS (a consultar)\"\n    },\n    \"receitas.simulacao_12_meses\": {\n      \"origem\": \"premissa\",\n      \"confianca\": \"media\",\n      \"justificativa\": \"Crescimento escalonado de 42 mil a 50 mil por mês, ilustrativo.\",\n      \"fonte\": \"\"\n    }\n  }\n}\n";
   var TPL_TXT = "{\n  \"schema_version\": \"1.0\",\n  \"_instrucoes\": \"Preencha todos os campos com null ou 0. Percentuais em unidades de percentual (2 = 2%). Valores em R$. Campos mensais aceitam um número (vale para os 12 meses) ou uma lista com 12 números. Em 'meta', registre a origem de cada campo que não veio direto de documento do cliente.\",\n  \"ano_calendario\": null,\n  \"empresa\": {\n    \"identificacao\": \"\",\n    \"situacao\": \"ativa\",\n    \"uf\": \"\",\n    \"municipio\": \"\",\n    \"cnae_principal\": \"\"\n  },\n  \"regimes_a_comparar\": [\"simples\", \"presumido\", \"real\"],\n  \"atividades\": [\n    {\n      \"id\": \"\",\n      \"descricao\": \"\",\n      \"cnae\": \"\",\n      \"percentual_receita\": 100,\n      \"anexo_simples\": \"I | II | III | IV | V | III_ou_V_fator_r | vedado\",\n      \"tipo_presumido\": \"comercio_industria | servicos_gerais | intermediacao_negocios | locacao_cessao_bens | servicos_transporte_cargas | servicos_transporte_passageiros | servicos_hospitalares | revenda_combustiveis\",\n      \"iss_percentual\": null,\n      \"icms_liquido_percentual_receita\": null\n    }\n  ],\n  \"receitas\": {\n    \"historico_12_meses_anteriores\": [null, null, null, null, null, null, null, null, null, null, null, null],\n    \"simulacao_12_meses\": [null, null, null, null, null, null, null, null, null, null, null, null]\n  },\n  \"custos\": {\n    \"compras_insumos_mensal\": null,\n    \"compras_com_direito_credito_pis_cofins_mensal\": null,\n    \"outras_despesas_operacionais_mensal\": null,\n    \"despesas_com_direito_credito_pis_cofins_mensal\": null\n  },\n  \"folha\": {\n    \"salarios_empregados_mensal\": null,\n    \"prolabore_total_mensal\": null,\n    \"rat_percentual\": null,\n    \"terceiros_percentual\": null,\n    \"folha_historico_12m_fator_r\": null\n  },\n  \"socios\": {\n    \"quantidade\": null,\n    \"distribuicao_mensal_por_socio\": null,\n    \"isento_lucros_ate_2025_mensal_por_socio\": 0\n  },\n  \"lucro_real\": {\n    \"prejuizo_fiscal_acumulado\": 0,\n    \"ajustes_adicoes_exclusoes_mensal\": 0\n  },\n  \"meta\": {\n    \"caminho.do.campo\": {\n      \"origem\": \"informado | extraido_de_documento | inferido_ia | premissa\",\n      \"confianca\": \"alta | media | baixa\",\n      \"justificativa\": \"\",\n      \"fonte\": \"\"\n    }\n  }\n}\n";
 
@@ -860,7 +943,8 @@
   function $(id) { return document.getElementById(id); }
 
   var ta = { aliq: $('taAliq'), dados: $('taDados') };
-  var state = { res: null, sens: null, aliq: null, dados: null, erros: 0 };
+  // cbsIbs: escolha do operador, guardada só em memória da página (volta a "desligado" ao recarregar).
+  var state = { res: null, sens: null, aliq: null, dados: null, erros: 0, cbsIbs: false };
   var timer = null;
 
   /* ---------- abas ---------- */
@@ -1007,8 +1091,9 @@
       val.avisos.forEach(function (x) { (x.indexOf('Alíquotas') === 0 ? mA : mD).push({ t: 'warn', x: x }); });
       if (!val.erros.length) {
         try {
-          state.res = E.calcular(pa.v, pd.v);
-          state.sens = E.sensibilidade(pa.v, pd.v);
+          var opc = { aplicarCbsIbs: state.cbsIbs };
+          state.res = E.calcular(pa.v, pd.v, opc);
+          state.sens = E.sensibilidade(pa.v, pd.v, undefined, opc);
         } catch (e) {
           mD.push({ t: 'err', x: 'Falha no cálculo: ' + e.message });
         }
@@ -1072,7 +1157,13 @@
     var anexos = {};
     ms.forEach(function (m) { m.atividades.forEach(function (x) { anexos[x.anexo] = 1; }); });
     return '<p class="caption">Alíquota efetiva = (RBT12 × alíquota nominal − parcela a deduzir) ÷ RBT12. DAS do mês = receita do mês × alíquota efetiva. O RBT12 soma a receita dos 12 meses anteriores ao mês calculado.</p>' +
-      tabela(heads, rows, num, true);
+      tabela(heads, rows, num, true) +
+      (state.res.cbs_ibs ? (r.itens.cbs == null ? '<p class="caption">CBS e IBS não somados ao Simples (sem regra de cobrança por fora do DAS no aliquotas.json).</p>' : '<p class="caption">Por fora do DAS:' + txtCbsIbs(r) + '</p>') : '');
+  }
+  function txtCbsIbs(r) {
+    if (r.itens.cbs == null) return '';
+    var d = state.res.cbs_ibs;
+    return ' CBS ' + brl(r.itens.cbs) + ' (' + pct(d.cbs) + ' da receita) e IBS ' + brl(r.itens.ibs) + ' (' + pct(d.ibs) + '), alíquotas em definição' + (r.id === 'real' ? '; reduzem o lucro antes do IR' : '; não alteram a base de IRPJ e CSLL') + '.';
   }
   function detPresumido(r) {
     var P = state.aliq.lucro_presumido;
@@ -1083,7 +1174,7 @@
     rows.push(['Total', brl(sumBy(tr, function (t) { return t.receita; })), brl(sumBy(tr, function (t) { return t.base_irpj; })), brl(sumBy(tr, function (t) { return t.irpj; })), brl(sumBy(tr, function (t) { return t.adicional; })), brl(sumBy(tr, function (t) { return t.base_csll; })), brl(sumBy(tr, function (t) { return t.csll; }))]);
     return '<p class="caption">Presunção média ponderada pelas atividades: IRPJ ' + pct(r.detalhe.presuncao_irpj_media) + ' e CSLL ' + pct(r.detalhe.presuncao_csll_media) + ' da receita. Base = receita × presunção, com acréscimo sobre o excedente acumulado no ano acima do limite da LC 224/2025. Adicional de ' + pct(P.irpj_adicional_aliquota, 0) + ' sobre a base trimestral acima de ' + brl(P.irpj_adicional_limite_mensal * 3) + '.</p>' +
       tabela(['Trimestre', 'Receita', 'Base IRPJ', 'IRPJ ' + pct(P.irpj_aliquota, 0), 'Adicional', 'Base CSLL', 'CSLL ' + pct(P.csll_aliquota, 0)], rows, [1, 2, 3, 4, 5, 6], true) +
-      '<p class="caption">No ano: PIS ' + brl(r.itens.pis) + ' (' + pct(P.pis_aliquota) + ' da receita), COFINS ' + brl(r.itens.cofins) + ' (' + pct(P.cofins_aliquota, 0) + '), ISS ' + brl(r.itens.iss) + ', ICMS líquido informado ' + brl(r.itens.icms) + ', CPP e RAT ' + brl(r.itens.cpp) + ', terceiros ' + brl(r.itens.terceiros) + '.</p>';
+      '<p class="caption">No ano: PIS ' + brl(r.itens.pis) + ' (' + pct(P.pis_aliquota) + ' da receita), COFINS ' + brl(r.itens.cofins) + ' (' + pct(P.cofins_aliquota, 0) + '), ISS ' + brl(r.itens.iss) + ', ICMS líquido informado ' + brl(r.itens.icms) + ', CPP e RAT ' + brl(r.itens.cpp) + ', terceiros ' + brl(r.itens.terceiros) + '.' + txtCbsIbs(r) + '</p>';
   }
   function detReal(r) {
     var R = state.aliq.lucro_real;
@@ -1094,7 +1185,7 @@
     rows.push(['Total', brl(sumBy(tr, function (t) { return t.lucro_antes_ir; })), brl(sumBy(tr, function (t) { return t.compensacao; })), brl(sumBy(tr, function (t) { return t.base; })), brl(sumBy(tr, function (t) { return t.irpj; })), brl(sumBy(tr, function (t) { return t.adicional; })), brl(sumBy(tr, function (t) { return t.csll; }))]);
     return '<p class="caption">Lucro antes do IR = receita − PIS e COFINS líquidos de créditos − ISS − ICMS − compras − despesas − custo da folha (salários, pró-labore, FGTS e encargos patronais) ± ajustes. Apuração trimestral, compensação de prejuízo limitada a ' + pct(R.limite_compensacao_prejuizo, 0) + ' do lucro do trimestre.</p>' +
       tabela(['Trimestre', 'Lucro antes do IR', 'Compensação', 'Base', 'IRPJ ' + pct(R.irpj_aliquota, 0), 'Adicional', 'CSLL ' + pct(R.csll_aliquota, 0)], rows, [1, 2, 3, 4, 5, 6], true) +
-      '<p class="caption">No ano: PIS líquido ' + brl(r.itens.pis) + ', COFINS líquida ' + brl(r.itens.cofins) + ', ISS ' + brl(r.itens.iss) + ', ICMS líquido informado ' + brl(r.itens.icms) + ', CPP e RAT ' + brl(r.itens.cpp) + ', terceiros ' + brl(r.itens.terceiros) + '.</p>';
+      '<p class="caption">No ano: PIS líquido ' + brl(r.itens.pis) + ', COFINS líquida ' + brl(r.itens.cofins) + ', ISS ' + brl(r.itens.iss) + ', ICMS líquido informado ' + brl(r.itens.icms) + ', CPP e RAT ' + brl(r.itens.cpp) + ', terceiros ' + brl(r.itens.terceiros) + '.' + txtCbsIbs(r) + '</p>';
   }
 
   /* ---------- resultado ---------- */
@@ -1104,11 +1195,41 @@
   };
   var ORIGEM_TXT = { inferido_ia: 'Inferido por IA', premissa: 'Premissa', extraido_de_documento: 'Extraído de documento', informado: 'Informado' };
 
+  // Alíquotas de CBS/IBS que o modo ligado usaria (só para exibir; o cálculo é do motor).
+  function taxaReforma(campo, teste) {
+    var RC = (state.aliq && state.aliq.reforma_consumo) || {};
+    var o = RC[campo];
+    var v = o && typeof o === 'object' && o.aliquota != null ? o.aliquota : RC[teste];
+    return Number(v) || 0;
+  }
+  function barraCbsIbs() {
+    var on = state.cbsIbs;
+    var tx = 'CBS ' + pct(taxaReforma('cbs_aplicar', 'cbs_teste'), 1) + ' e IBS ' + pct(taxaReforma('ibs_aplicar', 'ibs_teste'), 1);
+    var modo = on ? 'Modo: com ' + tx + ' (em definição)' : 'Modo atual: sem CBS/IBS';
+    var hint = on
+      ? 'Valores em definição, lidos de reforma_consumo no aliquotas.json e aplicados sobre a receita. Somados ao Presumido e ao Real' + ((state.res && state.res.cbs_ibs && state.res.cbs_ibs.simples_incluido) ? ' e ao Simples' : '; o Simples fica sem CBS/IBS por falta de regra no JSON') + '. Sem compensação com PIS, COFINS, ICMS e ISS.'
+      : 'Resultado pelas regras vigentes, sem CBS e IBS. Ligue para simular ' + tx + ' enquanto não estão definidos.';
+    return '<div class="cbs-bar' + (on ? ' on' : '') + '"><span class="modo" id="cbsModo">' + esc(modo) + '</span>' +
+      '<button type="button" class="btn' + (on ? ' primary' : '') + '" id="btnCbsIbs" aria-pressed="' + (on ? 'true' : 'false') + '">Aplicar CBS e IBS</button>' +
+      '<span class="hint">' + esc(hint) + '</span></div>' +
+      (on ? '<div class="msgs"><div class="msg warn" role="status"><b>CBS e IBS em definição.</b> Os valores abaixo incluem alíquotas ainda não definidas; não use como número final sem validação do contador.</div></div>' : '');
+  }
+  $('resultado').addEventListener('click', function (e) {
+    var t = e.target;
+    while (t && t !== this && t.id !== 'btnCbsIbs') t = t.parentNode;
+    if (!t || t.id !== 'btnCbsIbs') return;
+    var y = window.pageYOffset;
+    state.cbsIbs = !state.cbsIbs;
+    atualizar();
+    window.scrollTo(0, y);
+    var b = $('btnCbsIbs'); if (b) b.focus();
+  });
+
   function renderResultado() {
     var box = $('resultado');
     var res = state.res;
     if (!res) {
-      box.innerHTML = '<div class="empty"><h2>Entradas com erro</h2><p class="muted">Há ' + state.erros + (state.erros === 1 ? ' erro' : ' erros') + ' nos JSON. Corrija na aba Entradas para ver o comparativo.</p><a class="btn primary" href="#entradas" style="text-decoration:none">Ir para Entradas</a></div>';
+      box.innerHTML = (state.cbsIbs ? barraCbsIbs() : '') + '<div class="empty"><h2>Entradas com erro</h2><p class="muted">Há ' + state.erros + (state.erros === 1 ? ' erro' : ' erros') + ' nos JSON ou no cálculo. Corrija na aba Entradas para ver o comparativo.</p><a class="btn primary" href="#entradas" style="text-decoration:none">Ir para Entradas</a></div>';
       return;
     }
     var dados = state.dados;
@@ -1116,7 +1237,7 @@
     var best = res.ranking[0];
     var min = best ? res.regimes[best].carga_total : 0;
     var isEx = ta.dados.value.trim() === EX_TXT.trim();
-    var h = [];
+    var h = [barraCbsIbs()];
 
     if (isEx) {
       h.push('<div class="banner"><span><b>Exemplo fictício carregado.</b> Troque os dados na aba Entradas.</span><a href="#entradas">Editar dados</a></div>');
@@ -1135,15 +1256,16 @@
 
     // barras
     var max = Math.max.apply(null, keys.map(function (k) { return res.regimes[k].carga_total; })) || 1;
+    var nomeS3 = res.cbs_ibs ? 'PIS, COFINS, ISS, ICMS, CBS e IBS' : 'PIS, COFINS, ISS e ICMS';
     function seg(cls, v, nome) { return v > 0 ? '<div class="bar-seg ' + cls + '" style="width:' + (v / max * 100).toFixed(3) + '%" title="' + esc(nome + ': ' + brl(v)) + '"></div>' : ''; }
     h.push('<div class="panel"><h2>Composição da carga no ano</h2><div class="bars">' + keys.map(function (k) {
       var r = res.regimes[k], i = r.itens;
-      var s1 = i.das || 0, s2 = (i.irpj || 0) + (i.csll || 0), s3 = (i.pis || 0) + (i.cofins || 0) + (i.iss || 0) + (i.icms || 0), s4 = (i.cpp || 0) + (i.terceiros || 0) + r.retencao_aplicada;
-      return '<div class="bar-row"><div class="lab">' + esc(r.nome) + '</div><div class="bar-track">' + seg('s1', s1, 'DAS') + seg('s2', s2, 'IRPJ e CSLL') + seg('s3', s3, 'PIS, COFINS, ISS e ICMS') + seg('s4', s4, 'Folha patronal e retenção sobre lucros') + '</div><div class="val">' + brl(r.carga_total) + '</div></div>';
-    }).join('') + '</div><div class="legend"><span><i class="s1"></i>DAS</span><span><i class="s2"></i>IRPJ e CSLL</span><span><i class="s3"></i>PIS, COFINS, ISS e ICMS</span><span><i class="s4"></i>CPP, RAT, terceiros e retenção sobre lucros</span></div></div>');
+      var s1 = i.das || 0, s2 = (i.irpj || 0) + (i.csll || 0), s3 = (i.pis || 0) + (i.cofins || 0) + (i.iss || 0) + (i.icms || 0) + (i.cbs || 0) + (i.ibs || 0), s4 = (i.cpp || 0) + (i.terceiros || 0) + r.retencao_aplicada;
+      return '<div class="bar-row"><div class="lab">' + esc(r.nome) + '</div><div class="bar-track">' + seg('s1', s1, 'DAS') + seg('s2', s2, 'IRPJ e CSLL') + seg('s3', s3, nomeS3) + seg('s4', s4, 'Folha patronal e retenção sobre lucros') + '</div><div class="val">' + brl(r.carga_total) + '</div></div>';
+    }).join('') + '</div><div class="legend"><span><i class="s1"></i>DAS</span><span><i class="s2"></i>IRPJ e CSLL</span><span><i class="s3"></i>' + nomeS3 + '</span><span><i class="s4"></i>CPP, RAT, terceiros e retenção sobre lucros</span></div></div>');
 
     // tabela comparativa
-    var linhas = ['das', 'irpj', 'csll', 'pis', 'cofins', 'iss', 'icms', 'cpp', 'terceiros', 'retencao_lucros'];
+    var linhas = ['das', 'irpj', 'csll', 'pis', 'cofins', 'iss', 'icms'].concat(res.cbs_ibs ? ['cbs', 'ibs'] : [], ['cpp', 'terceiros', 'retencao_lucros']);
     var heads = ['Item'].concat(keys.map(function (k) { return res.regimes[k].nome; }));
     var rows = linhas.map(function (l) {
       var row = [esc(E.ROTULOS[l])];
@@ -1161,7 +1283,7 @@
     rows.push(['Carga da empresa'].concat(keys.map(function (k) { return brl(res.regimes[k].total_empresa); })));
     rows.push(['% da receita (empresa)'].concat(keys.map(function (k) { return pct(res.regimes[k].pct_empresa); })));
     rows.push(['Carga total, com retenção'].concat(keys.map(function (k) { return brl(res.regimes[k].carga_total); })));
-    h.push('<div class="stack"><h2>Comparativo anual</h2>' + tabela(heads, rows, keys.map(function (_, i) { return i + 1; }), true) + '<p class="caption">No Simples, IRPJ, CSLL, PIS, COFINS, ISS e ICMS estão dentro do DAS. A retenção sobre lucros é antecipação do IRPF do sócio, sujeita a ajuste na declaração anual.</p></div>');
+    h.push('<div class="stack"><h2>Comparativo anual</h2>' + tabela(heads, rows, keys.map(function (_, i) { return i + 1; }), true) + '<p class="caption">No Simples, IRPJ, CSLL, PIS, COFINS, ISS e ICMS estão dentro do DAS. A retenção sobre lucros é antecipação do IRPF do sócio, sujeita a ajuste na declaração anual.' + (res.cbs_ibs ? ' CBS e IBS: base na receita bruta, alíquotas em definição' + (res.cbs_ibs.simples_incluido ? '.' : '; o Simples aparece com traço porque o aliquotas.json não define cobrança por fora do DAS.') : '') + '</p></div>');
 
     // avisos
     var av = [];

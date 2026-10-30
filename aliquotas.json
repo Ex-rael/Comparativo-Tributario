@@ -178,7 +178,30 @@
     "ibs_teste": 0.001,
     "gera_carga_adicional_no_ano_teste": false,
     "cronograma": "2026 teste (CBS 0,9% + IBS 0,1% informados nas notas). 2027 CBS passa a valer e PIS/COFINS são extintos. 2029 a 2032 transição do IBS substitui ICMS e ISS.",
-    "nota": "O motor não modela CBS/IBS a partir de 2027. Alíquota cheia depende de resolução do Senado.",
+    "nota": "Por padrão o motor não aplica CBS/IBS. Só os aplica quando o operador liga o botão 'Aplicar CBS e IBS' (usa cbs_aplicar, ibs_aplicar e simples_por_fora_do_das abaixo). Alíquota cheia depende de resolução do Senado.",
+    "cbs_aplicar": {
+      "status": "a_confirmar",
+      "aliquota": 0.009,
+      "base_calculo": "receita_bruta",
+      "nota": "Alíquota de CBS usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: receita bruta mensal, sem créditos nem exclusões. Valor inicial copiado de cbs_teste.",
+      "fontes": [
+        "https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf"
+      ]
+    },
+    "ibs_aplicar": {
+      "status": "a_confirmar",
+      "aliquota": 0.001,
+      "base_calculo": "receita_bruta",
+      "nota": "Alíquota de IBS usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: receita bruta mensal, sem créditos nem exclusões. Valor inicial copiado de ibs_teste.",
+      "fontes": [
+        "https://investnews.com.br/guias/ibs-e-cbs/"
+      ]
+    },
+    "simples_por_fora_do_das": {
+      "status": "a_confirmar",
+      "aplicar": false,
+      "nota": "false: CBS e IBS não são somados ao Simples (o motor avisa e aplica só ao Presumido e ao Real). Mude para true somente se houver regra clara de cobrança por fora do DAS; então a mesma alíquota sobre a receita é somada ao Simples."
+    },
     "fontes": [
       "https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf",
       "https://investnews.com.br/guias/ibs-e-cbs/"

@@ -25,7 +25,7 @@ O QUE CONFERIR
 3. lucro_real: alíquotas de IRPJ, adicional, CSLL, PIS e COFINS não cumulativos e limite de compensação de prejuízo.
 4. encargos_folha: CPP patronal, FGTS e a dispensa de contribuições a terceiros no Simples.
 5. dividendos: alíquota de retenção, limite mensal por beneficiário, vigência, transição de lucros apurados até 2025 e se o Simples Nacional está sujeito. Registre a controvérsia, não a resolva.
-6. reforma_consumo: alíquotas de teste, cronograma e o que muda em [[ANO_CALENDARIO]].
+6. reforma_consumo: alíquotas de teste (cbs_teste, ibs_teste), cronograma e o que muda em [[ANO_CALENDARIO]]. Confira também os campos usados pelo botão "Aplicar CBS e IBS" da página: cbs_aplicar.aliquota e ibs_aplicar.aliquota (alíquotas em definição que o operador pode aplicar; cada um com status, nota e fontes; se ainda não houver valor oficial, mantenha o valor atual, status a_confirmar e explique na nota) e simples_por_fora_do_das.aplicar (true somente se norma clara mandar cobrar CBS/IBS por fora do DAS; caso contrário false, com a controvérsia na nota). Não remova esses campos.
 
 REGRAS
 1. Nunca preencha número de memória. Abra a fonte e confira cada valor, inclusive os que já estão no JSON.

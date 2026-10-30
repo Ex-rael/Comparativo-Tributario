@@ -15,8 +15,9 @@ Este documento descreve, em notação matemática, tudo o que o motor de cálcul
 7. [Retenção sobre lucros distribuídos](#7-retenção-sobre-lucros-distribuídos)
 8. [Carga total e ranking](#8-carga-total-e-ranking)
 9. [Análise de sensibilidade](#9-análise-de-sensibilidade)
-10. [Exemplo numérico conferível](#10-exemplo-numérico-conferível)
-11. [O que o motor não modela](#11-o-que-o-motor-não-modela)
+10. [CBS e IBS (opcional)](#10-cbs-e-ibs-opcional)
+11. [Exemplo numérico conferível](#11-exemplo-numérico-conferível)
+12. [O que o motor não modela](#12-o-que-o-motor-não-modela)
 
 ---
 
@@ -276,7 +277,38 @@ Em cada cenário reporta-se o $\text{Carga}^{\text{total}}$ de cada regime e o r
 
 ---
 
-## 10. Exemplo numérico conferível
+## 10. CBS e IBS (opcional)
+
+CBS e IBS ainda não têm alíquotas definidas. Por isso entram no cálculo **somente se o operador ligar o botão "Aplicar CBS e IBS"** na aba Resultado (opção `aplicarCbsIbs` do motor). **Desligado (padrão), nada desta seção é calculado e o resultado é exatamente o das seções 4 a 9.** Ligado, o motor recalcula também a sensibilidade com a mesma opção.
+
+**Parâmetros** (todos do `aliquotas.json`, bloco `reforma_consumo`, nunca digitados na página): $a_{\text{CBS}}$ = `cbs_aplicar.aliquota`, $a_{\text{IBS}}$ = `ibs_aplicar.aliquota` (frações entre 0 e 1) e a chave `simples_por_fora_do_das.aplicar`. Se `cbs_aplicar` ou `ibs_aplicar` faltarem, o motor usa `cbs_teste` e `ibs_teste` e avisa. Os campos novos nascem com status `a_confirmar`, valor inicial igual aos de teste (0,9% e 0,1%).
+
+**Base e fórmulas.** Base de cálculo = receita bruta mensal, sem créditos, exclusões ou reduções de base:
+
+$$\text{CBS}_m = a_{\text{CBS}}\,R_m \qquad \text{IBS}_m = a_{\text{IBS}}\,R_m \qquad \text{CBS}=\sum_m\text{CBS}_m,\quad \text{IBS}=\sum_m\text{IBS}_m$$
+
+**Presumido.** CBS e IBS somam à carga da empresa. Não alteram a base de IRPJ e CSLL ($R\times$ presunção):
+
+$$\text{Carga}^{\text{empresa}}_{\text{Pres}} \mathrel{+}= \text{CBS} + \text{IBS} \qquad \text{LucroIsento}_{\text{Pres}} \mathrel{-}= \text{CBS} + \text{IBS}$$
+
+**Real.** Somam à carga e, como PIS, COFINS, ISS e ICMS, reduzem o lucro antes do IR (hipótese de dedutibilidade a validar):
+
+$$\text{LAIR}_m \mathrel{-}= \text{CBS}_m + \text{IBS}_m \qquad \text{Carga}^{\text{empresa}}_{\text{Real}} \mathrel{+}= \text{CBS} + \text{IBS}$$
+
+Como o LAIR cai, IRPJ e CSLL caem; o efeito líquido do CBS/IBS na carga do Real é menor que o valor bruto.
+
+**Simples.** Se `simples_por_fora_do_das.aplicar = false` (padrão), o regime **não recebe** CBS/IBS e o motor avisa (a tabela mostra traço). Se `true`, a mesma base e as mesmas alíquotas são somadas por fora do DAS (sem alterar o DAS). Esse campo só deve ser ligado se houver regra clara de cobrança.
+
+**Limitações deste modo (suposições a validar pelo contador).**
+
+- Sem compensação: PIS, COFINS, ICMS e ISS continuam calculados integralmente e CBS/IBS entram por cima, o que pode **superestimar** a carga (dupla contagem na transição).
+- Sem créditos de CBS/IBS sobre insumos, sem regimes específicos, reduções de alíquota, cashback ou split payment.
+- Alíquotas aplicadas uniformemente em qualquer ano-calendário, sem o cronograma de transição; no ano de teste, as fontes dizem que não há carga adicional, então o resultado é uma simulação hipotética.
+- Dedutibilidade no Real e ausência de efeito na base do Presumido são hipóteses, não conferidas em norma.
+
+---
+
+## 11. Exemplo numérico conferível
 
 Usa o arquivo `dados-empresa.exemplo.json` (empresa fictícia de software, 100% `III_ou_V_fator_r` / `servicos_gerais`, ISS 3%) com o `aliquotas.json` padrão. Receita anual $R = 555.000$. Folha: salários 12.000, pró-labore 8.000, RAT 1%, terceiros 5,8%, $F^{\text{hist}} = 251.520$.
 
@@ -303,15 +335,17 @@ Usa o arquivo `dados-empresa.exemplo.json` (empresa fictícia de software, 100% 
 
 **Totais do ano na carga da empresa** (arredondados): Simples R\$ 55.524,96 · Presumido R\$ 137.323,50 · Real R\$ 149.460,42. A retenção sobre lucros é zero no exemplo (distribuição de R\$ 4.000 por sócio/mês, abaixo do limite de R\$ 50.000).
 
+**Com CBS 0,9% e IBS 0,1% ligados** (seção 10): $\text{CBS}_1 = 0{,}009\times 42.000 = 378$ e $\text{IBS}_1 = 0{,}001\times 42.000 = 42$ em janeiro; no ano, CBS $= 4.995$ e IBS $= 555$. Presumido $= 137.323,50 + 5.550 = \mathbf{142.873,50}$. Real: $\text{LAIR}_1 = 5.264 - 420 = 4.844$ e a carga vai a **153.678,42** (soma de 5.550 menos a queda de IRPJ/CSLL, 25.900,92 para 24.568,92). Simples inalterado em 55.524,96 (sem CBS/IBS por fora do DAS).
+
 ---
 
-## 11. O que o motor não modela
+## 12. O que o motor não modela
 
 - Partilha de ICMS/ISS fora do DAS acima do sublimite do Simples.
 - ICMS-ST, produtos monofásicos, exportação, incentivos fiscais, JCP, parcelamentos e retenções na fonte sobre serviços.
 - Tributação do pró-labore (igual nos três regimes, portanto fora da comparação) e IRPFM (tributação mínima de altas rendas), que só gera aviso.
 - Saldo credor de PIS/COFINS acumulado entre meses.
-- CBS e IBS da reforma do consumo (em 2026 apenas aviso informativo; a partir de 2027 o motor avisa que os resultados podem estar defasados).
+- CBS e IBS da reforma do consumo, por padrão (aviso informativo em 2026; a partir de 2027 o motor avisa que os resultados podem estar defasados). Só entram se o operador ligar "Aplicar CBS e IBS", e então de forma simplificada (seção 10): sem compensação com PIS/COFINS/ICMS/ISS, sem créditos, sem cronograma de transição e sem CBS/IBS no Simples, salvo `simples_por_fora_do_das.aplicar = true`.
 - Lucro Real com apuração anual por estimativa.
 
 Cada limitação acima também aparece na aba **Resultado** da ferramenta, para o contador ver junto ao número.
