@@ -81,6 +81,8 @@
   .chip.warn { background: var(--warn-bg); color: var(--warn); }
 
   pre.out { margin: 0; padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; overflow: auto; max-height: 560px; font: 12px/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .tok { font: 12px var(--f-mono); color: var(--ink-2); text-align: right; }
+  .tok-total { font: 500 12px var(--f-mono); color: var(--ink-2); }
   mark.ph { background: var(--warn-bg); color: var(--warn); border-radius: 2px; padding: 0 2px; }
   .banner { padding: 10px 14px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); font-size: 14px; }
   .sticky-copy { position: sticky; top: 0; z-index: 2; background: var(--surface); padding-block: 4px; }
@@ -127,7 +129,7 @@
         <div class="panel">
           <div class="panel-head sticky-copy">
             <h2>Prompt pronto</h2>
-            <div class="toolbar"><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
           </div>
           <pre class="out" data-out></pre>
         </div>
@@ -173,7 +175,7 @@
         <div class="panel">
           <div class="panel-head sticky-copy">
             <h2>Prompt pronto</h2>
-            <div class="toolbar"><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
           </div>
           <pre class="out" data-out></pre>
         </div>
@@ -203,6 +205,10 @@
   var defaults = {};
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  /* Estimativa sem tokenizador: ~3,5 caracteres por token em português e JSON. Varia por modelo. */
+  function tokens(txt) { return Math.ceil(txt.length / 3.5); }
+  function fmtTok(n) { return '≈ ' + n.toLocaleString('pt-BR') + ' tokens'; }
 
   function hoje() {
     var d = new Date();
@@ -246,6 +252,16 @@
     st.className = 'chip ' + (n ? 'warn' : 'ok');
     st.textContent = n ? n + (n === 1 ? ' campo vazio' : ' campos vazios') : 'Completo';
     P.pronto = plain;
+    Array.prototype.forEach.call(sec.querySelectorAll('[data-key]'), function (el) {
+      if (el.tagName !== 'TEXTAREA') return;
+      var t = el.nextElementSibling;
+      if (!t || !t.hasAttribute('data-tok')) {
+        t = document.createElement('div'); t.className = 'tok'; t.setAttribute('data-tok', '');
+        el.parentNode.insertBefore(t, el.nextSibling);
+      }
+      t.textContent = fmtTok(tokens(el.value));
+    });
+    sec.querySelector('[data-total]').textContent = 'Total ' + fmtTok(tokens(plain));
   }
 
   function copiar(texto, btn) {
