@@ -81,6 +81,15 @@
   .chip.warn { background: var(--warn-bg); color: var(--warn); }
 
   pre.out { margin: 0; padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; overflow: auto; max-height: 560px; font: 12px/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  legend { font: 700 14px var(--f-display); padding: 0 6px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 10px; }
+  .ativ { display: grid; grid-template-columns: 1.1fr 2fr .8fr .8fr .8fr auto; gap: 6px; align-items: end; padding-bottom: 8px; border-bottom: 1px dashed var(--line); margin-bottom: 8px; }
+  .ativ .field label { font-size: 12px; }
+  @media (max-width: 700px) { .ativ { grid-template-columns: 1fr 1fr; } }
+  .hint { font: 12px var(--f-mono); color: var(--ink-2); }
+  .hint.warn { color: var(--warn); }
+  .banner.info { background: var(--info-bg); color: var(--info); }
   .tok { font: 12px var(--f-mono); color: var(--ink-2); text-align: right; }
   .tok-total { font: 500 12px var(--f-mono); color: var(--ink-2); }
   mark.ph { background: var(--warn-bg); color: var(--warn); border-radius: 2px; padding: 0 2px; }
@@ -147,14 +156,56 @@
             <label for="p2-SITUACAO">Situação <code>[[ATIVA ou EM_ABERTURA]]</code></label>
             <select id="p2-SITUACAO" data-key="ATIVA ou EM_ABERTURA"><option value="">Selecione</option><option value="ATIVA">ATIVA</option><option value="EM_ABERTURA">EM_ABERTURA</option></select>
           </div>
-          <div class="field">
-            <label for="p2-MATERIAL_DO_CLIENTE">Material do cliente <code>[[MATERIAL_DO_CLIENTE]]</code></label>
-            <textarea class="big" id="p2-MATERIAL_DO_CLIENTE" data-key="MATERIAL_DO_CLIENTE" spellcheck="false" placeholder="Cartão CNPJ, contrato social, faturamento mensal, folha, balancete, relação de despesas"></textarea>
-          </div>
-          <div class="field">
-            <label for="p2-PREMISSAS_DO_CONTADOR">Premissas do contador <code>[[PREMISSAS_DO_CONTADOR]]</code></label>
-            <textarea id="p2-PREMISSAS_DO_CONTADOR" data-key="PREMISSAS_DO_CONTADOR" spellcheck="false" placeholder="Crescimento, quantidade de sócios, distribuição de lucros desejada. Se não houver, escreva: nenhuma."></textarea>
-          </div>
+          <div class="banner info">Preencha apenas <b>totais e códigos</b>. Não cole documentos, CNPJ, e-mail, endereço, nomes nem CPFs: o motor não usa nada disso. Campo em branco vira "não informado" e a IA devolve como pendência.</div>
+          <div class="toolbar"><span class="chip ok" id="f-status"></span><span class="tok-total" id="f-tok"></span></div>
+
+          <fieldset><legend>Empresa</legend>
+            <div class="row">
+              <div class="field"><label for="f-apelido">Apelido <code>sem razão social</code></label><input type="text" id="f-apelido" data-f="apelido" data-free></div>
+              <div class="field"><label for="f-uf">UF</label><input type="text" id="f-uf" data-f="uf" maxlength="2" style="text-transform:uppercase"></div>
+              <div class="field"><label for="f-municipio">Município</label><input type="text" id="f-municipio" data-f="municipio" data-free></div>
+              <div class="field"><label for="f-meses">Meses de atividade <code>se abertura ou &lt; 12</code></label><input type="number" id="f-meses" data-f="meses" min="0" max="11"></div>
+            </div>
+          </fieldset>
+
+          <fieldset><legend>Atividades</legend>
+            <p class="caption">Uma linha por grupo de CNAE com enquadramento diferente. ISS e ICMS são opcionais: sem valor, a IA deduz e marca a confiança.</p>
+            <div id="f-ativs"></div>
+            <div class="toolbar"><button class="btn" type="button" data-add-ativ>Adicionar atividade</button><span class="tok-total" id="f-pct"></span></div>
+          </fieldset>
+
+          <fieldset><legend>Receita (R$)</legend>
+            <div class="field"><label for="f-hist">Mensal, 12 meses anteriores <code>12 valores, em ordem; vazio se em abertura</code></label><textarea id="f-hist" data-f="hist" data-n="0|12" spellcheck="false" placeholder="40.000; 40.000; ... (aceita colar uma coluna do Excel)"></textarea></div>
+            <div class="field"><label for="f-sim">Mensal simulada, jan a dez <code>12 valores</code></label><textarea id="f-sim" data-f="sim" data-n="12" spellcheck="false"></textarea></div>
+            <div class="field"><label for="f-cresc">Crescimento sobre o histórico, % <code>se não houver os 12 valores simulados</code></label><input type="text" id="f-cresc" data-f="cresc" inputmode="decimal"></div>
+          </fieldset>
+
+          <fieldset><legend>Folha e sócios (R$ por mês: um valor ou 12)</legend>
+            <div class="row">
+              <div class="field"><label for="f-sal">Salários dos empregados <code>soma</code></label><input type="text" id="f-sal" data-f="sal" data-n="1|12"></div>
+              <div class="field"><label for="f-prol">Pró-labore total</label><input type="text" id="f-prol" data-f="prol" data-n="1|12"></div>
+              <div class="field"><label for="f-nsoc">Quantidade de sócios</label><input type="number" id="f-nsoc" data-f="nsoc" min="1"></div>
+              <div class="field"><label for="f-folha12">Folha dos 12 meses anteriores <code>salários + pró-labore + FGTS</code></label><input type="text" id="f-folha12" data-f="folha12"></div>
+              <div class="field"><label for="f-rat">RAT ajustado, % <code>RAT x FAP</code></label><input type="text" id="f-rat" data-f="rat" inputmode="decimal"></div>
+              <div class="field"><label for="f-terc">Terceiros, % <code>conforme FPAS</code></label><input type="text" id="f-terc" data-f="terc" inputmode="decimal"></div>
+              <div class="field"><label for="f-dist">Distribuição de lucros por sócio</label><input type="text" id="f-dist" data-f="dist" data-n="1|12"></div>
+              <div class="field"><label for="f-iso">Isento (lucros apurados até 2025), por sócio</label><input type="text" id="f-iso" data-f="iso" data-n="1|12"></div>
+            </div>
+          </fieldset>
+
+          <fieldset><legend>Custos e Lucro Real (R$ por mês: um valor ou 12)</legend>
+            <p class="caption">Só importam se o Lucro Real estiver na comparação.</p>
+            <div class="row">
+              <div class="field"><label for="f-compras">Compras de insumos</label><input type="text" id="f-compras" data-f="compras" data-n="1|12"></div>
+              <div class="field"><label for="f-comprascred">Dessas, com direito a crédito de PIS/COFINS</label><input type="text" id="f-comprascred" data-f="comprascred" data-n="1|12"></div>
+              <div class="field"><label for="f-desp">Outras despesas operacionais</label><input type="text" id="f-desp" data-f="desp" data-n="1|12"></div>
+              <div class="field"><label for="f-despcred">Dessas, com direito a crédito de PIS/COFINS</label><input type="text" id="f-despcred" data-f="despcred" data-n="1|12"></div>
+              <div class="field"><label for="f-prej">Prejuízo fiscal acumulado</label><input type="text" id="f-prej" data-f="prej"></div>
+              <div class="field"><label for="f-ajustes">Adições e exclusões (mensal)</label><input type="text" id="f-ajustes" data-f="ajustes" data-n="1|12"></div>
+            </div>
+          </fieldset>
+
+          <div class="field"><label for="f-obs">Observações do contador <code>opcional</code></label><textarea id="f-obs" data-f="obs" data-free spellcheck="false" placeholder="Premissas ou pontos de atenção que não cabem nos campos acima. Sem nomes, CPF ou CNPJ."></textarea></div>
           <div class="field">
             <label for="p2-COLE_O_ALIQUOTAS_JSON">aliquotas.json <code>[[COLE_O_ALIQUOTAS_JSON]]</code></label>
             <textarea id="p2-COLE_O_ALIQUOTAS_JSON" data-key="COLE_O_ALIQUOTAS_JSON" spellcheck="false"></textarea>
@@ -228,9 +279,135 @@
     return (i >= 0 ? md.slice(md.indexOf('\n', i) + 1) : md).trim();
   }
 
+
+  /* ---------- ficha estruturada (prompt 2) ---------- */
+  var ativsEl = $('f-ativs');
+  function novaAtividade(pct) {
+    var d = document.createElement('div');
+    d.className = 'ativ';
+    d.innerHTML =
+      '<div class="field"><label>CNAE</label><input type="text" data-a="cnae" placeholder="6201-5/01"></div>' +
+      '<div class="field"><label>Descrição curta</label><input type="text" data-a="desc" data-free></div>' +
+      '<div class="field"><label>% da receita</label><input type="text" data-a="pct" inputmode="decimal" value="' + (pct || '') + '"></div>' +
+      '<div class="field"><label>ISS %</label><input type="text" data-a="iss" inputmode="decimal"></div>' +
+      '<div class="field"><label>ICMS líq. %</label><input type="text" data-a="icms" inputmode="decimal"></div>' +
+      '<button class="btn" type="button" data-del-ativ aria-label="Remover atividade">Remover</button>';
+    ativsEl.appendChild(d);
+  }
+  novaAtividade('100');
+
+  /* "42.000,50", "R$ 42000" ou "42000.5" -> número. Retorna NaN se não for número. */
+  function brNum(s) {
+    s = String(s).replace(/R\$|\s/g, '');
+    if (s === '') return NaN;
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+  }
+  function lista(s) { return s.split(/[;\t\n]+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  function fmtNum(n) { return String(Math.round(n * 100) / 100); }
+
+  /* Máscara local de CPF, CNPJ e e-mail nos campos de texto livre. */
+  var mascarados = 0;
+  function mascarar(t) {
+    return t.replace(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b|\b\d{11}\b/g, function () { mascarados++; return '[CPF]'; })
+      .replace(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b|\b\d{14}\b/g, function () { mascarados++; return '[CNPJ]'; })
+      .replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, function () { mascarados++; return '[EMAIL]'; });
+  }
+
+  function fichaTexto() {
+    var fSec = $('tab-p2'), falt = 0, avisos = [];
+    mascarados = 0;
+    function F(n) {
+      var el = fSec.querySelector('[data-f="' + n + '"]');
+      var v = el.value.trim();
+      if (el.hasAttribute('data-free')) v = mascarar(v);
+      return v;
+    }
+    function ni(v) { if (v === '') { falt++; return 'não informado'; } return v; }
+    /* valor numérico simples ou lista, devolvido normalizado */
+    function nums(n, esperado) {
+      var el = fSec.querySelector('[data-f="' + n + '"]');
+      var raw = el.value.replace(/R\$/g, '');
+      var itens = lista(raw.trim().indexOf('\n') >= 0 || el.value.indexOf(';') >= 0 ? raw : raw.replace(/\s+/g, ';'));
+      var vals = itens.map(brNum);
+      var h = el.parentNode.querySelector('.hint');
+      if (!h) { h = document.createElement('div'); h.className = 'hint'; el.parentNode.appendChild(h); }
+      if (!itens.length) { h.textContent = ''; h.className = 'hint'; return ''; }
+      var ok = vals.every(function (x) { return !isNaN(x); });
+      var qtd = String(esperado || '').split('|').map(Number);
+      var okQtd = !esperado || qtd.indexOf(itens.length) >= 0;
+      var tot = ok ? vals.reduce(function (a, b) { return a + b; }, 0) : 0;
+      h.textContent = itens.length + (itens.length === 1 ? ' valor' : ' valores') + (ok && itens.length > 1 ? ', soma R$ ' + tot.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '') +
+        (!ok ? ' (há valor não numérico)' : '') + (!okQtd ? ' (esperado ' + esperado.replace('|', ' ou ') + ')' : '');
+      h.className = 'hint' + (ok && okQtd ? '' : ' warn');
+      if (!ok || !okQtd) avisos.push(n);
+      return ok ? vals.map(fmtNum).join('; ') : el.value.trim();
+    }
+    function pctVal(n) { var v = F(n); if (v === '') return ''; var x = brNum(v); return isNaN(x) ? v : fmtNum(x); }
+    function simples(n) { var el = fSec.querySelector('[data-f="' + n + '"]'); var v = el.value.trim(); if (v === '') return ''; var x = brNum(v); return isNaN(x) ? v : fmtNum(x); }
+
+    var L = [];
+    L.push('FICHA CONSOLIDADA DO CLIENTE (valores totais, sem dados pessoais)');
+    L.push('Empresa');
+    L.push('- Apelido: ' + ni(F('apelido')));
+    L.push('- UF: ' + ni(F('uf').toUpperCase()));
+    L.push('- Município: ' + ni(F('municipio')));
+    var meses = F('meses');
+    L.push('- Meses de atividade (só se em abertura ou com menos de 12 meses): ' + (meses === '' ? 'não se aplica' : meses));
+    L.push('Atividades (CNAE | descrição | % da receita | ISS % | ICMS líquido % da receita)');
+    var soma = 0, algumPct = false;
+    Array.prototype.forEach.call(ativsEl.querySelectorAll('.ativ'), function (row, k) {
+      function A(n) { var el = row.querySelector('[data-a="' + n + '"]'); var v = el.value.trim(); return el.hasAttribute('data-free') ? mascarar(v) : v; }
+      var pct = A('pct'), pn = brNum(pct);
+      if (!isNaN(pn)) { soma += pn; algumPct = true; }
+      L.push('  ' + (k + 1) + '. ' + ni(A('cnae')) + ' | ' + ni(A('desc')) + ' | ' + ni(pct) + ' | ' + (A('iss') || 'não informado (IA deduz)') + ' | ' + (A('icms') || 'não informado (IA deduz)'));
+    });
+    var pctEl = $('f-pct');
+    pctEl.textContent = algumPct ? 'Soma: ' + fmtNum(soma) + '%' + (Math.abs(soma - 100) > 0.01 ? ' (deve ser 100)' : '') : '';
+    pctEl.style.color = algumPct && Math.abs(soma - 100) > 0.01 ? 'var(--warn)' : '';
+    L.push('Receita (R$)');
+    var hist = nums('hist', '0|12');
+    L.push('- Mensal, 12 meses anteriores ao primeiro mês simulado: ' + (hist === '' ? 'não informado (deixar vazio apenas se em abertura)' : hist)); if (hist === '') falt++;
+    L.push('- Mensal simulada, jan a dez: ' + ni(nums('sim', '12')));
+    var cr = pctVal('cresc');
+    L.push('- Crescimento sobre o histórico, %: ' + (cr === '' ? 'não informado' : cr));
+    L.push('Folha e sócios (R$ por mês, salvo indicação)');
+    L.push('- Salários dos empregados: ' + ni(nums('sal', '1|12')));
+    L.push('- Pró-labore total: ' + ni(nums('prol', '1|12')));
+    L.push('- Quantidade de sócios: ' + ni(F('nsoc')));
+    L.push('- Folha dos 12 meses anteriores (salários + pró-labore + FGTS, sem CPP), total: ' + ni(simples('folha12')));
+    L.push('- RAT ajustado (RAT x FAP), %: ' + (pctVal('rat') || 'não informado (IA deduz)'));
+    L.push('- Terceiros, % (conforme FPAS): ' + (pctVal('terc') || 'não informado (IA deduz)'));
+    L.push('- Distribuição de lucros por sócio: ' + ni(nums('dist', '1|12')));
+    L.push('- Isento por lucros apurados até 2025, por sócio: ' + (nums('iso', '1|12') || '0'));
+    L.push('Custos e Lucro Real (R$ por mês)');
+    L.push('- Compras de insumos: ' + ni(nums('compras', '1|12')));
+    L.push('- Dessas, com direito a crédito de PIS/COFINS: ' + ni(nums('comprascred', '1|12')));
+    L.push('- Outras despesas operacionais: ' + ni(nums('desp', '1|12')));
+    L.push('- Dessas, com direito a crédito de PIS/COFINS: ' + ni(nums('despcred', '1|12')));
+    L.push('- Prejuízo fiscal acumulado: ' + (simples('prej') || '0'));
+    L.push('- Adições e exclusões (mensal): ' + (nums('ajustes', '1|12') || '0'));
+
+    var obs = F('obs');
+    var prem = [];
+    if (cr !== '') prem.push('Crescimento da receita sobre o histórico: ' + cr + '%.');
+    if (obs) prem.push(obs);
+
+    var st = $('f-status');
+    var n = falt + avisos.length;
+    st.className = 'chip ' + (n ? 'warn' : 'ok');
+    st.textContent = n ? falt + ' não informado' + (falt === 1 ? '' : 's') + (avisos.length ? ', ' + avisos.length + ' com alerta' : '') : 'Ficha completa';
+    var msk = mascarados ? ' · ' + mascarados + ' dado(s) pessoal(is) mascarado(s)' : '';
+    var texto = L.join('\n');
+    $('f-tok').textContent = 'Ficha ' + fmtTok(tokens(texto)) + msk;
+    return { material: texto, premissas: prem.length ? prem.join(' ') : 'nenhuma' };
+  }
+
   function valores(sec) {
     var v = {};
     Array.prototype.forEach.call(sec.querySelectorAll('[data-key]'), function (el) { v[el.getAttribute('data-key')] = el.value.trim(); });
+    if (sec.id === 'tab-p2') { var f = fichaTexto(); v.MATERIAL_DO_CLIENTE = f.material; v.PREMISSAS_DO_CONTADOR = f.premissas; }
     return v;
   }
 
@@ -302,6 +479,8 @@
     sec.addEventListener('click', function (e) {
       var b = e.target.closest('button');
       if (!b) return;
+      if (b.hasAttribute('data-add-ativ')) { novaAtividade(''); render(id); return; }
+      if (b.hasAttribute('data-del-ativ')) { if (ativsEl.children.length > 1) b.closest('.ativ').remove(); render(id); return; }
       if (b.hasAttribute('data-copy-prompt')) { render(id); copiar(PROMPTS[id].pronto || '', b); }
       if (b.hasAttribute('data-reset')) {
         var k = b.getAttribute('data-reset');

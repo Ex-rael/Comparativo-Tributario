@@ -11,7 +11,7 @@ ENTRADAS
 - Data de hoje: [[DATA_DE_HOJE]]
 - Ano-calendário simulado: [[ANO_CALENDARIO]] (12 meses, de janeiro a dezembro)
 - Situação: [[ATIVA ou EM_ABERTURA]]
-- Material do cliente (cole texto, tabelas ou extratos de: cartão CNPJ, contrato social, faturamento mensal, folha, balancete, relação de despesas):
+- Ficha consolidada do cliente (somente totais e códigos, sem CNPJ, nomes, CPFs, e-mail ou endereço; campo "não informado" vira null e pendência):
 [[MATERIAL_DO_CLIENTE]]
 - Premissas do contador, se houver (crescimento, quantidade de sócios, distribuição de lucros desejada):
 [[PREMISSAS_DO_CONTADOR]]
