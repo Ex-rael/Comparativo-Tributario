@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "metadata": {
+    "descricao": "Alíquotas e regras vigentes lidas pelo motor de cálculo. Percentuais em fração decimal (0.04 = 4%). Valores em R$. Atualizar somente quando a norma mudar.",
+    "ano_calendario": 2026,
+    "data_verificacao": "2026-10-29",
+    "verificado_por": "",
+    "status_geral": "rascunho_a_validar_pelo_contador",
+    "legenda_status": {
+      "conferido_fonte_oficial": "Valor conferido na norma primária ou em página oficial do órgão, com URL e data de acesso.",
+      "conferido_fonte_secundaria": "Valor encontrado em pelo menos uma fonte secundária (artigo técnico, portal contábil). Ainda não aberto na norma primária.",
+      "conhecimento_previo_a_confirmar": "Valor de conhecimento geral, não localizado nas fontes desta verificação. Confirmar na norma.",
+      "a_confirmar": "Ponto novo, controvertido ou com divergência entre fontes. Exige validação do contador antes do uso."
+    }
+  },
+
+  "simples_nacional": {
+    "status": "conferido_fonte_secundaria",
+    "base_legal": "LC 123/2006 (Anexos I a V, redação da LC 155/2016); Resolução CGSN 140/2018; Portaria CGSN 54/2025 (sublimite de 2026)",
+    "limite_receita_anual": 4800000,
+    "sublimite_icms_iss": 3600000,
+    "fator_r_minimo": 0.28,
+    "formula_aliquota_efetiva": "(RBT12 x aliquota_nominal - parcela_a_deduzir) / RBT12",
+    "anexos": {
+      "I": {
+        "nome": "Comércio",
+        "cpp_incluida_no_das": true,
+        "faixas": [
+          { "ate": 180000, "aliquota": 0.04, "deduzir": 0 },
+          { "ate": 360000, "aliquota": 0.073, "deduzir": 5940 },
+          { "ate": 720000, "aliquota": 0.095, "deduzir": 13860 },
+          { "ate": 1800000, "aliquota": 0.107, "deduzir": 22500 },
+          { "ate": 3600000, "aliquota": 0.143, "deduzir": 87300 },
+          { "ate": 4800000, "aliquota": 0.19, "deduzir": 378000 }
+        ]
+      },
+      "II": {
+        "nome": "Indústria",
+        "cpp_incluida_no_das": true,
+        "faixas": [
+          { "ate": 180000, "aliquota": 0.045, "deduzir": 0 },
+          { "ate": 360000, "aliquota": 0.078, "deduzir": 5940 },
+          { "ate": 720000, "aliquota": 0.1, "deduzir": 13860 },
+          { "ate": 1800000, "aliquota": 0.112, "deduzir": 22500 },
+          { "ate": 3600000, "aliquota": 0.147, "deduzir": 85500 },
+          { "ate": 4800000, "aliquota": 0.3, "deduzir": 720000 }
+        ]
+      },
+      "III": {
+        "nome": "Serviços (locação, instalação, manutenção, atividades com Fator R >= 28%)",
+        "cpp_incluida_no_das": true,
+        "faixas": [
+          { "ate": 180000, "aliquota": 0.06, "deduzir": 0 },
+          { "ate": 360000, "aliquota": 0.112, "deduzir": 9360 },
+          { "ate": 720000, "aliquota": 0.135, "deduzir": 17640 },
+          { "ate": 1800000, "aliquota": 0.16, "deduzir": 35640 },
+          { "ate": 3600000, "aliquota": 0.21, "deduzir": 125640 },
+          { "ate": 4800000, "aliquota": 0.33, "deduzir": 648000 }
+        ]
+      },
+      "IV": {
+        "nome": "Serviços (construção, vigilância, limpeza, advocacia); CPP fora do DAS",
+        "cpp_incluida_no_das": false,
+        "faixas": [
+          { "ate": 180000, "aliquota": 0.045, "deduzir": 0 },
+          { "ate": 360000, "aliquota": 0.09, "deduzir": 8100 },
+          { "ate": 720000, "aliquota": 0.102, "deduzir": 12420 },
+          { "ate": 1800000, "aliquota": 0.14, "deduzir": 39780 },
+          { "ate": 3600000, "aliquota": 0.22, "deduzir": 183780 },
+          { "ate": 4800000, "aliquota": 0.33, "deduzir": 828000 }
+        ]
+      },
+      "V": {
+        "nome": "Serviços intelectuais e técnicos com Fator R < 28%",
+        "cpp_incluida_no_das": true,
+        "faixas": [
+          { "ate": 180000, "aliquota": 0.155, "deduzir": 0 },
+          { "ate": 360000, "aliquota": 0.18, "deduzir": 4500 },
+          { "ate": 720000, "aliquota": 0.195, "deduzir": 9900 },
+          { "ate": 1800000, "aliquota": 0.205, "deduzir": 17100 },
+          { "ate": 3600000, "aliquota": 0.23, "deduzir": 62100 },
+          { "ate": 4800000, "aliquota": 0.305, "deduzir": 540000 }
+        ]
+      }
+    },
+    "fontes": [
+      "Anexos I, III e V: https://agilize.com.br/artigos/tabela-anexos-simples-nacional-2026/",
+      "Anexos II e IV: https://www.contabilizei.com.br/contabilidade-online/tabela-simples-nacional/",
+      "Limite e sublimite 2026: https://noticias.iob.com.br/?p=423",
+      "Oficial para conferir: Portal do Simples Nacional (www8.receita.fazenda.gov.br/simplesnacional) e LC 123/2006 no Planalto"
+    ]
+  },
+
+  "lucro_presumido": {
+    "status": "conferido_fonte_secundaria",
+    "base_legal": "Leis 9.249/1995 e 9.430/1996; RIR (Decreto 9.580/2018); LC 224/2025 (acréscimo de 10% na presunção)",
+    "limite_opcao_receita_anual": 78000000,
+    "irpj_aliquota": 0.15,
+    "irpj_adicional_aliquota": 0.1,
+    "irpj_adicional_limite_mensal": 20000,
+    "csll_aliquota": 0.09,
+    "pis_aliquota": 0.0065,
+    "cofins_aliquota": 0.03,
+    "presuncao": {
+      "comercio_industria": { "irpj": 0.08, "csll": 0.12, "descricao": "Comércio, indústria e atividades não listadas abaixo", "status": "conferido_fonte_secundaria" },
+      "servicos_gerais": { "irpj": 0.32, "csll": 0.32, "descricao": "Prestação de serviços em geral (não hospitalares, não transporte)", "status": "conferido_fonte_secundaria" },
+      "intermediacao_negocios": { "irpj": 0.32, "csll": 0.32, "descricao": "Intermediação de negócios, administração, locação e cessão de bens", "status": "conhecimento_previo_a_confirmar" },
+      "locacao_cessao_bens": { "irpj": 0.32, "csll": 0.32, "descricao": "Locação ou cessão de bens e direitos", "status": "conhecimento_previo_a_confirmar" },
+      "servicos_transporte_cargas": { "irpj": 0.08, "csll": 0.12, "descricao": "Transporte de cargas", "status": "conferido_fonte_secundaria" },
+      "servicos_transporte_passageiros": { "irpj": 0.16, "csll": 0.12, "descricao": "Transporte de passageiros", "status": "conhecimento_previo_a_confirmar" },
+      "servicos_hospitalares": { "irpj": 0.08, "csll": 0.12, "descricao": "Serviços hospitalares e equiparados, se cumpridas as exigências (sociedade empresária, normas da Anvisa)", "status": "conhecimento_previo_a_confirmar" },
+      "revenda_combustiveis": { "irpj": 0.016, "csll": 0.12, "descricao": "Revenda de combustíveis e gás natural", "status": "conferido_fonte_secundaria" }
+    },
+    "acrescimo_presuncao": {
+      "status": "a_confirmar",
+      "ativo": true,
+      "base_legal": "LC 224/2025, art. 12; IN RFB 2.306/2026 (citada em fonte secundária)",
+      "percentual": 0.1,
+      "limite_receita_anual": 5000000,
+      "criterio": "Acréscimo de 10% sobre o percentual de presunção, aplicado à parcela da receita bruta acumulada no ano que ultrapassar o limite.",
+      "vigencia_irpj": { "ano": 2026, "mes": 1 },
+      "vigencia_csll": { "ano": 2026, "mes": 4 },
+      "nota": "Datas de vigência vêm de fontes secundárias. O critério de apuração trimestral do excedente deve ser conferido na IN RFB. Fonte secundária informa que a regra é contestada na Justiça."
+    },
+    "fontes": [
+      "Alíquotas e presunção: https://triviumcontabil.com.br/lucro-presumido-como-funciona/",
+      "Cálculo e alíquotas: https://www.contabilidadezen.com.br/blog/lucro-presumido-aliquotas-calculo-2026/",
+      "Acréscimo LC 224/2025 (Receita Federal, texto do art. 12): https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/estudos/notas-cetad/notas-tecnicas/2026/nota-cetad-coest-no-009-2026",
+      "Datas e IN 2.306/2026: https://contadores.cnt.br/projetos/46/noticias/tecnicas/2026/05/12/lucro-presumido-em-2026-o-que-muda-com-a-in-2-306-2026-e-como-calcular-o-impacto-no-seu-cliente.html"
+    ]
+  },
+
+  "lucro_real": {
+    "status": "conhecimento_previo_a_confirmar",
+    "base_legal": "Leis 9.249/1995, 9.430/1996, 10.637/2002 e 10.833/2003; RIR (Decreto 9.580/2018)",
+    "apuracao": "trimestral",
+    "irpj_aliquota": 0.15,
+    "irpj_adicional_aliquota": 0.1,
+    "irpj_adicional_limite_mensal": 20000,
+    "csll_aliquota": 0.09,
+    "pis_aliquota": 0.0165,
+    "cofins_aliquota": 0.076,
+    "limite_compensacao_prejuizo": 0.3,
+    "nota": "A soma de PIS e COFINS (9,25%) aparece em fontes secundárias. As alíquotas separadas e o limite de 30% de compensação são de conhecimento prévio."
+  },
+
+  "encargos_folha": {
+    "status": "conhecimento_previo_a_confirmar",
+    "base_legal": "Lei 8.212/1991, art. 22; Lei 8.036/1990 (FGTS); LC 123/2006, art. 13, §3º (Simples dispensa contribuições a terceiros)",
+    "cpp_patronal": 0.2,
+    "fgts": 0.08,
+    "nota": "RAT/FAP e percentual de terceiros dependem do CNAE e do FPAS da empresa e são informados em dados-empresa.json."
+  },
+
+  "dividendos": {
+    "status": "conferido_fonte_secundaria",
+    "base_legal": "Lei 15.270/2025",
+    "vigencia_ano": 2026,
+    "retencao_aliquota": 0.1,
+    "limite_mensal_por_beneficiario": 50000,
+    "regra": "Retenção de IRRF de 10% sobre o total pago no mês quando uma mesma PJ paga mais que o limite a uma mesma pessoa física residente. A retenção é antecipação sujeita a ajuste na declaração anual.",
+    "simples_sujeito_retencao": false,
+    "simples_status": "a_confirmar",
+    "simples_nota": "Ponto controvertido nas fontes: a LC 123/2006 prevê isenção de lucros distribuídos pelo Simples e a Lei 15.270/2025 é lei ordinária. O motor calcula o valor hipotético e só soma ao total se este campo for true.",
+    "irpfm_limite_anual": 600000,
+    "irpfm_nota": "Tributação mínima anual de altas rendas (renda acima de R$ 600.000 por ano). Não calculada pelo motor; gera apenas aviso.",
+    "fontes": [
+      "https://www.contabeis.com.br/artigos/76397/entenda-sobre-a-tributacao-de-dividendos-em-2026/",
+      "https://www.portaltributario.com.br/noticias/instituido-tributacao-irpf-lucros-dividendos.htm"
+    ]
+  },
+
+  "reforma_consumo": {
+    "status": "conferido_fonte_secundaria",
+    "base_legal": "EC 132/2023; LC 214/2025",
+    "ano_teste": 2026,
+    "cbs_teste": 0.009,
+    "ibs_teste": 0.001,
+    "gera_carga_adicional_no_ano_teste": false,
+    "cronograma": "2026 teste (CBS 0,9% + IBS 0,1% informados nas notas). 2027 CBS passa a valer e PIS/COFINS são extintos. 2029 a 2032 transição do IBS substitui ICMS e ISS.",
+    "nota": "O motor não modela CBS/IBS a partir de 2027. Alíquota cheia depende de resolução do Senado.",
+    "fontes": [
+      "https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf",
+      "https://investnews.com.br/guias/ibs-e-cbs/"
+    ]
+  }
+}

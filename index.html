@@ -1,8 +1,11 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Comparativo Tributário</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <style>
   /* Layout: bancada de trabalho em coluna única. Faixa de abas no topo, três cartões de regime, tabelas largas em contêineres roláveis. */
   :root {
@@ -154,6 +157,21 @@
   .empty { padding: 28px 18px; border: 1px dashed var(--line); border-radius: 6px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
   .src { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
   ul.plain { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+
+  .nav-links { display: flex; gap: 14px; font-size: 14px; font-weight: 600; margin-top: 6px; }
+  .md { max-width: 900px; }
+  .md h1 { font-size: 26px; margin: 0 0 12px; }
+  .md h2 { font-size: 20px; margin: 28px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .md h3 { margin: 20px 0 8px; }
+  .md p, .md ul, .md ol { margin: 0 0 12px; max-width: none; }
+  .md li { margin: 3px 0; }
+  .md code { font: 12.5px var(--f-mono); background: var(--surface-2); padding: 1px 5px; border-radius: 3px; }
+  .md blockquote { margin: 0 0 12px; padding: 8px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 4px 4px 0; }
+  .md blockquote p { margin: 0; }
+  .md table { margin: 0 0 14px; }
+  .md .tablewrap { margin: 0 0 14px; }
+  .md .katex-display { overflow-x: auto; overflow-y: hidden; padding: 6px 0; }
+  .md hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
   @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 </style>
 
@@ -163,12 +181,16 @@
       <h1>Comparativo Tributário</h1>
       <p class="sub">Simples Nacional, Lucro Presumido e Lucro Real a partir de dois arquivos JSON.</p>
     </div>
-    <div class="meta-line" id="metaLine"></div>
+    <div>
+      <div class="meta-line" id="metaLine"></div>
+      <div class="nav-links"><a href="prompts.html">Prompts</a></div>
+    </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Seções">
     <button class="tab" role="tab" id="t-entradas" data-tab="entradas" aria-controls="tab-entradas">Entradas</button>
     <button class="tab" role="tab" id="t-resultado" data-tab="resultado" aria-controls="tab-resultado">Resultado</button>
+    <button class="tab" role="tab" id="t-formulas" data-tab="formulas" aria-controls="tab-formulas">Fórmulas</button>
     <button class="tab" role="tab" id="t-modelos" data-tab="modelos" aria-controls="tab-modelos">Modelos e divisão de tarefas</button>
   </nav>
 
@@ -213,6 +235,12 @@
     <!-- RESULTADO -->
     <section id="tab-resultado" role="tabpanel" aria-labelledby="t-resultado" class="stack" hidden>
       <div id="resultado"></div>
+    </section>
+
+    <!-- FÓRMULAS -->
+    <section id="tab-formulas" role="tabpanel" aria-labelledby="t-formulas" class="stack" hidden>
+      <p class="muted">Memória de cálculo em notação matemática, para validação pelo contador sem abrir o código. Texto do arquivo <a href="calculos.md">calculos.md</a>.</p>
+      <div class="md" id="mdFormulas"><p class="muted">Carregando...</p></div>
     </section>
 
     <!-- MODELOS -->
@@ -836,7 +864,7 @@
   var timer = null;
 
   /* ---------- abas ---------- */
-  var TABS = ['entradas', 'resultado', 'modelos'];
+  var TABS = ['entradas', 'resultado', 'formulas', 'modelos'];
   function showTab() {
     var h = (location.hash || '').replace('#', '');
     if (TABS.indexOf(h) < 0) h = 'resultado';
@@ -844,11 +872,66 @@
       $('tab-' + t).hidden = t !== h;
       $('t-' + t).setAttribute('aria-selected', t === h ? 'true' : 'false');
     });
+    if (h === 'formulas') carregarFormulas();
   }
   TABS.forEach(function (t) {
     $('t-' + t).addEventListener('click', function () { location.hash = t; });
   });
   window.addEventListener('hashchange', showTab);
+
+
+  /* ---------- fórmulas (calculos.md -> HTML com KaTeX) ---------- */
+  var fmState = 0;
+  function script(src) {
+    return new Promise(function (ok, fail) {
+      var s = document.createElement('script');
+      s.src = src; s.onload = ok; s.onerror = function () { fail(new Error('Falha ao carregar ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+  /* Tira as expressões $$..$$ e $..$ antes do Markdown (que estragaria _ e \\) e as devolve renderizadas. */
+  function mdComMatematica(md) {
+    var itens = [];
+    function guarda(tex, display) {
+      itens.push(window.katex.renderToString(tex, { displayMode: display, throwOnError: false }));
+      return 'KTX' + (itens.length - 1) + 'X';
+    }
+    md = md.replace(/\\\$/g, 'KTXDOLARX');
+    md = md.replace(/\$\$([\s\S]+?)\$\$/g, function (m, t) { return '\n\nKTXBLOCO' + guarda(t, true) + '\n\n'; });
+    md = md.replace(/\$([^$\n]+?)\$/g, function (m, t) { return guarda(t, false); });
+    var html = window.marked.parse(md);
+    html = html.replace(/<p>KTXBLOCO(KTX\d+X)<\/p>/g, '$1');
+    html = html.replace(/KTX(\d+)X/g, function (m, i) { return itens[+i]; });
+    html = html.replace(/KTXDOLARX/g, '$');
+    html = html.replace(/<table>/g, '<div class="tablewrap"><table>').replace(/<\/table>/g, '</table></div>');
+    return html;
+  }
+  function carregarFormulas() {
+    if (fmState) return;
+    fmState = 1;
+    var alvo = $('mdFormulas');
+    Promise.all([
+      script('https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js'),
+      script('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js'),
+      fetch('calculos.md').then(function (r) { if (!r.ok) throw new Error('calculos.md (' + r.status + ')'); return r.text(); })
+    ]).then(function (v) {
+      alvo.innerHTML = mdComMatematica(v[2]);
+      Array.prototype.forEach.call(alvo.querySelectorAll('h1,h2,h3'), function (el) {
+        el.id = el.textContent.toLowerCase().replace(/[^\p{L}\p{N} -]/gu, '').trim().replace(/ /g, '-');
+      });
+      alvo.addEventListener('click', function (e) {
+        var a = e.target.closest('a[href^="#"]');
+        if (!a) return;
+        e.preventDefault();
+        var t = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1)));
+        if (t) t.scrollIntoView();
+      });
+      fmState = 2;
+    }).catch(function (e) {
+      fmState = 0;
+      alvo.innerHTML = '<div class="msg warn">Não foi possível exibir as fórmulas aqui (' + esc(e.message) + '). Abra o <a href="calculos.md">calculos.md</a> diretamente. Pelo arquivo local (file://) o navegador bloqueia a leitura; use o GitHub Pages ou um servidor local.</div>';
+    });
+  }
 
   /* ---------- cópia ---------- */
   function copyText(text, btn, srcEl) {

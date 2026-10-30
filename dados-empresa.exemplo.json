@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "_aviso": "EXEMPLO FICTÍCIO para demonstração. Nenhum valor abaixo pertence a uma empresa real. Substitua tudo pelos dados do cliente.",
+  "ano_calendario": 2026,
+  "empresa": {
+    "identificacao": "Exemplo Serviços de Tecnologia Ltda (fictícia)",
+    "situacao": "ativa",
+    "uf": "RS",
+    "municipio": "Porto Alegre",
+    "cnae_principal": "6201-5/01"
+  },
+  "regimes_a_comparar": ["simples", "presumido", "real"],
+  "atividades": [
+    {
+      "id": "desenvolvimento_software",
+      "descricao": "Desenvolvimento de software sob encomenda",
+      "cnae": "6201-5/01",
+      "percentual_receita": 100,
+      "anexo_simples": "III_ou_V_fator_r",
+      "tipo_presumido": "servicos_gerais",
+      "iss_percentual": 3,
+      "icms_liquido_percentual_receita": 0
+    }
+  ],
+  "receitas": {
+    "historico_12_meses_anteriores": [40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000, 40000],
+    "simulacao_12_meses": [42000, 42000, 42000, 45000, 45000, 45000, 48000, 48000, 48000, 50000, 50000, 50000]
+  },
+  "custos": {
+    "compras_insumos_mensal": 0,
+    "compras_com_direito_credito_pis_cofins_mensal": 0,
+    "outras_despesas_operacionais_mensal": 6000,
+    "despesas_com_direito_credito_pis_cofins_mensal": 2000
+  },
+  "folha": {
+    "salarios_empregados_mensal": 12000,
+    "prolabore_total_mensal": 8000,
+    "rat_percentual": 1,
+    "terceiros_percentual": 5.8,
+    "folha_historico_12m_fator_r": 251520
+  },
+  "socios": {
+    "quantidade": 2,
+    "distribuicao_mensal_por_socio": 4000,
+    "isento_lucros_ate_2025_mensal_por_socio": 0
+  },
+  "lucro_real": {
+    "prejuizo_fiscal_acumulado": 0,
+    "ajustes_adicoes_exclusoes_mensal": 0
+  },
+  "meta": {
+    "atividades[0].anexo_simples": {
+      "origem": "inferido_ia",
+      "confianca": "media",
+      "justificativa": "Desenvolvimento de software sob encomenda tende a ser Anexo V, com migração ao Anexo III se o Fator R for de 28% ou mais.",
+      "fonte": "Resolução CGSN 140/2018 (ilustrativo neste exemplo)"
+    },
+    "atividades[0].iss_percentual": {
+      "origem": "inferido_ia",
+      "confianca": "baixa",
+      "justificativa": "Valor ilustrativo. A alíquota de ISS do município deve ser conferida na lei municipal.",
+      "fonte": "Lei municipal de ISS (a consultar)"
+    },
+    "folha.rat_percentual": {
+      "origem": "inferido_ia",
+      "confianca": "media",
+      "justificativa": "RAT de 1% (grau de risco leve) e FAP 1,0 assumidos para o CNAE. Conferir o FAP da empresa.",
+      "fonte": "Decreto 3.048/1999, Anexo V (ilustrativo neste exemplo)"
+    },
+    "folha.terceiros_percentual": {
+      "origem": "premissa",
+      "confianca": "media",
+      "justificativa": "5,8% assumido para o enquadramento de FPAS usual em serviços. Conferir o código FPAS da empresa.",
+      "fonte": "Tabela de FPAS (a consultar)"
+    },
+    "receitas.simulacao_12_meses": {
+      "origem": "premissa",
+      "confianca": "media",
+      "justificativa": "Crescimento escalonado de 42 mil a 50 mil por mês, ilustrativo.",
+      "fonte": ""
+    }
+  }
+}

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompts - Comparativo Tributário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #eef2ee; --surface: #f8faf7; --surface-2: #e6ece7; --ink: #14231c; --ink-2: #47594f; --line: #cbd6cd;
+    --accent: #1d6b4f; --accent-ink: #ffffff; --accent-soft: #d9eadf;
+    --warn: #8a5200; --warn-bg: #f8ecd3; --bad: #a3322b; --bad-bg: #f6dedb; --info: #2b5d8a; --info-bg: #dce9f5;
+    --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+    --f-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
+      --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
+      --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
+    --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
+    --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body);
+    padding-block: 20px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .shell { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  h1, h2 { font-family: var(--f-display); margin: 0; line-height: 1.15; text-wrap: balance; }
+  h1 { font-size: 30px; letter-spacing: -0.01em; }
+  h2 { font-size: 21px; }
+  p { margin: 0; max-width: 70ch; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .muted, .caption { color: var(--ink-2); }
+  .caption { font-size: 13px; }
+  .top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
+  .top .sub { color: var(--ink-2); margin-top: 4px; }
+  .nav { display: flex; gap: 14px; font-size: 14px; font-weight: 600; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tab { appearance: none; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 10px 14px; font: 600 14px var(--f-body); color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; align-items: start; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-weight: 600; font-size: 13.5px; }
+  .field label code { font: 500 11.5px var(--f-mono); color: var(--ink-2); font-weight: 400; }
+  input[type="text"], input[type="date"], input[type="number"], select, textarea {
+    width: 100%; min-width: 0; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px;
+    padding: 8px 10px; font: 14px var(--f-body);
+  }
+  textarea { font: 12.5px/1.5 var(--f-mono); resize: vertical; min-height: 110px; tab-size: 2; }
+  textarea.big { min-height: 200px; }
+
+  .btn { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 13px var(--f-body); padding: 7px 12px; border-radius: 4px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; padding: 9px 18px; font-size: 14px; }
+  .btn input { display: none; }
+
+  .chip { display: inline-block; font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; }
+  .chip.ok { background: var(--accent-soft); color: var(--accent); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
+
+  pre.out { margin: 0; padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; overflow: auto; max-height: 560px; font: 12px/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  mark.ph { background: var(--warn-bg); color: var(--warn); border-radius: 2px; padding: 0 2px; }
+  .banner { padding: 10px 14px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); font-size: 14px; }
+  .sticky-copy { position: sticky; top: 0; z-index: 2; background: var(--surface); padding-block: 4px; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div>
+      <h1>Prompts</h1>
+      <p class="sub">Preencha os campos, confira a prévia e copie o prompt completo com um clique.</p>
+    </div>
+    <nav class="nav" aria-label="Páginas">
+      <a href="index.html">Comparativo</a>
+      <a href="index.html#formulas">Fórmulas</a>
+    </nav>
+  </header>
+
+  <div class="banner" id="loadErr" hidden></div>
+
+  <nav class="tabs" role="tablist" aria-label="Prompts">
+    <button class="tab" role="tab" id="t-p1" data-tab="p1" aria-controls="tab-p1">1. Alíquotas e regras</button>
+    <button class="tab" role="tab" id="t-p2" data-tab="p2" aria-controls="tab-p2">2. Dados da empresa</button>
+  </nav>
+
+  <main>
+    <section id="tab-p1" role="tabpanel" aria-labelledby="t-p1" hidden>
+      <p class="muted" style="margin-bottom:16px">Use quando uma norma mudar e a cada virada de ano. Exige um assistente com acesso à web.</p>
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Campos</h2>
+          <div class="field"><label for="p1-DATA_DE_HOJE">Data de hoje <code>[[DATA_DE_HOJE]]</code></label><input type="date" id="p1-DATA_DE_HOJE" data-key="DATA_DE_HOJE"></div>
+          <div class="field"><label for="p1-ANO_CALENDARIO">Ano-calendário <code>[[ANO_CALENDARIO]]</code></label><input type="number" id="p1-ANO_CALENDARIO" data-key="ANO_CALENDARIO" min="2000" max="2100"></div>
+          <div class="field">
+            <label for="p1-COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL">aliquotas.json atual <code>[[COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL]]</code></label>
+            <textarea class="big" id="p1-COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL" data-key="COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL" spellcheck="false"></textarea>
+            <div class="toolbar">
+              <label class="btn">Carregar arquivo<input type="file" accept=".json,application/json" data-file="COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL"></label>
+              <button class="btn" type="button" data-reset="COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL">Restaurar padrão</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head sticky-copy">
+            <h2>Prompt pronto</h2>
+            <div class="toolbar"><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+          </div>
+          <pre class="out" data-out></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-p2" role="tabpanel" aria-labelledby="t-p2" hidden>
+      <p class="muted" style="margin-bottom:16px">Use uma vez por cliente e a cada nova simulação. Os dois JSON vêm preenchidos com os modelos do projeto.</p>
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Campos</h2>
+          <div class="field"><label for="p2-DATA_DE_HOJE">Data de hoje <code>[[DATA_DE_HOJE]]</code></label><input type="date" id="p2-DATA_DE_HOJE" data-key="DATA_DE_HOJE"></div>
+          <div class="field"><label for="p2-ANO_CALENDARIO">Ano-calendário simulado <code>[[ANO_CALENDARIO]]</code></label><input type="number" id="p2-ANO_CALENDARIO" data-key="ANO_CALENDARIO" min="2000" max="2100"></div>
+          <div class="field">
+            <label for="p2-SITUACAO">Situação <code>[[ATIVA ou EM_ABERTURA]]</code></label>
+            <select id="p2-SITUACAO" data-key="ATIVA ou EM_ABERTURA"><option value="">Selecione</option><option value="ATIVA">ATIVA</option><option value="EM_ABERTURA">EM_ABERTURA</option></select>
+          </div>
+          <div class="field">
+            <label for="p2-MATERIAL_DO_CLIENTE">Material do cliente <code>[[MATERIAL_DO_CLIENTE]]</code></label>
+            <textarea class="big" id="p2-MATERIAL_DO_CLIENTE" data-key="MATERIAL_DO_CLIENTE" spellcheck="false" placeholder="Cartão CNPJ, contrato social, faturamento mensal, folha, balancete, relação de despesas"></textarea>
+          </div>
+          <div class="field">
+            <label for="p2-PREMISSAS_DO_CONTADOR">Premissas do contador <code>[[PREMISSAS_DO_CONTADOR]]</code></label>
+            <textarea id="p2-PREMISSAS_DO_CONTADOR" data-key="PREMISSAS_DO_CONTADOR" spellcheck="false" placeholder="Crescimento, quantidade de sócios, distribuição de lucros desejada. Se não houver, escreva: nenhuma."></textarea>
+          </div>
+          <div class="field">
+            <label for="p2-COLE_O_ALIQUOTAS_JSON">aliquotas.json <code>[[COLE_O_ALIQUOTAS_JSON]]</code></label>
+            <textarea id="p2-COLE_O_ALIQUOTAS_JSON" data-key="COLE_O_ALIQUOTAS_JSON" spellcheck="false"></textarea>
+            <div class="toolbar">
+              <label class="btn">Carregar arquivo<input type="file" accept=".json,application/json" data-file="COLE_O_ALIQUOTAS_JSON"></label>
+              <button class="btn" type="button" data-reset="COLE_O_ALIQUOTAS_JSON">Restaurar padrão</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="p2-COLE_O_TEMPLATE">Modelo dados-empresa.template.json <code>[[COLE_O_TEMPLATE]]</code></label>
+            <textarea id="p2-COLE_O_TEMPLATE" data-key="COLE_O_TEMPLATE" spellcheck="false"></textarea>
+            <div class="toolbar">
+              <label class="btn">Carregar arquivo<input type="file" accept=".json,application/json" data-file="COLE_O_TEMPLATE"></label>
+              <button class="btn" type="button" data-reset="COLE_O_TEMPLATE">Restaurar padrão</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head sticky-copy">
+            <h2>Prompt pronto</h2>
+            <div class="toolbar"><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+          </div>
+          <pre class="out" data-out></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  /*
+   * Fonte única dos textos: os arquivos .md e .json do repositório são lidos com fetch.
+   * Cada campo [[CHAVE]] do prompt é substituído pelo valor do formulário com a chave de mesmo nome.
+   */
+  var PROMPTS = {
+    p1: { arquivo: 'prompt-1-aliquotas.md' },
+    p2: { arquivo: 'prompt-2-dados-empresa.md' }
+  };
+  var DEFAULTS = {
+    COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL: 'aliquotas.json',
+    COLE_O_ALIQUOTAS_JSON: 'aliquotas.json',
+    COLE_O_TEMPLATE: 'dados-empresa.template.json'
+  };
+  var PH = /\[\[([^\]]+)\]\]/g;
+  var TABS = ['p1', 'p2'];
+  var defaults = {};
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function hoje() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  function carregar(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error(url + ' (' + r.status + ')');
+      return r.text();
+    });
+  }
+
+  /* O corpo do prompt é o que vem depois da primeira linha "---" do arquivo. */
+  function corpo(md) {
+    var i = md.search(/^---\s*$/m);
+    return (i >= 0 ? md.slice(md.indexOf('\n', i) + 1) : md).trim();
+  }
+
+  function valores(sec) {
+    var v = {};
+    Array.prototype.forEach.call(sec.querySelectorAll('[data-key]'), function (el) { v[el.getAttribute('data-key')] = el.value.trim(); });
+    return v;
+  }
+
+  function render(id) {
+    var P = PROMPTS[id], sec = $('tab-' + id);
+    if (!P.texto) return;
+    var v = valores(sec), faltando = {};
+    var plain = P.texto.replace(PH, function (m, k) {
+      if (v[k]) return v[k];
+      faltando[k] = 1;
+      return m;
+    });
+    var html = esc(P.texto).replace(/\[\[([^\]]+)\]\]/g, function (m, k) {
+      if (v[k]) return esc(v[k]);
+      return '<mark class="ph">' + m + '</mark>';
+    });
+    sec.querySelector('[data-out]').innerHTML = html;
+    var n = Object.keys(faltando).length, st = sec.querySelector('[data-status]');
+    st.className = 'chip ' + (n ? 'warn' : 'ok');
+    st.textContent = n ? n + (n === 1 ? ' campo vazio' : ' campos vazios') : 'Completo';
+    P.pronto = plain;
+  }
+
+  function copiar(texto, btn) {
+    var label = btn.textContent;
+    function fim(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = label; }, 1800); }
+    function alt() {
+      var ta = document.createElement('textarea');
+      ta.value = texto; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); fim('Copiado'); } catch (e) { fim('Não foi possível copiar'); }
+      document.body.removeChild(ta);
+    }
+    try { navigator.clipboard.writeText(texto).then(function () { fim('Copiado'); }, alt); } catch (e) { alt(); }
+  }
+
+  function showTab() {
+    var h = (location.hash || '').replace('#', '');
+    if (TABS.indexOf(h) < 0) h = 'p1';
+    TABS.forEach(function (t) {
+      $('tab-' + t).hidden = t !== h;
+      $('t-' + t).setAttribute('aria-selected', t === h ? 'true' : 'false');
+    });
+  }
+  TABS.forEach(function (t) { $('t-' + t).addEventListener('click', function () { location.hash = t; }); });
+  window.addEventListener('hashchange', showTab);
+
+  TABS.forEach(function (id) {
+    var sec = $('tab-' + id);
+    sec.addEventListener('input', function () { render(id); });
+    sec.addEventListener('change', function (e) {
+      var el = e.target;
+      if (el.type !== 'file' || !el.files || !el.files[0]) return;
+      var alvo = sec.querySelector('[data-key="' + el.getAttribute('data-file') + '"]');
+      var rd = new FileReader();
+      rd.onload = function () { alvo.value = String(rd.result); el.value = ''; render(id); };
+      rd.readAsText(el.files[0]);
+    });
+    sec.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      if (b.hasAttribute('data-copy-prompt')) { render(id); copiar(PROMPTS[id].pronto || '', b); }
+      if (b.hasAttribute('data-reset')) {
+        var k = b.getAttribute('data-reset');
+        sec.querySelector('[data-key="' + k + '"]').value = defaults[k] || '';
+        render(id);
+      }
+    });
+    var ano = sec.querySelector('[data-key="ANO_CALENDARIO"]');
+    ano.value = new Date().getFullYear();
+    sec.querySelector('[data-key="DATA_DE_HOJE"]').value = hoje();
+  });
+
+  var erros = [];
+  var pedidos = [];
+  Object.keys(PROMPTS).forEach(function (id) {
+    pedidos.push(carregar(PROMPTS[id].arquivo).then(function (t) { PROMPTS[id].texto = corpo(t); }, function (e) { erros.push(e.message); }));
+  });
+  Object.keys(DEFAULTS).forEach(function (k) {
+    pedidos.push(carregar(DEFAULTS[k]).then(function (t) {
+      defaults[k] = t.trim();
+      Array.prototype.forEach.call(document.querySelectorAll('[data-key="' + k + '"]'), function (el) { if (!el.value) el.value = defaults[k]; });
+    }, function (e) { erros.push(e.message); }));
+  });
+  showTab();
+  Promise.all(pedidos).then(function () {
+    if (erros.length) {
+      var b = $('loadErr');
+      b.hidden = false;
+      b.textContent = 'Não foi possível carregar: ' + erros.join(', ') + '. Abra esta página por um servidor (GitHub Pages ou "python3 -m http.server"), não direto do arquivo.';
+    }
+    TABS.forEach(render);
+  });
+})();
+</script>
+</body>
+</html>

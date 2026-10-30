@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "_instrucoes": "Preencha todos os campos com null ou 0. Percentuais em unidades de percentual (2 = 2%). Valores em R$. Campos mensais aceitam um número (vale para os 12 meses) ou uma lista com 12 números. Em 'meta', registre a origem de cada campo que não veio direto de documento do cliente.",
+  "ano_calendario": null,
+  "empresa": {
+    "identificacao": "",
+    "situacao": "ativa",
+    "uf": "",
+    "municipio": "",
+    "cnae_principal": ""
+  },
+  "regimes_a_comparar": ["simples", "presumido", "real"],
+  "atividades": [
+    {
+      "id": "",
+      "descricao": "",
+      "cnae": "",
+      "percentual_receita": 100,
+      "anexo_simples": "I | II | III | IV | V | III_ou_V_fator_r | vedado",
+      "tipo_presumido": "comercio_industria | servicos_gerais | intermediacao_negocios | locacao_cessao_bens | servicos_transporte_cargas | servicos_transporte_passageiros | servicos_hospitalares | revenda_combustiveis",
+      "iss_percentual": null,
+      "icms_liquido_percentual_receita": null
+    }
+  ],
+  "receitas": {
+    "historico_12_meses_anteriores": [null, null, null, null, null, null, null, null, null, null, null, null],
+    "simulacao_12_meses": [null, null, null, null, null, null, null, null, null, null, null, null]
+  },
+  "custos": {
+    "compras_insumos_mensal": null,
+    "compras_com_direito_credito_pis_cofins_mensal": null,
+    "outras_despesas_operacionais_mensal": null,
+    "despesas_com_direito_credito_pis_cofins_mensal": null
+  },
+  "folha": {
+    "salarios_empregados_mensal": null,
+    "prolabore_total_mensal": null,
+    "rat_percentual": null,
+    "terceiros_percentual": null,
+    "folha_historico_12m_fator_r": null
+  },
+  "socios": {
+    "quantidade": null,
+    "distribuicao_mensal_por_socio": null,
+    "isento_lucros_ate_2025_mensal_por_socio": 0
+  },
+  "lucro_real": {
+    "prejuizo_fiscal_acumulado": 0,
+    "ajustes_adicoes_exclusoes_mensal": 0
+  },
+  "meta": {
+    "caminho.do.campo": {
+      "origem": "informado | extraido_de_documento | inferido_ia | premissa",
+      "confianca": "alta | media | baixa",
+      "justificativa": "",
+      "fonte": ""
+    }
+  }
+}
