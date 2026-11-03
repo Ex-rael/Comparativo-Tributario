@@ -11,16 +11,24 @@ O trabalho é dividido em camadas, para que o cálculo seja sempre o mesmo para 
 | Camada | Quem executa | Risco principal |
 |---|---|---|
 | **Cálculo** (RBT12, Fator R, bases, IRPJ, CSLL, PIS, COFINS, CPP, retenção sobre lucros, sensibilidade) | JavaScript da página | Regra que o motor não modela |
-| **Regras** (`aliquotas.json`) | IA consulta fonte oficial, contador valida | Valor desatualizado |
-| **Dados deduzidos** (anexo, tipo de atividade, ISS, RAT, terceiros) | IA infere e registra origem e confiança em `meta`, contador revisa | Inferência errada com cara de certeza |
-| **Dados do cliente** (receitas, folha, sócios, custos) | Vêm de documentos do cliente. A IA só organiza | Número digitado errado |
+| **Regras** (`aliquotas.json`) | IA consulta fonte oficial (prompt 1), contador valida na aba **Alíquotas** | Valor desatualizado |
+| **Classificação** (CNAE, anexo, tipo de presunção, ISS, RAT, terceiros) | Contador escolhe na ficha. CNAE e município conferidos na API do IBGE | Enquadramento escolhido errado |
+| **Dados do cliente** (receitas, folha, sócios, custos) | Totais digitados na ficha. O `ficha.js` gera o JSON, sem IA | Número digitado errado |
+
+O `dados-empresa.json` sai da ficha por código determinístico: a mesma ficha gera sempre o mesmo JSON. A IA fica opcional, para pesquisar alíquotas e como alternativa à ficha.
 
 ## Páginas
 
 | Página | Para quê |
 |---|---|
-| **`index.html`** | Aba **Entradas** (cole ou carregue os dois JSON, com validação), **Resultado** (cartões por regime, comparativo item a item, memória de cálculo mês a mês, sensibilidade e avisos), **Fórmulas** (a memória de cálculo em LaTeX) e **Modelos** |
-| **`prompts.html`** | Formulários que montam os dois prompts prontos para colar numa IA, com um clique em **Copiar prompt** |
+| **`index.html`** | Aba **Entradas** (cole ou carregue os dois JSON, com validação), **Alíquotas** (tabela editável do `aliquotas.json`), **Resultado** (cartões por regime, comparativo item a item, memória de cálculo, sensibilidade e avisos), **Fórmulas** (a memória de cálculo em LaTeX) e **Modelos** |
+| **`prompts.html`** (Ficha e prompts) | A **ficha do cliente**, que gera o `dados-empresa.json` sem IA, e os dois prompts prontos para colar numa IA |
+
+### Aba Alíquotas
+- Mostra o `aliquotas.json` carregado em tabelas por bloco: Simples (com as 6 faixas de cada anexo), Presumido (com a tabela de presunção), Real, encargos de folha, lucros distribuídos e reforma do consumo.
+- Percentuais aparecem em %, valores em R$. Cada bloco traz o status, a base legal, a nota e as fontes.
+- **Edite direto na célula.** O JSON e o resultado se atualizam na hora, sem enviar formulário. Células alteradas ficam destacadas e a lista "Alterações desta sessão" mostra cada valor antigo e novo.
+- **Copiar JSON alterado** leva o arquivo completo para a área de transferência. **Desfazer alterações** volta ao JSON carregado.
 
 ### Aba Resultado
 - Cartões com a carga total e o percentual da receita de cada regime, destacando o de menor carga entre os elegíveis.
@@ -30,18 +38,21 @@ O trabalho é dividido em camadas, para que o cálculo seja sempre o mesmo para 
 ### Aba Fórmulas e `calculos.md`
 Toda a aritmética do motor está descrita em [`calculos.md`](calculos.md), em Markdown com LaTeX, para o contador validar sem abrir o código. O arquivo renderiza no GitHub e na aba **Fórmulas**. Inclui um exemplo numérico conferível à mão.
 
-### Página de prompts
+### Ficha e prompts
+- **Ficha do cliente** (aba 2): totais e códigos, sem documentos, CNPJ, nomes ou CPFs. O `dados-empresa.json` aparece à direita, gerado na hora pelo `ficha.js`, com a lista de **Pendências** e a validação do motor.
+- **CNAE e município** são conferidos na API pública do IBGE, direto do navegador. O anexo do Simples e o tipo de presunção são escolhidos pelo contador em listas fechadas.
+- **Premissas fixas**, sempre registradas em `meta`: ISS em branco vira 0 em comércio, ICMS em branco vira 0 em serviço, e sem receita simulada repete-se o histórico (com o crescimento informado, se houver).
+- **Usar no Comparativo** abre o `index.html` já com os dados. **Copiar JSON** é a alternativa.
+- **Preencher com exemplo** carrega uma empresa fictícia. CPF, CNPJ e e-mail digitados em texto livre são mascarados localmente.
 - **Prompt 1** (alíquotas e regras): use quando uma norma mudar e a cada virada de ano. Exige um assistente com acesso à web.
-- **Prompt 2** (dados da empresa): uma **ficha estruturada** de totais e códigos, sem documentos, CNPJ, nomes ou CPFs. Campos em branco viram "não informado" e a IA devolve como pendência. CPF, CNPJ e e-mail digitados em texto livre são mascarados localmente.
-- **Preencher com exemplo** carrega uma empresa fictícia para ver a ficha completa.
-- Cada campo mostra uma estimativa de tokens, e o prompt pronto mostra o total.
+- **Prompt 2** (dados da empresa): alternativa à ficha, em que a IA monta o JSON. Mostra uma estimativa de tokens por campo e no total.
 
 ## Como usar
 
-1. **Alíquotas.** Abra `prompts.html`, aba 1, copie o prompt e cole numa IA com acesso à web. Salve o JSON devolvido como `aliquotas.json` (ou use o padrão do repositório). O contador valida os blocos marcados `a_confirmar`.
-2. **Dados da empresa.** Na aba 2, preencha a ficha, copie o prompt e cole numa IA. A IA devolve o `dados-empresa.json`, uma lista de pendências e a tabela de campos deduzidos.
-3. **Comparar.** No `index.html`, aba **Entradas**, cole os dois JSON. A validação aparece ao lado de cada um.
-4. **Revisar.** Revise as pendências e os campos com confiança baixa. Só então leia a aba **Resultado**.
+1. **Alíquotas.** Use o `aliquotas.json` do repositório, ou atualize-o com o prompt 1 numa IA com acesso à web. O contador confere e ajusta os valores na aba **Alíquotas** e copia o JSON final.
+2. **Dados da empresa.** Em `prompts.html`, aba 2, preencha a ficha e resolva as pendências.
+3. **Comparar.** Clique em **Usar no Comparativo**, ou cole o JSON no campo 2 da aba **Entradas** do `index.html`.
+4. **Revisar.** Revise as premissas em `meta` e os avisos. Só então leia a aba **Resultado**.
 
 Para ver o fluxo sem dados reais, use **Carregar exemplo** na aba Entradas.
 
@@ -49,8 +60,11 @@ Para ver o fluxo sem dados reais, use **Carregar exemplo** na aba Entradas.
 
 | Arquivo | Conteúdo |
 |---|---|
-| `index.html` | Motor de cálculo (`CTEngine`) e interface do comparativo |
-| `prompts.html` | Formulários dos prompts |
+| `index.html` | Interface do comparativo |
+| `motor.js` | Motor de cálculo (`CTEngine`), usado pelas duas páginas |
+| `ficha.js` | Compilador determinístico da ficha para o `dados-empresa.json` (`CTFicha`) |
+| `prompts.html` | Ficha do cliente e prompts |
+| `docs/avaliacao-apis.md` | Testes de viabilidade das APIs do IBGE (CNAE) e da NFS-e (ISS) |
 | `calculos.md` | Memória de cálculo em LaTeX |
 | `aliquotas.json` | Alíquotas, faixas, limites e vigências, cada bloco com `status` e `fontes` |
 | `dados-empresa.template.json` | Modelo em branco dos dados da empresa |
@@ -66,7 +80,7 @@ python3 -m http.server 8000
 # abra http://localhost:8000/index.html
 ```
 
-O motor também roda no Node: o script do `index.html` exporta `calcular`, `validar` e `sensibilidade` via `module.exports`.
+O motor e o compilador também rodam no Node: `require('./motor.js')` exporta `calcular`, `validar` e `sensibilidade`, e `require('./ficha.js')` exporta `compilarFicha`.
 
 ## Publicar no GitHub Pages
 
@@ -81,6 +95,18 @@ Em **Settings → Pages**, escolha a branch `main` e a raiz do repositório. Nã
 ## Limitações
 
 Fora do escopo do motor: partilha de ICMS e ISS acima do sublimite do Simples, ICMS-ST, produtos monofásicos, exportação, incentivos fiscais, JCP, parcelamentos, retenções na fonte sobre serviços, IRPFM, saldo credor de PIS e COFINS entre meses, compensação de CBS e IBS com os tributos atuais e cronograma de transição do IBS. A lista completa está na seção final do [`calculos.md`](calculos.md) e na aba Resultado.
+
+## APIs externas
+
+Só a API pública do IBGE, chamada direto do navegador (CORS liberado, sem autenticação): classificação CNAE e lista de municípios. Sem internet, a ficha funciona normalmente e só deixa de conferir esses dois campos.
+
+As APIs do Sistema Nacional NFS-e (parâmetros municipais de ISS) exigem certificado digital ICP-Brasil e não servem a um site estático. Detalhes em [`docs/avaliacao-apis.md`](docs/avaliacao-apis.md).
+
+## Próximos passos
+
+- **Preenchimento da ficha auxiliado por IA:** a IA leria os documentos do cliente e proporia os valores da ficha, para o contador revisar antes de gerar o JSON. O JSON continuaria saindo do `ficha.js`, sem IA.
+- **Tabela `cnae.json`:** CNAE → anexo do Simples, Fator R, vedação e grau de RAT, validada pelo contador, para a ficha sugerir o enquadramento.
+- **Tabela de ISS do escritório:** município (código IBGE) × item da LC 116 → alíquota.
 
 ## Licença
 

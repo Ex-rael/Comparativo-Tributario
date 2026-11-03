@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Prompts - Comparativo Tributário</title>
+<title>Ficha e prompts - Comparativo Tributário</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -99,6 +99,20 @@
   .hint { font: 12px var(--f-mono); color: var(--ink-2); }
   .hint.warn { color: var(--warn); }
   .banner.info { background: var(--info-bg); color: var(--info); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .seg button { appearance: none; border: 0; background: var(--surface); color: var(--ink-2); font: 600 13px var(--f-body); padding: 8px 12px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .ativ .full { grid-column: 1 / -1; }
+  .checks { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
+  .checks label { display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
+  .pend { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+  .pend code { font: 11.5px var(--f-mono); color: var(--ink-2); }
+  .msg { font-size: 13px; padding: 7px 10px; border-radius: 4px; }
+  .msg.err { background: var(--bad-bg); color: var(--bad); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn); }
+  .msg.ok { background: var(--accent-soft); color: var(--accent); }
+  .chip.err { background: var(--bad-bg); color: var(--bad); }
   .tok { font: 12px var(--f-mono); color: var(--ink-2); text-align: right; }
   .tok-total { font: 500 12px var(--f-mono); color: var(--ink-2); }
   mark.ph { background: var(--warn-bg); color: var(--warn); border-radius: 2px; padding: 0 2px; }
@@ -111,8 +125,8 @@
 <div class="shell">
   <header class="top">
     <div>
-      <h1>Prompts</h1>
-      <p class="sub">Preencha os campos, confira a prévia e copie o prompt completo com um clique.</p>
+      <h1>Ficha e prompts</h1>
+      <p class="sub">Monte o dados-empresa.json a partir da ficha do cliente, sem IA, ou copie os prompts prontos.</p>
     </div>
     <nav class="nav" aria-label="Páginas">
       <a href="index.html">Comparativo</a>
@@ -124,7 +138,7 @@
 
   <nav class="tabs" role="tablist" aria-label="Prompts">
     <button class="tab" role="tab" id="t-p1" data-tab="p1" aria-controls="tab-p1">1. Alíquotas e regras</button>
-    <button class="tab" role="tab" id="t-p2" data-tab="p2" aria-controls="tab-p2">2. Dados da empresa</button>
+    <button class="tab" role="tab" id="t-p2" data-tab="p2" aria-controls="tab-p2">2. Dados da empresa (ficha)</button>
   </nav>
 
   <main>
@@ -167,18 +181,18 @@
     </section>
 
     <section id="tab-p2" role="tabpanel" aria-labelledby="t-p2" hidden>
-      <p class="muted" style="margin-bottom:12px">Use uma vez por cliente e a cada nova simulação. Os dois JSON vêm preenchidos com os modelos do projeto.</p>
+      <p class="muted" style="margin-bottom:12px">Use uma vez por cliente e a cada nova simulação. A ficha gera o dados-empresa.json direto no navegador.</p>
       <details class="guia" open>
         <summary>Como usar, em 6 passos</summary>
         <ol>
-          <li>Escolha o <b>ano</b> e a <b>situação</b> (ATIVA ou EM_ABERTURA).</li>
+          <li>Escolha o <b>ano</b>, a <b>situação</b> (ATIVA ou EM_ABERTURA) e os <b>regimes</b> a comparar.</li>
           <li>Preencha a <b>ficha</b> com <b>totais e códigos</b>, tirados da folha, do faturamento e do balancete. Não cole documentos, CNPJ, nomes nem CPFs.</li>
+          <li>Em cada atividade, digite o <b>CNAE</b>: a página confere no IBGE e traz a descrição oficial. Escolha o <b>anexo do Simples</b> e o <b>tipo de presunção</b>.</li>
           <li>Cole listas direto do Excel (uma coluna de 12 meses). A página confere a contagem e a soma.</li>
-          <li>Campos em branco viram "não informado" e a IA devolve como pendência. Confira o resumo no topo da ficha.</li>
-          <li>Clique em <b>Copiar prompt</b> e cole num assistente de IA. Os dois JSON (alíquotas e modelo) já vão junto.</li>
-          <li>Cole o JSON devolvido no campo 2 da aba <b>Entradas</b> do <a href="index.html#entradas">Comparativo</a>. Revise as pendências e os campos de confiança baixa antes de olhar o <b>Resultado</b>.</li>
+          <li>À direita, o <b>dados-empresa.json</b> é gerado na hora. Resolva o que aparecer em <b>Pendências</b>.</li>
+          <li>Clique em <b>Usar no Comparativo</b> para abrir o resultado com esses dados, ou copie o JSON.</li>
         </ol>
-        <p class="note">Sem Lucro Real na comparação, os campos de custos podem ficar em branco.</p>
+        <p class="note">Sem Lucro Real na comparação, os custos podem ficar em branco. O <b>Prompt para IA</b> continua disponível como alternativa. Planejado: preenchimento da ficha auxiliado por IA a partir dos documentos do cliente, com revisão do contador.</p>
       </details>
       <div style="height:16px"></div>
       <div class="grid-2">
@@ -190,20 +204,27 @@
             <label for="p2-SITUACAO">Situação <code>[[ATIVA ou EM_ABERTURA]]</code></label>
             <select id="p2-SITUACAO" data-key="ATIVA ou EM_ABERTURA"><option value="">Selecione</option><option value="ATIVA">ATIVA</option><option value="EM_ABERTURA">EM_ABERTURA</option></select>
           </div>
-          <div class="banner info">Preencha apenas <b>totais e códigos</b>. Não cole documentos, CNPJ, e-mail, endereço, nomes nem CPFs: o motor não usa nada disso. Campo em branco vira "não informado" e a IA devolve como pendência.</div>
+          <div class="banner info">Preencha apenas <b>totais e códigos</b>. Não cole documentos, CNPJ, e-mail, endereço, nomes nem CPFs: o motor não usa nada disso. O <b>dados-empresa.json</b> é gerado na hora, sem IA. Campo em branco vira <code>null</code> e aparece em <b>Pendências</b>.</div>
           <div class="toolbar"><button class="btn" type="button" data-exemplo>Preencher com exemplo</button><button class="btn" type="button" data-limpar>Limpar ficha</button><span class="chip ok" id="f-status"></span><span class="tok-total" id="f-tok"></span></div>
 
           <fieldset><legend>Empresa</legend>
             <div class="row">
               <div class="field"><label for="f-apelido">Apelido <code>sem razão social</code></label><input type="text" id="f-apelido" data-f="apelido" data-free></div>
               <div class="field"><label for="f-uf">UF</label><input type="text" id="f-uf" data-f="uf" maxlength="2" style="text-transform:uppercase"></div>
-              <div class="field"><label for="f-municipio">Município</label><input type="text" id="f-municipio" data-f="municipio" data-free></div>
+              <div class="field"><label for="f-municipio">Município <code>lista do IBGE</code></label><input type="text" id="f-municipio" data-f="municipio" data-free list="dl-mun" autocomplete="off"><datalist id="dl-mun"></datalist><div class="hint" id="h-mun"></div></div>
               <div class="field"><label for="f-meses">Meses de atividade <code>se abertura ou &lt; 12</code></label><input type="number" id="f-meses" data-f="meses" min="0" max="11"></div>
+            </div>
+            <div class="field"><span style="font-weight:600;font-size:13.5px">Regimes a comparar</span>
+              <div class="checks">
+                <label><input type="checkbox" data-reg="simples" checked> Simples Nacional</label>
+                <label><input type="checkbox" data-reg="presumido" checked> Lucro Presumido</label>
+                <label><input type="checkbox" data-reg="real" checked> Lucro Real</label>
+              </div>
             </div>
           </fieldset>
 
           <fieldset><legend>Atividades</legend>
-            <p class="caption">Uma linha por grupo de CNAE com enquadramento diferente. ISS e ICMS são opcionais: sem valor, a IA deduz e marca a confiança.</p>
+            <p class="caption">Uma linha por grupo de CNAE com enquadramento diferente. O CNAE é conferido na API do IBGE. Anexo do Simples e tipo de presunção são escolha do contador. ISS em branco: zero em comércio, pendência em serviço. ICMS em branco: zero em serviço, pendência em comércio.</p>
             <div id="f-ativs"></div>
             <div class="toolbar"><button class="btn" type="button" data-add-ativ>Adicionar atividade</button><span class="tok-total" id="f-pct"></span></div>
           </fieldset>
@@ -260,16 +281,35 @@
         </div>
         <div class="panel">
           <div class="panel-head sticky-copy">
-            <h2>Prompt pronto</h2>
-            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+            <div class="seg" role="group" aria-label="Saída">
+              <button type="button" data-view="json" aria-pressed="true">dados-empresa.json</button>
+              <button type="button" data-view="prompt" aria-pressed="false">Prompt para IA (opcional)</button>
+            </div>
           </div>
-          <pre class="out" data-out></pre>
+          <div id="v-json" class="stack" style="gap:12px">
+            <div class="toolbar">
+              <span class="chip ok" id="j-status"></span>
+              <button class="btn primary" type="button" id="j-usar">Usar no Comparativo</button>
+              <button class="btn" type="button" id="j-copiar">Copiar JSON</button>
+            </div>
+            <p class="caption">Gerado pelo <code>ficha.js</code>, sem IA: a mesma ficha gera sempre o mesmo JSON.</p>
+            <div id="j-pend"></div>
+            <div class="msgs" id="j-val"></div>
+            <pre class="out" id="j-out"></pre>
+          </div>
+          <div id="v-prompt" class="stack" style="gap:12px" hidden>
+            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+            <p class="caption">Caminho alternativo: a IA monta o JSON a partir da ficha. Revise tudo o que ela devolver.</p>
+            <pre class="out" data-out></pre>
+          </div>
         </div>
       </div>
     </section>
   </main>
 </div>
 
+<script src="motor.js"></script>
+<script src="ficha.js"></script>
 <script>
 (function () {
   'use strict';
@@ -321,15 +361,84 @@
     var d = document.createElement('div');
     d.className = 'ativ';
     d.innerHTML =
-      '<div class="field span2"><label>CNAE</label><input type="text" data-a="cnae" placeholder="Ex.: 6201-5/01"></div>' +
+      '<div class="field span2"><label>CNAE</label><input type="text" data-a="cnae" placeholder="Ex.: 6201-5/01" inputmode="numeric"></div>' +
       '<div class="field"><label>% da receita</label><input type="text" data-a="pct" inputmode="decimal" placeholder="100" value="' + (pct || '') + '"></div>' +
       '<div class="field"><label>ISS %</label><input type="text" data-a="iss" inputmode="decimal" placeholder="Ex.: 3"></div>' +
+      '<div class="hint full" data-ibge></div>' +
       '<div class="field span2"><label>Descrição curta</label><input type="text" data-a="desc" data-free placeholder="Ex.: Software sob encomenda"></div>' +
       '<div class="field"><label>ICMS líquido %</label><input type="text" data-a="icms" inputmode="decimal" placeholder="Serviço: 0"></div>' +
-      '<button class="btn" type="button" data-del-ativ aria-label="Remover atividade">Remover</button>';
+      '<button class="btn" type="button" data-del-ativ aria-label="Remover atividade">Remover</button>' +
+      '<div class="field span2"><label>Anexo do Simples</label><select data-a="anexo">' + OPC_ANEXO + '</select></div>' +
+      '<div class="field span2"><label>Tipo de presunção (Presumido)</label><select data-a="tipo"></select></div>';
     ativsEl.appendChild(d);
   }
+  var OPC_ANEXO = '<option value="">Escolha</option>' + [['I', 'I · Comércio'], ['II', 'II · Indústria'], ['III', 'III · Serviços'], ['IV', 'IV · Serviços, CPP fora'], ['V', 'V · Serviços intelectuais'], ['III_ou_V_fator_r', 'III ou V pelo Fator R'], ['vedado', 'Vedado ao Simples']]
+    .map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
+  /* Tipos de presunção lidos do aliquotas.json da aba (com reserva fixa enquanto ele não carrega). */
+  var TIPOS_PADRAO = ['comercio_industria', 'servicos_gerais', 'intermediacao_negocios', 'locacao_cessao_bens', 'servicos_transporte_cargas', 'servicos_transporte_passageiros', 'servicos_hospitalares', 'revenda_combustiveis'];
+  function aliqAtual() {
+    try { return JSON.parse($('p2-COLE_O_ALIQUOTAS_JSON').value); } catch (e) { return null; }
+  }
+  function atualizarTipos() {
+    var A = aliqAtual(), pr = A && A.lucro_presumido && A.lucro_presumido.presuncao;
+    var tipos = pr ? Object.keys(pr) : TIPOS_PADRAO;
+    var html = '<option value="">Escolha</option>' + tipos.map(function (t) {
+      var d = pr && pr[t] && pr[t].descricao ? ' · ' + pr[t].descricao : '';
+      return '<option value="' + esc(t) + '">' + esc(t + d) + '</option>';
+    }).join('');
+    Array.prototype.forEach.call(ativsEl.querySelectorAll('[data-a="tipo"]'), function (s) {
+      var v = s.value; s.innerHTML = html; s.value = v;
+    });
+  }
   novaAtividade('100');
+  atualizarTipos();
+
+  /* ---------- consultas à API do IBGE (públicas, com CORS liberado) ---------- */
+  var IBGE = 'https://servicodados.ibge.gov.br/api';
+  var cacheCnae = {}, cacheMun = {};
+  function consultarCnae(row) {
+    var inp = row.querySelector('[data-a="cnae"]'), out = row.querySelector('[data-ibge]');
+    var d = inp.value.replace(/\D/g, '');
+    if (!d) { out.textContent = ''; out.className = 'hint full'; return; }
+    if (d.length !== 7) { out.textContent = 'Use os 7 dígitos da subclasse (ex.: 6201-5/01).'; out.className = 'hint full warn'; return; }
+    inp.value = CTFicha.formatarCnae(d);
+    out.textContent = 'Consultando o IBGE...'; out.className = 'hint full';
+    var p = cacheCnae[d] || (cacheCnae[d] = fetch(IBGE + '/v2/cnae/subclasses/' + d).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }));
+    p.then(function (j) {
+      if (!j || !j.id) { out.textContent = 'CNAE ' + inp.value + ' não encontrado no IBGE (CNAE 2.3).'; out.className = 'hint full warn'; return; }
+      var c = j.classe || {}, sec = c.grupo && c.grupo.divisao && c.grupo.divisao.secao;
+      out.textContent = '✓ IBGE: ' + j.descricao + (sec ? ' · seção ' + sec.id + ' (' + sec.descricao.toLowerCase() + ')' : '');
+      out.className = 'hint full';
+      var desc = row.querySelector('[data-a="desc"]');
+      if (!desc.value.trim()) { desc.value = j.descricao.charAt(0) + j.descricao.slice(1).toLowerCase(); render('p2'); }
+    }, function () {
+      delete cacheCnae[d];
+      out.textContent = 'IBGE indisponível agora. O CNAE segue sem conferência.'; out.className = 'hint full warn';
+    });
+  }
+  function normNome(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+  function conferirMunicipio() {
+    var uf = $('f-uf').value.trim().toUpperCase(), nome = $('f-municipio').value, h = $('h-mun');
+    $('f-municipio').removeAttribute('data-ibge');
+    if (!/^[A-Z]{2}$/.test(uf)) { h.textContent = uf ? 'UF com 2 letras.' : ''; h.className = 'hint' + (uf ? ' warn' : ''); return; }
+    var p = cacheMun[uf] || (cacheMun[uf] = fetch(IBGE + '/v1/localidades/estados/' + uf + '/municipios').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }));
+    p.then(function (lista) {
+      if (!lista.length) { h.textContent = 'UF ' + uf + ' não encontrada no IBGE.'; h.className = 'hint warn'; return; }
+      var dl = $('dl-mun');
+      if (dl.getAttribute('data-uf') !== uf) {
+        dl.innerHTML = lista.map(function (m) { return '<option value="' + esc(m.nome) + '">'; }).join('');
+        dl.setAttribute('data-uf', uf);
+      }
+      if (!nome.trim()) { h.textContent = lista.length + ' municípios de ' + uf + ' disponíveis na lista.'; h.className = 'hint'; return; }
+      var m = lista.filter(function (x) { return normNome(x.nome) === normNome(nome); })[0];
+      if (m) { $('f-municipio').setAttribute('data-ibge', m.id); h.textContent = '✓ IBGE: código ' + m.id; h.className = 'hint'; }
+      else { h.textContent = 'Município não encontrado em ' + uf + ' no IBGE.'; h.className = 'hint warn'; }
+      render('p2');
+    }, function () {
+      delete cacheMun[uf];
+      h.textContent = 'IBGE indisponível agora. O município segue sem conferência.'; h.className = 'hint warn';
+    });
+  }
 
   /* "42.000,50", "R$ 42000" ou "42000.5" -> número. Retorna NaN se não for número. */
   function brNum(s) {
@@ -365,8 +474,8 @@
       obs: 'Empresa fictícia para demonstração. Comércio de informática (60% da receita) e assistência técnica (40%). Crédito de PIS/COFINS apurado pelo contador: insumos e despesas informados acima.'
     },
     atividades: [
-      { cnae: '4751-2/01', desc: 'Comércio varejista de equipamentos de informática', pct: '60', iss: '', icms: '6' },
-      { cnae: '9511-8/00', desc: 'Manutenção de computadores e periféricos', pct: '40', iss: '3', icms: '0' }
+      { cnae: '4751-2/01', desc: 'Comércio varejista de equipamentos de informática', pct: '60', iss: '', icms: '6', anexo: 'I', tipo: 'comercio_industria' },
+      { cnae: '9511-8/00', desc: 'Manutenção de computadores e periféricos', pct: '40', iss: '3', icms: '0', anexo: 'III', tipo: 'servicos_gerais' }
     ]
   };
   function preencherFicha(dados) {
@@ -383,7 +492,16 @@
         ['cnae', 'desc', 'iss', 'icms'].forEach(function (k) { row.querySelector('[data-a="' + k + '"]').value = a[k]; });
       });
     } else novaAtividade('100');
+    atualizarTipos();
+    if (dados) dados.atividades.forEach(function (a, k) {
+      var row = ativsEl.children[k];
+      row.querySelector('[data-a="anexo"]').value = a.anexo || '';
+      row.querySelector('[data-a="tipo"]').value = a.tipo || '';
+    });
+    Array.prototype.forEach.call(sec.querySelectorAll('[data-reg]'), function (c) { c.checked = true; });
     sec.querySelector('[data-key="ATIVA ou EM_ABERTURA"]').value = dados ? dados.situacao : '';
+    Array.prototype.forEach.call(ativsEl.children, consultarCnae);
+    conferirMunicipio();
   }
 
   function fichaTexto() {
@@ -426,13 +544,13 @@
     L.push('- Município: ' + ni(F('municipio')));
     var meses = F('meses');
     L.push('- Meses de atividade (só se em abertura ou com menos de 12 meses): ' + (meses === '' ? 'não se aplica' : meses));
-    L.push('Atividades (CNAE | descrição | % da receita | ISS % | ICMS líquido % da receita)');
+    L.push('Atividades (CNAE | descrição | % da receita | anexo do Simples | tipo de presunção | ISS % | ICMS líquido % da receita)');
     var soma = 0, algumPct = false;
     Array.prototype.forEach.call(ativsEl.querySelectorAll('.ativ'), function (row, k) {
       function A(n) { var el = row.querySelector('[data-a="' + n + '"]'); var v = el.value.trim(); return el.hasAttribute('data-free') ? mascarar(v) : v; }
       var pct = A('pct'), pn = brNum(pct);
       if (!isNaN(pn)) { soma += pn; algumPct = true; }
-      L.push('  ' + (k + 1) + '. ' + ni(A('cnae')) + ' | ' + ni(A('desc')) + ' | ' + ni(pct) + ' | ' + (A('iss') || 'não informado (IA deduz)') + ' | ' + (A('icms') || 'não informado (IA deduz)'));
+      L.push('  ' + (k + 1) + '. ' + ni(A('cnae')) + ' | ' + ni(A('desc')) + ' | ' + ni(pct) + ' | ' + (A('anexo') || 'não informado (IA deduz)') + ' | ' + (A('tipo') || 'não informado (IA deduz)') + ' | ' + (A('iss') || 'não informado (IA deduz)') + ' | ' + (A('icms') || 'não informado (IA deduz)'));
     });
     var pctEl = $('f-pct');
     pctEl.textContent = algumPct ? 'Soma: ' + fmtNum(soma) + '%' + (Math.abs(soma - 100) > 0.01 ? ' (deve ser 100)' : '') : '';
@@ -475,6 +593,71 @@
     return { material: texto, premissas: prem.length ? prem.join(' ') : 'nenhuma' };
   }
 
+  /* ---------- ficha -> dados-empresa.json (ficha.js, sem IA) ---------- */
+  function lerEntrada() {
+    var sec = $('tab-p2'), e = {};
+    Array.prototype.forEach.call(sec.querySelectorAll('[data-f]'), function (el) { e[el.getAttribute('data-f')] = el.hasAttribute('data-free') ? mascarar(el.value) : el.value; });
+    e.ano = sec.querySelector('[data-key="ANO_CALENDARIO"]').value;
+    e.situacao = sec.querySelector('[data-key="ATIVA ou EM_ABERTURA"]').value;
+    e.municipio_ibge = $('f-municipio').getAttribute('data-ibge') || '';
+    e.regimes = Array.prototype.filter.call(sec.querySelectorAll('[data-reg]'), function (c) { return c.checked; }).map(function (c) { return c.getAttribute('data-reg'); });
+    e.atividades = Array.prototype.map.call(ativsEl.querySelectorAll('.ativ'), function (row) {
+      var a = {};
+      ['cnae', 'desc', 'pct', 'iss', 'icms', 'anexo', 'tipo'].forEach(function (k) {
+        var el = row.querySelector('[data-a="' + k + '"]');
+        a[k] = el.hasAttribute('data-free') ? mascarar(el.value) : el.value;
+      });
+      return a;
+    });
+    return e;
+  }
+  var compilado = null;
+  function renderJson() {
+    var A = aliqAtual();
+    var r = CTFicha.compilarFicha(lerEntrada(), A);
+    compilado = r;
+    var txt = JSON.stringify(r.dados, null, 2) + '\n';
+    $('j-out').textContent = txt;
+    var n = r.pendencias.length;
+    $('j-pend').innerHTML = n
+      ? '<div class="msg warn"><b>Pendências (' + n + ')</b><ul class="pend">' + r.pendencias.map(function (p) { return '<li>' + esc(p.rotulo) + ' <code>' + esc(p.caminho) + '</code></li>'; }).join('') + '</ul></div>'
+      : '<div class="msg ok">Sem pendências na ficha.</div>';
+    var val = A ? CTEngine.validar(A, r.dados) : { erros: ['Alíquotas: JSON inválido nesta página.'], avisos: [] };
+    var msgs = r.avisos.map(function (x) { return '<div class="msg warn">' + esc(x) + '</div>'; })
+      .concat(val.erros.map(function (x) { return '<div class="msg err">Motor: ' + esc(x) + '</div>'; }));
+    $('j-val').innerHTML = msgs.join('');
+    var st = $('j-status');
+    if (val.erros.length) { st.className = 'chip err'; st.textContent = val.erros.length + (val.erros.length === 1 ? ' erro no motor' : ' erros no motor'); }
+    else if (n) { st.className = 'chip warn'; st.textContent = n + (n === 1 ? ' pendência' : ' pendências'); }
+    else { st.className = 'chip ok'; st.textContent = 'Pronto para o Comparativo'; }
+    return txt;
+  }
+  $('j-copiar').addEventListener('click', function (e) { copiar(renderJson(), e.currentTarget); });
+  $('j-usar').addEventListener('click', function (e) {
+    var txt = renderJson();
+    try {
+      localStorage.setItem('ct:dados-importar', txt);
+      location.href = 'index.html#entradas';
+    } catch (err) {
+      copiar(txt, e.currentTarget);
+      alert('O navegador bloqueou a passagem direta. O JSON foi copiado: cole no campo 2 da aba Entradas do Comparativo.');
+    }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-view');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      $('v-json').hidden = v !== 'json';
+      $('v-prompt').hidden = v !== 'prompt';
+    });
+  });
+  ativsEl.addEventListener('change', function (e) {
+    if (e.target.getAttribute('data-a') === 'cnae') consultarCnae(e.target.closest('.ativ'));
+  });
+  $('f-uf').addEventListener('change', conferirMunicipio);
+  $('f-municipio').addEventListener('change', conferirMunicipio);
+  $('p2-COLE_O_ALIQUOTAS_JSON').addEventListener('input', atualizarTipos);
+
   function valores(sec) {
     var v = {};
     Array.prototype.forEach.call(sec.querySelectorAll('[data-key]'), function (el) { v[el.getAttribute('data-key')] = el.value.trim(); });
@@ -484,6 +667,7 @@
 
   function render(id) {
     var P = PROMPTS[id], sec = $('tab-' + id);
+    if (id === 'p2') renderJson();
     if (!P.texto) return;
     var v = valores(sec), faltando = {};
     var plain = P.texto.replace(PH, function (m, k) {
@@ -584,6 +768,7 @@
       b.hidden = false;
       b.textContent = 'Não foi possível carregar: ' + erros.join(', ') + '. Abra esta página por um servidor (GitHub Pages ou "python3 -m http.server"), não direto do arquivo.';
     }
+    atualizarTipos();
     TABS.forEach(render);
   });
 })();

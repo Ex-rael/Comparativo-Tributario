@@ -177,6 +177,21 @@
   .md .tablewrap { margin: 0 0 14px; }
   .md .katex-display { overflow-x: auto; overflow-y: hidden; padding: 6px 0; }
   .md hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+
+  .sticky-bar { position: sticky; top: 0; z-index: 3; background: var(--bg); padding-block: 8px; align-items: center; }
+  .aq-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+  .aq-meta { font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; }
+  .aq-meta p { max-width: none; }
+  td.aq-c { padding: 4px 8px; }
+  input.aq-in, select.aq-in {
+    width: 100%; min-width: 96px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px;
+    padding: 6px 8px; font: 13px var(--f-mono); text-align: right; font-variant-numeric: tabular-nums;
+  }
+  select.aq-in, input.aq-in.txt { text-align: left; font-family: var(--f-body); }
+  .aq-in.edit { background: var(--warn-bg); border-color: var(--warn); }
+  .aq-in.bad { border-color: var(--bad); outline: 1px solid var(--bad); }
+  .aq-un { font: 12px var(--f-mono); color: var(--ink-2); white-space: nowrap; }
+  .aq-in-wrap { display: flex; align-items: center; gap: 6px; }
   @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 </style>
 
@@ -188,12 +203,13 @@
     </div>
     <div>
       <div class="meta-line" id="metaLine"></div>
-      <div class="nav-links"><a href="prompts.html">Prompts</a></div>
+      <div class="nav-links"><a href="prompts.html">Ficha e prompts</a></div>
     </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Seções">
     <button class="tab" role="tab" id="t-entradas" data-tab="entradas" aria-controls="tab-entradas">Entradas</button>
+    <button class="tab" role="tab" id="t-aliquotas" data-tab="aliquotas" aria-controls="tab-aliquotas">Alíquotas</button>
     <button class="tab" role="tab" id="t-resultado" data-tab="resultado" aria-controls="tab-resultado">Resultado</button>
     <button class="tab" role="tab" id="t-formulas" data-tab="formulas" aria-controls="tab-formulas">Fórmulas</button>
     <button class="tab" role="tab" id="t-modelos" data-tab="modelos" aria-controls="tab-modelos">Modelos e divisão de tarefas</button>
@@ -209,7 +225,7 @@
             <h2>1. Alíquotas e regras</h2>
             <span class="chip ok" id="chipAliq">Válido</span>
           </div>
-          <p class="caption">Muda pouco. Gerado pelo prompt 1 e validado pelo contador.</p>
+          <p class="caption">Muda pouco. Gerado pelo prompt 1 e validado pelo contador. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
           <div class="toolbar">
             <label class="btn">Carregar arquivo<input type="file" id="fileAliq" accept=".json,application/json"></label>
             <button class="btn" id="resetAliq" type="button">Restaurar padrão</button>
@@ -237,6 +253,22 @@
       <div><a class="btn primary" href="#resultado" style="display:inline-block;text-decoration:none">Ver resultado</a></div>
     </section>
 
+    <!-- ALÍQUOTAS -->
+    <section id="tab-aliquotas" role="tabpanel" aria-labelledby="t-aliquotas" class="stack" hidden>
+      <div class="panel-head">
+        <p class="muted">Valores do aliquotas.json carregado em Entradas, em tabela. Edite direto na célula: o JSON e o resultado se atualizam na hora. Percentuais aparecem em %, valores em R$.</p>
+      </div>
+      <div class="toolbar sticky-bar">
+        <button class="btn primary" id="aqCopiar" type="button">Copiar JSON alterado</button>
+        <button class="btn" id="aqDesfazer" type="button">Desfazer alterações</button>
+        <span class="chip ok" id="aqChip">Sem alterações</span>
+        <span class="chip warn" id="aqPend" hidden></span>
+      </div>
+      <div class="msgs" id="aqMsgs"></div>
+      <details id="aqLog" hidden><summary>Alterações desta sessão</summary><div class="det-body"><ul class="plain" id="aqLogList"></ul></div></details>
+      <div id="aqTabelas" class="stack"></div>
+    </section>
+
     <!-- RESULTADO -->
     <section id="tab-resultado" role="tabpanel" aria-labelledby="t-resultado" class="stack" hidden>
       <div id="resultado"></div>
@@ -252,15 +284,15 @@
     <section id="tab-modelos" role="tabpanel" aria-labelledby="t-modelos" class="stack" hidden>
       <div class="stack">
         <h2>Quem faz o quê</h2>
-        <p class="muted">A IA nunca faz conta. Ela monta os dois JSON, e o JavaScript desta página faz toda a aritmética.</p>
+        <p class="muted">A IA nunca faz conta. O dados-empresa.json sai da ficha por código determinístico; a IA fica opcional, para pesquisar alíquotas (prompt 1) e como alternativa à ficha (prompt 2). Toda a aritmética é do JavaScript desta página.</p>
         <div class="tablewrap">
           <table>
             <thead><tr><th>Camada</th><th>O que contém</th><th>Quem executa</th><th>Risco principal</th></tr></thead>
             <tbody>
               <tr><td><b>Cálculo puro</b></td><td>RBT12, faixa e alíquota efetiva do Simples, Fator R, bases do Presumido e do Real, IRPJ, CSLL, PIS, COFINS, CPP, retenção sobre lucros, totais e sensibilidade</td><td>JavaScript desta página, sempre o mesmo resultado para a mesma entrada</td><td>Regra que o motor não modela. A aba Resultado lista as exclusões</td></tr>
               <tr><td><b>Regras</b> (JSON 1)</td><td>Alíquotas, faixas, limites, percentuais de presunção, vigências</td><td>IA consulta fonte oficial e preenche. Contador valida. Revisão a cada mudança de norma</td><td>Valor desatualizado ou tirado de fonte secundária</td></tr>
-              <tr><td><b>Dados deduzidos por IA</b> (JSON 2)</td><td>Anexo e tipo de atividade, ISS do município, RAT e terceiros, percentual com direito a crédito, premissas de crescimento</td><td>IA infere e registra origem, confiança e fonte em <code>meta</code>. Contador revisa o que não for "informado"</td><td>Inferência errada com cara de certeza</td></tr>
-              <tr><td><b>Dados do cliente</b> (JSON 2)</td><td>Receitas, folha, sócios, distribuição de lucros, custos</td><td>Vêm de documentos do cliente. A IA só organiza e converte para o formato, nunca estima</td><td>Número inventado ou digitado errado</td></tr>
+              <tr><td><b>Classificação</b> (JSON 2)</td><td>CNAE, anexo do Simples, tipo de presunção, ISS do município, RAT e terceiros, crédito de PIS/COFINS</td><td>Contador escolhe na ficha. O CNAE e o município são conferidos na API pública do IBGE. Premissas fixas (ISS zero em comércio, ICMS zero em serviço, repetição do histórico) ficam registradas em <code>meta</code></td><td>Anexo ou presunção escolhidos errados</td></tr>
+              <tr><td><b>Dados do cliente</b> (JSON 2)</td><td>Receitas, folha, sócios, distribuição de lucros, custos</td><td>Totais digitados na ficha (Ficha e prompts). O <code>ficha.js</code> converte para o formato, sem IA. O prompt 2 continua como alternativa</td><td>Número digitado errado</td></tr>
             </tbody>
           </table>
         </div>
@@ -284,643 +316,7 @@
   </main>
 </div>
 
-<script>
-/*
- * Motor de cálculo do comparativo tributário (cálculo puro, sem IA).
- * Entradas: aliquotas.json (regras estáveis) e dados-empresa.json (dados da empresa).
- * Funciona no navegador (global CTEngine) e no Node (module.exports).
- */
-(function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.CTEngine = factory();
-})(typeof self !== 'undefined' ? self : this, function () {
-  'use strict';
-
-  var VERSAO = '1.0.0';
-  var REGIMES = ['simples', 'presumido', 'real'];
-  var NOMES = { simples: 'Simples Nacional', presumido: 'Lucro Presumido', real: 'Lucro Real' };
-  var ROTULOS = {
-    das: 'DAS (tributos unificados)',
-    irpj: 'IRPJ e adicional',
-    csll: 'CSLL',
-    pis: 'PIS',
-    cofins: 'COFINS',
-    iss: 'ISS',
-    icms: 'ICMS líquido (estimado)',
-    cbs: 'CBS (reforma, em definição)',
-    ibs: 'IBS (reforma, em definição)',
-    cpp: 'CPP e RAT patronais',
-    terceiros: 'Contribuições a terceiros',
-    retencao_lucros: 'Retenção sobre lucros distribuídos'
-  };
-  var MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-  function num(x, d) {
-    var dflt = d === undefined ? 0 : d;
-    if (x === null || x === undefined || x === '') return dflt;
-    var n = Number(x);
-    return isFinite(n) ? n : dflt;
-  }
-  function mv(x, i) { return Array.isArray(x) ? num(x[i]) : num(x); }
-  function sum(a) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]; return s; }
-  function vigente(ano, mes, v) {
-    if (!v) return true;
-    return ano > v.ano || (ano === v.ano && mes >= v.mes);
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Normalização                                                         */
-  /* ------------------------------------------------------------------ */
-  function normalizar(dados) {
-    var emp = dados.empresa || {};
-    var rec = dados.receitas || {};
-    var sim = [];
-    for (var i = 0; i < 12; i++) sim.push(num((rec.simulacao_12_meses || [])[i]));
-    var h = (rec.historico_12_meses_anteriores || []).map(function (v) { return num(v); });
-    var hist = h.length >= 12 ? h.slice(h.length - 12) : new Array(12 - h.length).fill(0).concat(h);
-    var emAb = emp.situacao === 'em_abertura';
-    var primeiro = 0;
-    if (emAb) {
-      primeiro = sim.findIndex(function (v) { return v > 0; });
-      if (primeiro < 0) primeiro = 0;
-    }
-    var atividades = (dados.atividades || []).map(function (a, k) {
-      return {
-        id: a.id || ('atividade-' + (k + 1)),
-        descricao: a.descricao || '',
-        share: num(a.percentual_receita) / 100,
-        anexo: a.anexo_simples,
-        tipo: a.tipo_presumido,
-        iss: num(a.iss_percentual) / 100,
-        icms: num(a.icms_liquido_percentual_receita) / 100
-      };
-    });
-    var regimes = (dados.regimes_a_comparar && dados.regimes_a_comparar.length) ? dados.regimes_a_comparar : REGIMES.slice();
-    return {
-      ano: num(dados.ano_calendario, 2026),
-      emAb: emAb,
-      primeiro: primeiro,
-      sim: sim,
-      hist: hist,
-      histLen: h.length,
-      atividades: atividades,
-      custos: dados.custos || {},
-      folha: dados.folha || {},
-      socios: dados.socios || {},
-      lreal: dados.lucro_real || {},
-      regimes: regimes
-    };
-  }
-
-  function encargosMes(aliq, c, i) {
-    var E = aliq.encargos_folha || {};
-    var sal = mv(c.folha.salarios_empregados_mensal, i);
-    var prol = mv(c.folha.prolabore_total_mensal, i);
-    var rat = num(c.folha.rat_percentual) / 100;
-    var terc = num(c.folha.terceiros_percentual) / 100;
-    return {
-      sal: sal,
-      prol: prol,
-      fgts: sal * num(E.fgts),
-      cpp: (sal + prol) * num(E.cpp_patronal),
-      rat: sal * rat,
-      terc: sal * terc
-    };
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* CBS e IBS (opcional, alíquotas em definição)                         */
-  /*                                                                      */
-  /* Mecânica adotada (hipótese a validar pelo contador; ver calculos.md): */
-  /*  - Base de cálculo: receita bruta mensal, sem créditos nem exclusões. */
-  /*  - CBS = receita x cbs_aplicar.aliquota; IBS = receita x ibs_aplicar.aliquota. */
-  /*  - Alíquotas só vêm do aliquotas.json (reforma_consumo). Se cbs_aplicar */
-  /*    ou ibs_aplicar faltarem, usa cbs_teste / ibs_teste e avisa.         */
-  /*  - Presumido e Real: CBS e IBS somam à carga. No Real também reduzem   */
-  /*    o lucro antes do IR (como PIS, COFINS, ISS e ICMS). No Presumido     */
-  /*    não alteram a base de IRPJ e CSLL (receita x presunção).             */
-  /*  - Simples: só recebe CBS/IBS se simples_por_fora_do_das.aplicar for    */
-  /*    true no JSON; senão o regime fica sem CBS/IBS e o motor avisa.       */
-  /*  - Compensação com PIS, COFINS, ICMS e ISS na transição NÃO é modelada: */
-  /*    esses tributos seguem calculados integralmente (pode haver dupla     */
-  /*    contagem) e o motor avisa.                                           */
-  /* ------------------------------------------------------------------ */
-  function paramsCbsIbs(aliq) {
-    var RC = aliq.reforma_consumo || {};
-    var avisos = [], origem = 'cbs_aplicar e ibs_aplicar';
-    function le(campo, teste, nome) {
-      var o = RC[campo];
-      var v = o && typeof o === 'object' ? o.aliquota : undefined;
-      if (v === undefined || v === null || v === '') {
-        v = RC[teste];
-        origem = 'cbs_teste e ibs_teste (campos novos ausentes)';
-        avisos.push('Alíquotas: "reforma_consumo.' + campo + '" ausente; usando "' + teste + '" para ' + nome + '.');
-      }
-      v = Number(v);
-      if (!isFinite(v) || v < 0 || v > 1) throw new Error('Alíquota de ' + nome + ' inválida em reforma_consumo (esperado fração entre 0 e 1).');
-      return v;
-    }
-    var cbs = le('cbs_aplicar', 'cbs_teste', 'CBS');
-    var ibs = le('ibs_aplicar', 'ibs_teste', 'IBS');
-    var sp = RC.simples_por_fora_do_das;
-    return { cbs: cbs, ibs: ibs, simples: !!(sp && sp.aplicar === true), origem: origem, avisos: avisos };
-  }
-  function pctTxt(v) { return (v * 100).toFixed(2).replace('.', ',') + '%'; }
-
-  /* ------------------------------------------------------------------ */
-  /* Simples Nacional                                                     */
-  /* ------------------------------------------------------------------ */
-  function aliqEfetiva(anexo, rbt) {
-    var f = anexo.faixas;
-    var idx = -1;
-    for (var k = 0; k < f.length; k++) { if (rbt <= f[k].ate) { idx = k; break; } }
-    if (idx < 0) idx = f.length - 1;
-    var x = f[idx];
-    var ef = rbt > 0 ? (rbt * x.aliquota - x.deduzir) / rbt : f[0].aliquota;
-    return { faixa: idx, nominal: x.aliquota, deduzir: x.deduzir, efetiva: ef };
-  }
-
-  function calcSimples(aliq, c) {
-    var S = aliq.simples_nacional;
-    var avisos = [];
-    var motivos = [];
-    var i, e;
-    var fr = [];
-    for (i = 0; i < 12; i++) { e = encargosMes(aliq, c, i); fr.push(e.sal + e.prol + e.fgts); }
-    var histFR = num(c.folha.folha_historico_12m_fator_r);
-    var temFatorR = c.atividades.some(function (a) { return a.anexo === 'III_ou_V_fator_r'; });
-    if (temFatorR && !c.emAb && histFR === 0) {
-      avisos.push('Fator R: folha_historico_12m_fator_r não informada. O cálculo parte de folha zero nos 12 meses anteriores, o que tende a enquadrar no Anexo V nos primeiros meses.');
-    }
-    if (!c.emAb && c.histLen < 12) {
-      avisos.push('Histórico de receita com menos de 12 meses: RBT12 subestimado. Se a empresa começou há menos de 12 meses, use situacao "em_abertura".');
-    }
-    var serie = c.hist.concat(c.sim);
-    var meses = [];
-    var totalDas = 0, totalCpp = 0;
-    var vedado = false, estourou = false, avisouSub = false;
-    var rbtMax = 0;
-
-    for (i = 0; i < 12; i++) {
-      var rec = c.sim[i];
-      var rbt, folha12;
-      if (c.emAb) {
-        if (i < c.primeiro) {
-          meses.push({ mes: i, receita: 0, rbt12: 0, fator_r: 0, das: 0, cpp_fora: 0, atividades: [] });
-          continue;
-        }
-        if (i === c.primeiro) { rbt = rec * 12; folha12 = fr[i] * 12; }
-        else {
-          var n = i - c.primeiro;
-          rbt = sum(c.sim.slice(c.primeiro, i)) / n * 12;
-          folha12 = sum(fr.slice(c.primeiro, i)) / n * 12;
-        }
-      } else {
-        rbt = sum(serie.slice(i, i + 12));
-        folha12 = histFR * (12 - i) / 12 + sum(fr.slice(0, i));
-      }
-      if (rbt > rbtMax) rbtMax = rbt;
-      var fatorR = rbt > 0 ? folha12 / rbt : 0;
-      var das = 0, shareIV = 0, det = [];
-      c.atividades.forEach(function (a) {
-        var ra = rec * a.share;
-        var key = a.anexo;
-        if (key === 'vedado') { vedado = true; det.push({ id: a.id, anexo: 'vedado', receita: ra, das: 0 }); return; }
-        if (key === 'III_ou_V_fator_r') key = fatorR >= num(S.fator_r_minimo, 0.28) ? 'III' : 'V';
-        var anexo = S.anexos[key];
-        if (!anexo) throw new Error('Anexo do Simples inválido na atividade "' + a.id + '": ' + a.anexo);
-        var ap = aliqEfetiva(anexo, rbt);
-        var d = ra * ap.efetiva;
-        das += d;
-        if (key === 'IV') shareIV += a.share;
-        det.push({ id: a.id, anexo: key, faixa: ap.faixa + 1, nominal: ap.nominal, deduzir: ap.deduzir, efetiva: ap.efetiva, receita: ra, das: d });
-      });
-      e = encargosMes(aliq, c, i);
-      var cppFora = shareIV * (e.cpp + e.rat);
-      totalDas += das;
-      totalCpp += cppFora;
-      meses.push({ mes: i, receita: rec, rbt12: rbt, fator_r: fatorR, das: das, cpp_fora: cppFora, atividades: det });
-      if (rbt > S.limite_receita_anual) estourou = true;
-      if (rbt > S.sublimite_icms_iss && !avisouSub) {
-        avisouSub = true;
-        avisos.push('RBT12 acima do sublimite de ' + brl(S.sublimite_icms_iss) + ' em ' + MESES[i] + ': ICMS e ISS passam a ser recolhidos fora do DAS. O motor não modela essa partilha, então o DAS pode estar superestimado e ICMS/ISS subestimados.');
-      }
-    }
-
-    var receitaAnual = sum(c.sim);
-    if (estourou) motivos.push('RBT12 acima do limite de ' + brl(S.limite_receita_anual) + ' em algum mês.');
-    else if (receitaAnual > S.limite_receita_anual) avisos.push('Receita do ano acima de ' + brl(S.limite_receita_anual) + ': a exclusão do Simples vale a partir de 1º de janeiro do ano seguinte (ou retroativa, se o excesso passar de 20%). Conferir a Resolução CGSN 140/2018.');
-    if (vedado) motivos.push('Atividade marcada como vedada ao Simples Nacional.');
-
-    // Lucro distribuível isento (aproximado): presunção do IRPJ menos o DAS.
-    var P = aliq.lucro_presumido || { presuncao: {} };
-    var baseIsento = 0;
-    c.atividades.forEach(function (a) {
-      var t = P.presuncao[a.tipo];
-      if (t) baseIsento += receitaAnual * a.share * t.irpj;
-    });
-
-    var itens = { das: totalDas, cpp: totalCpp };
-    var cbsIbsTot = 0;
-    if (c.cbsIbs) {
-      if (c.cbsIbs.simples) {
-        itens.cbs = receitaAnual * c.cbsIbs.cbs;
-        itens.ibs = receitaAnual * c.cbsIbs.ibs;
-        cbsIbsTot = itens.cbs + itens.ibs;
-      } else {
-        avisos.push('CBS e IBS NÃO somados ao Simples: o aliquotas.json não traz regra clara para cobrança por fora do DAS (reforma_consumo.simples_por_fora_do_das.aplicar). Valem só para Presumido e Real.');
-      }
-    }
-    return {
-      id: 'simples',
-      elegivel: motivos.length === 0,
-      motivos: motivos,
-      avisos: avisos,
-      itens: itens,
-      detalhe: { meses: meses, rbt12_max: rbtMax },
-      lucro_isento_aprox: Math.max(0, baseIsento - totalDas - cbsIbsTot),
-      lucro_isento_tipo: 'Presunção do IRPJ menos o DAS total (aproximação conservadora)'
-    };
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Lucro Presumido                                                      */
-  /* ------------------------------------------------------------------ */
-  function calcPresumido(aliq, c) {
-    var P = aliq.lucro_presumido;
-    var ac = P.acrescimo_presuncao || {};
-    var avisos = [], motivos = [];
-    var pI = 0, pC = 0;
-    c.atividades.forEach(function (a) {
-      var t = P.presuncao[a.tipo];
-      if (!t) throw new Error('tipo_presumido inválido na atividade "' + a.id + '": ' + a.tipo);
-      pI += a.share * t.irpj;
-      pC += a.share * t.csll;
-    });
-    var issPct = 0, icmsPct = 0;
-    c.atividades.forEach(function (a) { issPct += a.share * a.iss; icmsPct += a.share * a.icms; });
-
-    var meses = [], cumPrev = 0, i;
-    var tot = { irpj: 0, csll: 0, pis: 0, cofins: 0, iss: 0, icms: 0, cpp: 0, terceiros: 0 };
-    if (c.cbsIbs) { tot.cbs = 0; tot.ibs = 0; }
-    for (i = 0; i < 12; i++) {
-      var rec = c.sim[i];
-      var cumNow = cumPrev + rec;
-      var lim = num(ac.limite_receita_anual);
-      var exced = ac.ativo === false ? 0 : Math.max(0, cumNow - lim) - Math.max(0, cumPrev - lim);
-      var acI = (ac.ativo !== false && vigente(c.ano, i + 1, ac.vigencia_irpj)) ? exced * pI * num(ac.percentual) : 0;
-      var acC = (ac.ativo !== false && vigente(c.ano, i + 1, ac.vigencia_csll)) ? exced * pC * num(ac.percentual) : 0;
-      var e = encargosMes(aliq, c, i);
-      var mp = {
-        mes: i, receita: rec, excedente: exced,
-        base_irpj: rec * pI + acI, base_csll: rec * pC + acC,
-        pis: rec * P.pis_aliquota, cofins: rec * P.cofins_aliquota,
-        iss: rec * issPct, icms: rec * icmsPct,
-        cpp: e.cpp + e.rat, terceiros: e.terc
-      };
-      if (c.cbsIbs) { mp.cbs = rec * c.cbsIbs.cbs; mp.ibs = rec * c.cbsIbs.ibs; }
-      meses.push(mp);
-      cumPrev = cumNow;
-    }
-    var tri = [];
-    for (var q = 0; q < 4; q++) {
-      var ms = meses.slice(q * 3, q * 3 + 3);
-      var bI = sum(ms.map(function (m) { return m.base_irpj; }));
-      var bC = sum(ms.map(function (m) { return m.base_csll; }));
-      var ativos = 3;
-      if (c.emAb) ativos = ms.filter(function (m, k) { return q * 3 + k >= c.primeiro; }).length;
-      var irpjBase = P.irpj_aliquota * bI;
-      var adic = P.irpj_adicional_aliquota * Math.max(0, bI - P.irpj_adicional_limite_mensal * ativos);
-      var csll = P.csll_aliquota * bC;
-      tri.push({
-        tri: q + 1, receita: sum(ms.map(function (m) { return m.receita; })),
-        base_irpj: bI, irpj: irpjBase, adicional: adic, base_csll: bC, csll: csll
-      });
-      tot.irpj += irpjBase + adic;
-      tot.csll += csll;
-    }
-    meses.forEach(function (m) {
-      tot.pis += m.pis; tot.cofins += m.cofins; tot.iss += m.iss; tot.icms += m.icms;
-      tot.cpp += m.cpp; tot.terceiros += m.terceiros;
-      if (c.cbsIbs) { tot.cbs += m.cbs; tot.ibs += m.ibs; }
-    });
-
-    var receitaAnual = sum(c.sim);
-    if (receitaAnual > num(P.limite_opcao_receita_anual, 78000000)) motivos.push('Receita anual acima do limite de ' + brl(P.limite_opcao_receita_anual) + ' para opção pelo Lucro Presumido.');
-    if (sum(meses.map(function (m) { return m.excedente; })) > 0) {
-      avisos.push('Receita acima de ' + brl(ac.limite_receita_anual) + ' no ano: acréscimo de ' + (num(ac.percentual) * 100) + '% na presunção aplicado ao excedente (LC 224/2025, status a confirmar).');
-    }
-    var baseAnual = sum(tri.map(function (t) { return t.base_irpj; }));
-    var lucroIsento = baseAnual - tot.irpj - tot.csll - tot.pis - tot.cofins;
-    var itens = { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros };
-    if (c.cbsIbs) { itens.cbs = tot.cbs; itens.ibs = tot.ibs; lucroIsento = lucroIsento - tot.cbs - tot.ibs; }
-
-    return {
-      id: 'presumido',
-      elegivel: motivos.length === 0,
-      motivos: motivos,
-      avisos: avisos,
-      itens: itens,
-      detalhe: { meses: meses, trimestres: tri, presuncao_irpj_media: pI, presuncao_csll_media: pC },
-      lucro_isento_aprox: Math.max(0, lucroIsento),
-      lucro_isento_tipo: 'Base presumida do IRPJ menos IRPJ, CSLL, PIS e COFINS'
-    };
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Lucro Real (apuração trimestral)                                     */
-  /* ------------------------------------------------------------------ */
-  function calcReal(aliq, c) {
-    var R = aliq.lucro_real;
-    var avisos = [], motivos = [];
-    var issPct = 0, icmsPct = 0;
-    c.atividades.forEach(function (a) { issPct += a.share * a.iss; icmsPct += a.share * a.icms; });
-    var meses = [], i;
-    var credExcedeu = false;
-    for (i = 0; i < 12; i++) {
-      var rec = c.sim[i];
-      var e = encargosMes(aliq, c, i);
-      var compras = mv(c.custos.compras_insumos_mensal, i);
-      var comprasCred = mv(c.custos.compras_com_direito_credito_pis_cofins_mensal, i);
-      var desp = mv(c.custos.outras_despesas_operacionais_mensal, i);
-      var despCred = mv(c.custos.despesas_com_direito_credito_pis_cofins_mensal, i);
-      var credBase = comprasCred + despCred;
-      var pisDeb = rec * R.pis_aliquota, cofDeb = rec * R.cofins_aliquota;
-      var pisCred = credBase * R.pis_aliquota, cofCred = credBase * R.cofins_aliquota;
-      if (pisCred > pisDeb || cofCred > cofDeb) credExcedeu = true;
-      var pis = Math.max(0, pisDeb - pisCred), cof = Math.max(0, cofDeb - cofCred);
-      var iss = rec * issPct, icms = rec * icmsPct;
-      var folhaCusto = e.sal + e.prol + e.fgts + e.cpp + e.rat + e.terc;
-      var ajuste = mv(c.lreal.ajustes_adicoes_exclusoes_mensal, i);
-      var lucro = rec - pis - cof - iss - icms - compras - desp - folhaCusto + ajuste;
-      var cbsM = c.cbsIbs ? rec * c.cbsIbs.cbs : 0, ibsM = c.cbsIbs ? rec * c.cbsIbs.ibs : 0;
-      if (c.cbsIbs) lucro = lucro - cbsM - ibsM; // CBS e IBS são dedutíveis como os demais tributos sobre a receita (hipótese)
-      var mr = {
-        mes: i, receita: rec, pis: pis, cofins: cof, iss: iss, icms: icms,
-        cpp: e.cpp + e.rat, terceiros: e.terc, folha_custo: folhaCusto, lucro_antes_ir: lucro
-      };
-      if (c.cbsIbs) { mr.cbs = cbsM; mr.ibs = ibsM; }
-      meses.push(mr);
-    }
-    var prej = num(c.lreal.prejuizo_fiscal_acumulado);
-    var tri = [];
-    var tot = { irpj: 0, csll: 0, pis: 0, cofins: 0, iss: 0, icms: 0, cpp: 0, terceiros: 0 };
-    if (c.cbsIbs) { tot.cbs = 0; tot.ibs = 0; }
-    var lucroTotal = 0;
-    for (var q = 0; q < 4; q++) {
-      var ms = meses.slice(q * 3, q * 3 + 3);
-      var lq = sum(ms.map(function (m) { return m.lucro_antes_ir; }));
-      var ativos = 3;
-      if (c.emAb) ativos = ms.filter(function (m, k) { return q * 3 + k >= c.primeiro; }).length;
-      var comp = 0, base = 0;
-      if (lq <= 0) { prej += -lq; }
-      else {
-        comp = Math.min(prej, R.limite_compensacao_prejuizo * lq);
-        prej -= comp;
-        base = lq - comp;
-      }
-      var irpjBase = R.irpj_aliquota * base;
-      var adic = R.irpj_adicional_aliquota * Math.max(0, base - R.irpj_adicional_limite_mensal * ativos);
-      var csll = R.csll_aliquota * base;
-      tri.push({ tri: q + 1, lucro_antes_ir: lq, compensacao: comp, base: base, irpj: irpjBase, adicional: adic, csll: csll });
-      tot.irpj += irpjBase + adic; tot.csll += csll;
-      lucroTotal += lq;
-    }
-    meses.forEach(function (m) {
-      tot.pis += m.pis; tot.cofins += m.cofins; tot.iss += m.iss; tot.icms += m.icms;
-      tot.cpp += m.cpp; tot.terceiros += m.terceiros;
-      if (c.cbsIbs) { tot.cbs += m.cbs; tot.ibs += m.ibs; }
-    });
-    var custosVazios = ['compras_insumos_mensal', 'outras_despesas_operacionais_mensal'].every(function (k) { return sum(meses.map(function (_, ix) { return mv(c.custos[k], ix); })) === 0; });
-    if (custosVazios) avisos.push('Lucro Real sem custos e despesas informados: o lucro tende a ser superestimado e o resultado deste regime não é confiável.');
-    if (credExcedeu) avisos.push('Créditos de PIS/COFINS superam os débitos em algum mês. O motor limitou o PIS/COFINS a zero e não acumula o saldo credor.');
-    if (lucroTotal < 0) avisos.push('Prejuízo fiscal no ano: o motor não modela outras vedações ou obrigações do Lucro Real.');
-    var lucroApos = lucroTotal - tot.irpj - tot.csll;
-
-    var itens = { irpj: tot.irpj, csll: tot.csll, pis: tot.pis, cofins: tot.cofins, iss: tot.iss, icms: tot.icms, cpp: tot.cpp, terceiros: tot.terceiros };
-    if (c.cbsIbs) { itens.cbs = tot.cbs; itens.ibs = tot.ibs; }
-
-    return {
-      id: 'real',
-      elegivel: true,
-      motivos: motivos,
-      avisos: avisos,
-      itens: itens,
-      detalhe: { meses: meses, trimestres: tri },
-      lucro_isento_aprox: Math.max(0, lucroApos),
-      lucro_isento_tipo: 'Lucro antes do IR menos IRPJ e CSLL'
-    };
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Lucros distribuídos                                                  */
-  /* ------------------------------------------------------------------ */
-  function calcDividendos(aliq, c, key) {
-    var D = aliq.dividendos || {};
-    var n = num(c.socios.quantidade);
-    var calc = 0, totalDist = 0;
-    for (var i = 0; i < 12; i++) {
-      var d = mv(c.socios.distribuicao_mensal_por_socio, i);
-      var iso = mv(c.socios.isento_lucros_ate_2025_mensal_por_socio, i);
-      totalDist += d * n;
-      var sujeito = Math.max(0, d - iso);
-      if (c.ano >= num(D.vigencia_ano, 2026) && sujeito > num(D.limite_mensal_por_beneficiario)) {
-        calc += sujeito * num(D.retencao_aliquota) * n;
-      }
-    }
-    var aplica = key === 'simples' ? D.simples_sujeito_retencao === true : true;
-    return { calculada: calc, aplicada: aplica ? calc : 0, aplica: aplica, total_distribuido: totalDist };
-  }
-
-  function fechar(aliq, c, r, receitaAnual) {
-    var dv = calcDividendos(aliq, c, r.id);
-    var totalEmp = 0;
-    Object.keys(r.itens).forEach(function (k) { totalEmp += r.itens[k] || 0; });
-    r.nome = NOMES[r.id];
-    r.dividendos = dv;
-    r.total_empresa = totalEmp;
-    r.retencao_aplicada = dv.aplicada;
-    r.carga_total = totalEmp + dv.aplicada;
-    r.pct_receita = receitaAnual > 0 ? r.carga_total / receitaAnual : 0;
-    r.pct_empresa = receitaAnual > 0 ? totalEmp / receitaAnual : 0;
-    if (dv.total_distribuido > 0 && dv.total_distribuido > r.lucro_isento_aprox) {
-      r.avisos.push('Distribuição anual de ' + brl(dv.total_distribuido) + ' acima do lucro isento estimado de ' + brl(r.lucro_isento_aprox) + ' (base da estimativa: ' + r.lucro_isento_tipo + '). O excedente exige escrituração contábil completa que o comprove, ou pode ser tributado.');
-    }
-    if (r.id === 'simples' && dv.calculada > 0 && !dv.aplica) {
-      r.avisos.push('Retenção de ' + brl(dv.calculada) + ' sobre lucros calculada como hipótese e NÃO somada ao total, porque as alíquotas indicam que o Simples não está sujeito (ponto controvertido, a confirmar).');
-    }
-    return r;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Orquestração                                                         */
-  /* ------------------------------------------------------------------ */
-  // opcoes.aplicarCbsIbs (padrão false): inclui CBS e IBS na carga. Desligado, o resultado é o de sempre.
-  function calcular(aliq, dados, opcoes) {
-    var c = normalizar(dados);
-    var receitaAnual = sum(c.sim);
-    var res = { versao: VERSAO, ano: c.ano, receita_anual: receitaAnual, regimes: {}, avisos: [], ranking: [] };
-    var pc = (opcoes && opcoes.aplicarCbsIbs === true) ? paramsCbsIbs(aliq) : null;
-    c.cbsIbs = pc;
-    if (pc) res.cbs_ibs = { aplicado: true, cbs: pc.cbs, ibs: pc.ibs, simples_incluido: pc.simples, origem: pc.origem };
-    var calcs = { simples: calcSimples, presumido: calcPresumido, real: calcReal };
-    c.regimes.forEach(function (k) {
-      if (calcs[k]) res.regimes[k] = fechar(aliq, c, calcs[k](aliq, c), receitaAnual);
-    });
-    res.ranking = Object.keys(res.regimes)
-      .filter(function (k) { return res.regimes[k].elegivel; })
-      .sort(function (a, b) { return res.regimes[a].carga_total - res.regimes[b].carga_total; })
-      .map(function (k) { return k; });
-
-    // Avisos gerais
-    var RC = aliq.reforma_consumo || {};
-    if (pc) {
-      pc.avisos.forEach(function (t) { res.avisos.push({ nivel: 'atencao', texto: t }); });
-      res.avisos.push({ nivel: 'atencao', texto: 'CBS ' + pctTxt(pc.cbs) + ' e IBS ' + pctTxt(pc.ibs) + ' aplicados sobre a receita bruta, com valores AINDA EM DEFINIÇÃO (hipótese do operador, lidos de reforma_consumo no aliquotas.json). ' + (pc.simples ? 'Também somados ao Simples, conforme o aliquotas.json.' : 'Somados apenas ao Presumido e ao Real; o Simples fica sem CBS/IBS por falta de regra clara no aliquotas.json.') });
-      res.avisos.push({ nivel: 'atencao', texto: 'Compensação na transição não modelada: PIS, COFINS, ICMS e ISS continuam calculados integralmente e CBS/IBS entram por cima, sem créditos nem exclusões de base. Pode haver dupla contagem e carga superestimada.' });
-      if (c.ano === num(RC.ano_teste, 2026) && RC.gera_carga_adicional_no_ano_teste === false) {
-        res.avisos.push({ nivel: 'info', texto: 'Segundo as fontes do aliquotas.json, em ' + c.ano + ' (ano de teste) não há carga adicional de CBS/IBS. Este modo é uma simulação hipotética.' });
-      }
-    } else if (c.ano === num(RC.ano_teste, 2026)) {
-      res.avisos.push({ nivel: 'info', texto: 'Reforma do consumo: em ' + c.ano + ' as notas destacam CBS ' + (num(RC.cbs_teste) * 100).toFixed(1).replace('.', ',') + '% e IBS ' + (num(RC.ibs_teste) * 100).toFixed(1).replace('.', ',') + '% como teste. Segundo as fontes, sem carga adicional no ano. Não modelado.' });
-    } else if (c.ano > num(RC.ano_teste, 2026)) {
-      res.avisos.push({ nivel: 'atencao', texto: 'Ano-calendário ' + c.ano + ': CBS e IBS (que substituem PIS, COFINS, ICMS e ISS) NÃO estão modelados. Os resultados refletem as regras anteriores à reforma e podem estar defasados.' });
-    }
-    var D = aliq.dividendos || {};
-    var n = Math.max(1, num(c.socios.quantidade, 1));
-    var distAnual = 0, prolAnual = 0;
-    for (var i = 0; i < 12; i++) { distAnual += mv(c.socios.distribuicao_mensal_por_socio, i); prolAnual += mv(c.folha.prolabore_total_mensal, i) / n; }
-    if (distAnual + prolAnual > num(D.irpfm_limite_anual, 600000)) {
-      res.avisos.push({ nivel: 'atencao', texto: 'Renda estimada por sócio acima de ' + brl(D.irpfm_limite_anual) + ' no ano (pró-labore + lucros): pode haver tributação mínima de altas rendas (IRPFM), não calculada aqui.' });
-    }
-    res.avisos.push({ nivel: 'info', texto: 'Fora do escopo do motor: ICMS-ST, produtos monofásicos, exportação, incentivos fiscais, JCP, parcelamentos, retenções na fonte sobre serviços e a tributação do pró-labore (igual nos três regimes).' });
-    res.avisos.push({ nivel: 'info', texto: 'FGTS não entra na carga, pois é igual nos três regimes. Ele reduz o lucro apenas no cálculo do Lucro Real.' });
-    return res;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Sensibilidade                                                        */
-  /* ------------------------------------------------------------------ */
-  var CENARIOS_PADRAO = [
-    { id: 'base', nome: 'Cenário base', receita: 1, prolabore: 1 },
-    { id: 'rec_mais', nome: 'Receita +10%', receita: 1.1, prolabore: 1 },
-    { id: 'rec_menos', nome: 'Receita -10%', receita: 0.9, prolabore: 1 },
-    { id: 'prol_mais', nome: 'Pró-labore +20%', receita: 1, prolabore: 1.2 },
-    { id: 'prol_menos', nome: 'Pró-labore -20%', receita: 1, prolabore: 0.8 }
-  ];
-
-  function escalar(x, f) { return Array.isArray(x) ? x.map(function (v) { return num(v) * f; }) : num(x) * f; }
-
-  function sensibilidade(aliq, dados, cenarios, opcoes) {
-    var lista = cenarios || CENARIOS_PADRAO;
-    return lista.map(function (cn) {
-      var d = JSON.parse(JSON.stringify(dados));
-      d.receitas = d.receitas || {};
-      d.receitas.simulacao_12_meses = escalar(d.receitas.simulacao_12_meses || [], cn.receita);
-      d.receitas.historico_12_meses_anteriores = escalar(d.receitas.historico_12_meses_anteriores || [], cn.receita);
-      if (d.folha) d.folha.prolabore_total_mensal = escalar(d.folha.prolabore_total_mensal, cn.prolabore);
-      var r = calcular(aliq, d, opcoes);
-      var out = { id: cn.id, nome: cn.nome, totais: {}, melhor: r.ranking[0] || null };
-      Object.keys(r.regimes).forEach(function (k) { out.totais[k] = { carga_total: r.regimes[k].carga_total, elegivel: r.regimes[k].elegivel }; });
-      return out;
-    });
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Validação e listas de revisão                                        */
-  /* ------------------------------------------------------------------ */
-  function validar(aliq, dados) {
-    var erros = [], avisos = [];
-    if (!aliq || typeof aliq !== 'object') { erros.push('Alíquotas: JSON inválido.'); return { erros: erros, avisos: avisos }; }
-    if (!dados || typeof dados !== 'object') { erros.push('Dados da empresa: JSON inválido.'); return { erros: erros, avisos: avisos }; }
-    ['simples_nacional', 'lucro_presumido', 'lucro_real', 'encargos_folha', 'dividendos'].forEach(function (k) {
-      if (!aliq[k]) erros.push('Alíquotas: bloco "' + k + '" ausente.');
-    });
-    var S = aliq.simples_nacional;
-    if (S && (!S.anexos || ['I', 'II', 'III', 'IV', 'V'].some(function (k) { return !S.anexos[k] || !S.anexos[k].faixas || S.anexos[k].faixas.length === 0; }))) {
-      erros.push('Alíquotas: Simples Nacional precisa dos anexos I a V com faixas.');
-    }
-    var ano = dados.ano_calendario;
-    if (!(Number(ano) >= 2000)) erros.push('Dados: "ano_calendario" ausente ou inválido.');
-    var sim = (dados.receitas || {}).simulacao_12_meses;
-    if (!Array.isArray(sim) || sim.length !== 12) erros.push('Dados: "receitas.simulacao_12_meses" deve ter exatamente 12 valores (janeiro a dezembro).');
-    else {
-      if (sim.some(function (v) { return v === null || v === '' || !isFinite(Number(v)) || Number(v) < 0; })) erros.push('Dados: "receitas.simulacao_12_meses" tem valor vazio, não numérico ou negativo.');
-      else if (sum(sim.map(Number)) === 0) erros.push('Dados: receita simulada total é zero.');
-    }
-    var emAb = (dados.empresa || {}).situacao === 'em_abertura';
-    var hist = (dados.receitas || {}).historico_12_meses_anteriores;
-    if (!emAb && !Array.isArray(hist)) avisos.push('Dados: sem "historico_12_meses_anteriores". Para empresa ativa o RBT12 do Simples fica incompleto.');
-    var ats = dados.atividades;
-    if (!Array.isArray(ats) || ats.length === 0) erros.push('Dados: informe ao menos uma atividade em "atividades".');
-    else {
-      var soma = ats.reduce(function (s, a) { return s + num(a.percentual_receita); }, 0);
-      if (Math.abs(soma - 100) > 0.01) erros.push('Dados: "percentual_receita" das atividades soma ' + soma.toFixed(2) + ', deve somar 100.');
-      ats.forEach(function (a, k) {
-        var nome = a.id || ('atividade ' + (k + 1));
-        var anexos = S && S.anexos ? Object.keys(S.anexos).concat(['III_ou_V_fator_r', 'vedado']) : [];
-        if (anexos.indexOf(a.anexo_simples) < 0) erros.push('Dados: atividade "' + nome + '" com "anexo_simples" inválido (use I, II, III, IV, V, III_ou_V_fator_r ou vedado).');
-        var P = aliq.lucro_presumido;
-        if (P && P.presuncao && !P.presuncao[a.tipo_presumido]) erros.push('Dados: atividade "' + nome + '" com "tipo_presumido" inválido (' + Object.keys(P.presuncao).join(', ') + ').');
-        ['iss_percentual', 'icms_liquido_percentual_receita'].forEach(function (f) {
-          if (a[f] === null || a[f] === undefined) erros.push('Dados: atividade "' + nome + '" sem "' + f + '" (use 0 se não se aplica).');
-        });
-      });
-    }
-    var regs = dados.regimes_a_comparar;
-    if (regs && regs.some(function (r) { return REGIMES.indexOf(r) < 0; })) erros.push('Dados: "regimes_a_comparar" aceita simples, presumido e real.');
-    var f = dados.folha;
-    if (!f) erros.push('Dados: bloco "folha" ausente.');
-    else ['salarios_empregados_mensal', 'prolabore_total_mensal', 'rat_percentual', 'terceiros_percentual'].forEach(function (k) {
-      if (f[k] === null || f[k] === undefined) erros.push('Dados: "folha.' + k + '" vazio (use 0 se não se aplica).');
-    });
-    var regsAtivos = regs && regs.length ? regs : REGIMES;
-    if (regsAtivos.indexOf('real') >= 0) {
-      var cu = dados.custos;
-      if (!cu) erros.push('Dados: bloco "custos" ausente (necessário para o Lucro Real).');
-      else ['compras_insumos_mensal', 'compras_com_direito_credito_pis_cofins_mensal', 'outras_despesas_operacionais_mensal', 'despesas_com_direito_credito_pis_cofins_mensal'].forEach(function (k) {
-        if (cu[k] === null || cu[k] === undefined) erros.push('Dados: "custos.' + k + '" vazio (use 0 se não se aplica).');
-      });
-    }
-    var so = dados.socios;
-    if (!so || !(Number(so.quantidade) >= 1)) avisos.push('Dados: "socios.quantidade" ausente. A retenção sobre lucros distribuídos ficará zerada.');
-    else if (so.distribuicao_mensal_por_socio === null || so.distribuicao_mensal_por_socio === undefined) erros.push('Dados: "socios.distribuicao_mensal_por_socio" vazio (use 0 se não há distribuição).');
-    var pend = listarPendencias(aliq).length;
-    if (pend > 0) avisos.push('Alíquotas: ' + pend + ' bloco(s) com status a confirmar. Ver lista de pendências.');
-    return { erros: erros, avisos: avisos };
-  }
-
-  function listarPendencias(aliq) {
-    var out = [];
-    (function walk(o, path) {
-      if (o && typeof o === 'object') {
-        if (!Array.isArray(o) && typeof o.status === 'string' && o.status.indexOf('conferido') !== 0) {
-          out.push({ caminho: path.join('.'), status: o.status, nota: o.nota || o.simples_nota || '' });
-        }
-        Object.keys(o).forEach(function (k) { walk(o[k], path.concat(k)); });
-      }
-    })(aliq, []);
-    return out;
-  }
-
-  function listarRevisoes(dados) {
-    var meta = (dados && dados.meta) || {};
-    return Object.keys(meta).filter(function (k) { return meta[k] && meta[k].origem && meta[k].origem !== 'informado'; })
-      .map(function (k) { return Object.assign({ campo: k }, meta[k]); });
-  }
-
-  function brl(v) {
-    return 'R$ ' + num(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  return {
-    versao: VERSAO, calcular: calcular, validar: validar, sensibilidade: sensibilidade,
-    listarPendencias: listarPendencias, listarRevisoes: listarRevisoes,
-    NOMES: NOMES, ROTULOS: ROTULOS, MESES: MESES, CENARIOS_PADRAO: CENARIOS_PADRAO
-  };
-});
-
-</script>
+<script src="motor.js"></script>
 <script>
 (function () {
   'use strict';
@@ -948,7 +344,7 @@
   var timer = null;
 
   /* ---------- abas ---------- */
-  var TABS = ['entradas', 'resultado', 'formulas', 'modelos'];
+  var TABS = ['entradas', 'aliquotas', 'resultado', 'formulas', 'modelos'];
   function showTab() {
     var h = (location.hash || '').replace('#', '');
     if (TABS.indexOf(h) < 0) h = 'resultado';
@@ -1105,6 +501,7 @@
     chip($('chipAliq'), mA);
     chip($('chipDados'), mD);
     metaLinha();
+    sincronizarAliquotas();
     renderResultado();
   }
 
@@ -1333,13 +730,225 @@
     box.innerHTML = h.join('');
   }
 
+
+  /* ---------- aba Alíquotas: tabela editável do aliquotas.json ---------- */
+  /*
+   * Tipos de célula: pct (fração no JSON, exibida em %), brl (R$), int, bool, status, txt.
+   * A edição grava no objeto, reescreve o textarea de Entradas e recalcula. Nada é enviado para fora.
+   */
+  var STATUS = {
+    conferido_fonte_oficial: 'Conferido em fonte oficial',
+    conferido_fonte_secundaria: 'Conferido em fonte secundária',
+    conhecimento_previo_a_confirmar: 'Conhecimento prévio, a confirmar',
+    a_confirmar: 'A confirmar'
+  };
+  var AQ_BLOCOS = [
+    { k: 'metadata', titulo: 'Verificação', linhas: [
+      ['ano_calendario', 'Ano-calendário', 'int'], ['data_verificacao', 'Data da verificação', 'txt'],
+      ['verificado_por', 'Verificado por', 'txt'], ['status_geral', 'Situação geral', 'txt']] },
+    { k: 'simples_nacional', titulo: 'Simples Nacional', linhas: [
+      ['limite_receita_anual', 'Limite de receita anual', 'brl'], ['sublimite_icms_iss', 'Sublimite de ICMS e ISS', 'brl'],
+      ['fator_r_minimo', 'Fator R mínimo para o Anexo III', 'pct']], anexos: true },
+    { k: 'lucro_presumido', titulo: 'Lucro Presumido', linhas: [
+      ['limite_opcao_receita_anual', 'Limite de receita para opção', 'brl'], ['irpj_aliquota', 'IRPJ', 'pct'],
+      ['irpj_adicional_aliquota', 'Adicional de IRPJ', 'pct'], ['irpj_adicional_limite_mensal', 'Limite mensal do adicional', 'brl'],
+      ['csll_aliquota', 'CSLL', 'pct'], ['pis_aliquota', 'PIS (cumulativo)', 'pct'], ['cofins_aliquota', 'COFINS (cumulativo)', 'pct'],
+      ['acrescimo_presuncao.status', 'Acréscimo da presunção: status', 'status'], ['acrescimo_presuncao.ativo', 'Acréscimo da presunção: ativo', 'bool'],
+      ['acrescimo_presuncao.percentual', 'Acréscimo sobre a presunção', 'pct'], ['acrescimo_presuncao.limite_receita_anual', 'Receita anual a partir da qual vale o acréscimo', 'brl'],
+      ['acrescimo_presuncao.vigencia_irpj.ano', 'Vigência no IRPJ: ano', 'int'], ['acrescimo_presuncao.vigencia_irpj.mes', 'Vigência no IRPJ: mês', 'int'],
+      ['acrescimo_presuncao.vigencia_csll.ano', 'Vigência na CSLL: ano', 'int'], ['acrescimo_presuncao.vigencia_csll.mes', 'Vigência na CSLL: mês', 'int']], presuncao: true },
+    { k: 'lucro_real', titulo: 'Lucro Real', linhas: [
+      ['irpj_aliquota', 'IRPJ', 'pct'], ['irpj_adicional_aliquota', 'Adicional de IRPJ', 'pct'], ['irpj_adicional_limite_mensal', 'Limite mensal do adicional', 'brl'],
+      ['csll_aliquota', 'CSLL', 'pct'], ['pis_aliquota', 'PIS (não cumulativo)', 'pct'], ['cofins_aliquota', 'COFINS (não cumulativo)', 'pct'],
+      ['limite_compensacao_prejuizo', 'Limite de compensação de prejuízo', 'pct']] },
+    { k: 'encargos_folha', titulo: 'Encargos de folha', linhas: [
+      ['cpp_patronal', 'CPP patronal', 'pct'], ['fgts', 'FGTS', 'pct']] },
+    { k: 'dividendos', titulo: 'Lucros distribuídos', linhas: [
+      ['vigencia_ano', 'Início da retenção (ano)', 'int'], ['retencao_aliquota', 'Alíquota de retenção', 'pct'],
+      ['limite_mensal_por_beneficiario', 'Limite mensal por beneficiário', 'brl'], ['simples_sujeito_retencao', 'Simples sujeito à retenção', 'bool'],
+      ['simples_status', 'Simples sujeito à retenção: status', 'status'], ['irpfm_limite_anual', 'Limite anual do IRPFM (só aviso)', 'brl']] },
+    { k: 'reforma_consumo', titulo: 'Reforma do consumo (CBS e IBS)', linhas: [
+      ['ano_teste', 'Ano de teste', 'int'], ['cbs_teste', 'CBS no ano de teste', 'pct'], ['ibs_teste', 'IBS no ano de teste', 'pct'],
+      ['gera_carga_adicional_no_ano_teste', 'Gera carga adicional no ano de teste', 'bool'],
+      ['cbs_aplicar.aliquota', 'CBS usada no botão "Aplicar CBS e IBS"', 'pct'], ['cbs_aplicar.status', 'CBS do botão: status', 'status'],
+      ['ibs_aplicar.aliquota', 'IBS usado no botão "Aplicar CBS e IBS"', 'pct'], ['ibs_aplicar.status', 'IBS do botão: status', 'status'],
+      ['simples_por_fora_do_das.aplicar', 'Somar CBS e IBS ao Simples', 'bool'], ['simples_por_fora_do_das.status', 'Somar ao Simples: status', 'status']] }
+  ];
+  var aq = { base: null, baseTxt: '', ultimoTxt: null, edits: {} };
+
+  function getPath(o, p) { for (var i = 0; i < p.length; i++) { if (o == null) return undefined; o = o[p[i]]; } return o; }
+  function setPath(o, p, v) { for (var i = 0; i < p.length - 1; i++) o = o[p[i]]; o[p[p.length - 1]] = v; }
+  function brNum(s) {
+    s = String(s).replace(/R\$|%|\s/g, '');
+    if (s === '') return NaN;
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+  }
+  function fmtCel(v, t) {
+    if (v === null || v === undefined) return '';
+    if (t === 'pct') return (Math.round(v * 100 * 1e8) / 1e8).toLocaleString('pt-BR', { maximumFractionDigits: 6 });
+    if (t === 'brl') return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return String(v);
+  }
+  function lerCel(txt, t) {
+    if (t === 'txt' || t === 'status') return { v: txt };
+    if (t === 'bool') return { v: txt === 'true' };
+    var n = brNum(txt);
+    if (isNaN(n)) return { err: 'número inválido' };
+    if (t === 'int') { if (n !== Math.round(n)) return { err: 'use número inteiro' }; return { v: n }; }
+    if (t === 'pct') { if (n < 0 || n > 100) return { err: 'percentual entre 0 e 100' }; return { v: Number((n / 100).toFixed(10)) }; }
+    if (n < 0) return { err: 'valor negativo' };
+    return { v: n };
+  }
+  function celula(path, t) {
+    var v = getPath(state.aliq, path);
+    var id = esc(path.join('.'));
+    var cls = 'aq-in' + (aq.edits[path.join('.')] ? ' edit' : '');
+    if (t === 'status') {
+      var op = Object.keys(STATUS).map(function (k) { return '<option value="' + k + '"' + (v === k ? ' selected' : '') + '>' + esc(STATUS[k]) + '</option>'; });
+      if (v && !STATUS[v]) op.unshift('<option value="' + esc(v) + '" selected>' + esc(v) + '</option>');
+      return '<select class="' + cls + '" data-aq="' + id + '" data-t="status" aria-label="' + id + '">' + op.join('') + '</select>';
+    }
+    if (t === 'bool') {
+      return '<select class="' + cls + '" data-aq="' + id + '" data-t="bool" aria-label="' + id + '"><option value="true"' + (v === true ? ' selected' : '') + '>Sim</option><option value="false"' + (v !== true ? ' selected' : '') + '>Não</option></select>';
+    }
+    var un = t === 'pct' ? '%' : t === 'brl' ? 'R$' : '';
+    var inp = '<input class="' + cls + (t === 'txt' ? ' txt' : '') + '" data-aq="' + id + '" data-t="' + t + '" value="' + esc(fmtCel(v, t)) + '" inputmode="' + (t === 'txt' ? 'text' : 'decimal') + '" aria-label="' + id + '">';
+    return '<div class="aq-in-wrap">' + (un === 'R$' ? '<span class="aq-un">R$</span>' : '') + inp + (un === '%' ? '<span class="aq-un">%</span>' : '') + '</div>';
+  }
+  function statusChip(s) {
+    if (!s) return '';
+    var ok = String(s).indexOf('conferido_fonte_oficial') === 0;
+    return '<span class="chip ' + (ok ? 'ok' : 'warn') + '">' + esc(STATUS[s] || s) + '</span>';
+  }
+  function blocoMeta(b) {
+    var out = [];
+    if (b.base_legal) out.push('<p><b>Base legal:</b> ' + esc(b.base_legal) + '</p>');
+    if (b.nota) out.push('<p><b>Nota:</b> ' + esc(b.nota) + '</p>');
+    if (b.simples_nota) out.push('<p><b>Nota:</b> ' + esc(b.simples_nota) + '</p>');
+    if (b.fontes && b.fontes.length) out.push('<details><summary>Fontes (' + b.fontes.length + ')</summary><div class="det-body"><ul class="plain">' + b.fontes.map(function (f) { return '<li class="src">' + esc(f) + '</li>'; }).join('') + '</ul></div></details>');
+    return out.length ? '<div class="aq-meta">' + out.join('') + '</div>' : '';
+  }
+  function renderAliquotas() {
+    var box = $('aqTabelas');
+    var A = state.aliq;
+    if (!A || typeof A !== 'object') { box.innerHTML = '<div class="empty"><p>O JSON de alíquotas em Entradas está inválido. Corrija para ver a tabela.</p></div>'; return; }
+    var html = [];
+    AQ_BLOCOS.forEach(function (bl) {
+      var B = A[bl.k];
+      if (!B) { html.push('<div class="panel"><h2>' + esc(bl.titulo) + '</h2><div class="msg err">Bloco "' + esc(bl.k) + '" ausente no JSON.</div></div>'); return; }
+      var p = ['<div class="panel"><div class="aq-head"><h2>' + esc(bl.titulo) + '</h2>' + statusChip(B.status) + '</div>'];
+      var rows = [];
+      if (B.status !== undefined) rows.push(['Status do bloco', celula([bl.k, 'status'], 'status')]);
+      bl.linhas.forEach(function (l) {
+        var path = [bl.k].concat(l[0].split('.'));
+        if (getPath(A, path) === undefined) return;
+        rows.push([esc(l[1]), celula(path, l[2])]);
+      });
+      p.push(tabelaAq(['Item', 'Valor'], rows));
+      if (bl.anexos && B.anexos) {
+        Object.keys(B.anexos).forEach(function (an) {
+          var X = B.anexos[an];
+          var fr = (X.faixas || []).map(function (f, i) {
+            var base = [bl.k, 'anexos', an, 'faixas', i];
+            return [String(i + 1), celula(base.concat('ate'), 'brl'), celula(base.concat('aliquota'), 'pct'), celula(base.concat('deduzir'), 'brl')];
+          });
+          p.push('<h3>Anexo ' + esc(an) + (X.nome ? ' · <span class="muted" style="font-weight:500">' + esc(X.nome) + '</span>' : '') + '</h3>');
+          p.push(tabelaAq(['Faixa', 'Receita em 12 meses até', 'Alíquota nominal', 'Parcela a deduzir'], fr));
+          if (X.cpp_incluida_no_das !== undefined) p.push(tabelaAq(['Item', 'Valor'], [['CPP incluída no DAS', celula([bl.k, 'anexos', an, 'cpp_incluida_no_das'], 'bool')]]));
+        });
+      }
+      if (bl.presuncao && B.presuncao) {
+        var pr = Object.keys(B.presuncao).map(function (tp) {
+          var X = B.presuncao[tp], base = [bl.k, 'presuncao', tp];
+          return [esc(X.descricao || tp) + '<small class="muted">' + esc(tp) + '</small>', celula(base.concat('irpj'), 'pct'), celula(base.concat('csll'), 'pct'), X.status !== undefined ? celula(base.concat('status'), 'status') : ''];
+        });
+        p.push('<h3>Percentuais de presunção</h3>');
+        p.push(tabelaAq(['Atividade', 'IRPJ', 'CSLL', 'Status'], pr));
+      }
+      p.push(blocoMeta(B));
+      if (B.acrescimo_presuncao) p.push(blocoMeta(B.acrescimo_presuncao));
+      p.push('</div>');
+      html.push(p.join(''));
+    });
+    box.innerHTML = html.join('');
+    aqResumo();
+  }
+  function tabelaAq(heads, rows) {
+    return '<div class="tablewrap"><table><thead><tr>' + heads.map(function (x) { return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr>' + r.map(function (c, i) { return '<td' + (i ? ' class="aq-c"' : '') + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  }
+  function aqResumo() {
+    var n = Object.keys(aq.edits).length;
+    var c = $('aqChip');
+    c.className = 'chip ' + (n ? 'warn' : 'ok');
+    c.textContent = n ? n + (n === 1 ? ' alteração' : ' alterações') : 'Sem alterações';
+    $('aqLog').hidden = !n;
+    $('aqLogList').innerHTML = Object.keys(aq.edits).map(function (k) {
+      var e = aq.edits[k];
+      return '<li><code>' + esc(k) + '</code>: ' + esc(JSON.stringify(e.de)) + ' → ' + esc(JSON.stringify(e.para)) + '</li>';
+    }).join('');
+    var pend = state.aliq ? E.listarPendencias(state.aliq).length : 0;
+    var pc = $('aqPend');
+    pc.hidden = !pend;
+    pc.textContent = pend + (pend === 1 ? ' bloco a confirmar' : ' blocos a confirmar');
+    $('aqMsgs').innerHTML = $('msgAliq').innerHTML;
+  }
+  /* Chamado a cada atualização. Só redesenha a tabela quando o JSON mudou por fora dela (arquivo, colagem, restaurar). */
+  function sincronizarAliquotas() {
+    if (ta.aliq.value === aq.ultimoTxt) { aqResumo(); return; }
+    var pr = parse(ta.aliq.value);
+    aq.ultimoTxt = ta.aliq.value;
+    if (pr.err) {
+      aq.edits = {};
+      $('aqTabelas').innerHTML = '<div class="empty"><p>O JSON de alíquotas em Entradas está inválido. Corrija para ver a tabela.</p></div>';
+      aqResumo();
+      return;
+    }
+    aq.base = pr.v;
+    aq.baseTxt = ta.aliq.value;
+    aq.ultimoTxt = ta.aliq.value;
+    aq.edits = {};
+    renderAliquotas();
+  }
+  $('aqTabelas').addEventListener('change', function (e) {
+    var el = e.target, k = el.getAttribute('data-aq');
+    if (!k || !state.aliq) return;
+    var path = k.split('.').map(function (x) { return /^\d+$/.test(x) ? Number(x) : x; });
+    var t = el.getAttribute('data-t');
+    var r = lerCel(el.value.trim(), t);
+    if (r.err) { el.classList.add('bad'); el.title = r.err; return; }
+    el.classList.remove('bad'); el.title = '';
+    setPath(state.aliq, path, r.v);
+    var orig = getPath(aq.base, path);
+    if (JSON.stringify(orig) === JSON.stringify(r.v)) { delete aq.edits[k]; el.classList.remove('edit'); }
+    else { aq.edits[k] = { de: orig, para: r.v }; el.classList.add('edit'); }
+    if (t !== 'txt' && t !== 'status' && t !== 'bool') el.value = fmtCel(r.v, t);
+    ta.aliq.value = JSON.stringify(state.aliq, null, 2) + '\n';
+    aq.ultimoTxt = ta.aliq.value;
+    agendar(0);
+  });
+  $('aqCopiar').addEventListener('click', function (e) { copyText(ta.aliq.value, e.currentTarget, ta.aliq); });
+  $('aqDesfazer').addEventListener('click', function () {
+    if (!Object.keys(aq.edits).length) return;
+    ta.aliq.value = aq.baseTxt;
+    aq.ultimoTxt = null;
+    agendar(0);
+  });
+
   /* ---------- início ---------- */
   $('preAliq').textContent = ALIQ_TXT;
   $('preTpl').textContent = TPL_TXT;
   $('preEx').textContent = EX_TXT;
   ta.aliq.value = ALIQ_TXT;
   ta.dados.value = EX_TXT;
+  // Dados vindos da ficha (prompts.html, botão "Usar no Comparativo"). Lido uma vez e apagado.
+  var importado = null;
+  try { importado = localStorage.getItem('ct:dados-importar'); localStorage.removeItem('ct:dados-importar'); } catch (e) { importado = null; }
+  if (importado) ta.dados.value = importado;
   showTab();
   atualizar();
+  if (importado) $('msgDados').insertAdjacentHTML('afterbegin', '<div class="msg info">Dados importados da ficha do cliente (compilada sem IA).</div>');
 })();
 </script>
