@@ -10,6 +10,9 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.8.1 — 2026-11-03
+- `docs/plano-modelo-decisao.md`: plano do modelo de decisão no navegador (LAYA), com a divisão modelo × regra × revisão humana em três níveis.
+
 ## 1.8.0 — 2026-11-03
 - `cnae.json` com as 1.332 subclasses CNAE 2.3 do IBGE, gerado por `scripts/gerar-cnae.mjs` (pronto para rotina automática).
 - Ficha: anexo do Simples sugerido só por regra objetiva (comércio: Anexo I; indústria: Anexo II). CNAE ambíguo, impeditivo ou de serviço mostra mensagem de que não pode ser inferido automaticamente e pede a escolha no select.

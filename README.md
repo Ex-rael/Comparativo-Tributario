@@ -122,6 +122,7 @@ SemVer, com a versão em `motor.js` e no topo das páginas. Sobe a cada commit: 
 
 ## Próximos passos
 
+- **Modelo de decisão no navegador** (LAYA) para os enquadramentos ambíguos: plano em [`docs/plano-modelo-decisao.md`](docs/plano-modelo-decisao.md).
 - **Preenchimento da ficha auxiliado por IA:** a IA leria os documentos do cliente e proporia os valores da ficha, para o contador revisar antes de gerar o JSON. O JSON continuaria saindo do `ficha.js`, sem IA.
 - **Rotina de atualização do `cnae.json`:** rodar `scripts/gerar-cnae.mjs` periodicamente e publicar no repositório.
 - **Carregar as tabelas oficiais** de vedação (Anexo VI da Resolução CGSN 140/2018) e RAT (Anexo V do Decreto 3.048/1999) em `fontes/`.
