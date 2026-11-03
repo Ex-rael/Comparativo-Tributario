@@ -1,0 +1,4 @@
+# Decreto 3.048/1999, Anexo V (Relação de atividades preponderantes e graus de risco, conforme a CNAE).
+# Copie da norma oficial (planalto.gov.br). RAT em % (1, 2 ou 3). Um CNAE por linha, 7 dígitos.
+# Exemplo de formato (não é dado real): 0000000;2
+cnae;rat

@@ -40,7 +40,9 @@ Toda a aritmética do motor está descrita em [`calculos.md`](calculos.md), em M
 
 ### Ficha e prompts
 - **Ficha do cliente** (aba 2): totais e códigos, sem documentos, CNPJ, nomes ou CPFs. O `dados-empresa.json` aparece à direita, gerado na hora pelo `ficha.js`, com a lista de **Pendências** e a validação do motor.
-- **CNAE e município** são conferidos na API pública do IBGE, direto do navegador. O anexo do Simples e o tipo de presunção são escolhidos pelo contador em listas fechadas.
+- **CNAE e município** são conferidos na tabela `cnae.json` e na API pública do IBGE, direto do navegador.
+- **Enquadramento:** o anexo do Simples só é sugerido quando há regra objetiva (comércio: Anexo I; indústria: Anexo II). CNAE ambíguo, impeditivo ou de serviço mostra a mensagem de que não pode ser inferido automaticamente, e o operador escolhe no select. O tipo de presunção é sempre escolha do operador.
+- **RAT e FAP** são informados separados. O JSON recebe RAT × FAP.
 - **Premissas fixas**, sempre registradas em `meta`: ISS em branco vira 0 em comércio, ICMS em branco vira 0 em serviço, e sem receita simulada repete-se o histórico (com o crescimento informado, se houver).
 - **Usar no Comparativo** abre o `index.html` já com os dados. **Copiar JSON** é a alternativa.
 - **Preencher com exemplo** carrega uma empresa fictícia. CPF, CNPJ e e-mail digitados em texto livre são mascarados localmente.
@@ -64,7 +66,10 @@ Para ver o fluxo sem dados reais, use **Carregar exemplo** na aba Entradas.
 | `motor.js` | Motor de cálculo (`CTEngine`), usado pelas duas páginas |
 | `ficha.js` | Compilador determinístico da ficha para o `dados-empresa.json` (`CTFicha`) |
 | `prompts.html` | Ficha do cliente e prompts |
+| `cnae.json` | Tabela CNAE 2.3 (IBGE) com anexo sugerido, vedação ao Simples e RAT, gerada por `scripts/gerar-cnae.mjs` |
+| `fontes/*.csv` | Tabelas oficiais que alimentam o `cnae.json`: Anexo VI da Resolução CGSN 140/2018 e Anexo V do Decreto 3.048/1999 |
 | `docs/avaliacao-apis.md` | Testes de viabilidade das APIs do IBGE (CNAE) e da NFS-e (ISS) |
+| `CHANGELOG.md` | Histórico de versões |
 | `calculos.md` | Memória de cálculo em LaTeX |
 | `aliquotas.json` | Alíquotas, faixas, limites e vigências, cada bloco com `status` e `fontes` |
 | `dados-empresa.template.json` | Modelo em branco dos dados da empresa |
@@ -102,10 +107,24 @@ Só a API pública do IBGE, chamada direto do navegador (CORS liberado, sem aute
 
 As APIs do Sistema Nacional NFS-e (parâmetros municipais de ISS) exigem certificado digital ICP-Brasil e não servem a um site estático. Detalhes em [`docs/avaliacao-apis.md`](docs/avaliacao-apis.md).
 
+## Tabela CNAE
+
+O `cnae.json` é gerado por `node scripts/gerar-cnae.mjs` (Node 18+, sem dependências), que:
+1. baixa as 1.332 subclasses da API do IBGE;
+2. lê `fontes/cgsn140-anexo-vi.csv` (`cnae;situacao`, com `impeditivo` ou `ambiguo`) e `fontes/decreto3048-anexo-v.csv` (`cnae;rat`);
+3. aplica as regras objetivas de anexo sugerido e grava o `cnae.json`.
+
+As duas tabelas oficiais ainda estão **sem dados**: as fontes (portal de normas da Receita e Planalto) não puderam ser baixadas automaticamente, e o gerador nunca preenche valor de memória. Enquanto estiverem vazias, a ficha avisa que a vedação ao Simples não foi verificada. O script foi feito para rodar numa rotina periódica que atualize o `cnae.json` no repositório.
+
+## Versionamento
+
+SemVer, com a versão em `motor.js` e no topo das páginas. Sobe a cada commit: **MAJOR** quando o resultado muda para a mesma entrada ou um JSON antigo deixa de valer; **MINOR** para função nova compatível; **PATCH** para correção, texto, layout ou documentação. Histórico em [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Próximos passos
 
 - **Preenchimento da ficha auxiliado por IA:** a IA leria os documentos do cliente e proporia os valores da ficha, para o contador revisar antes de gerar o JSON. O JSON continuaria saindo do `ficha.js`, sem IA.
-- **Tabela `cnae.json`:** CNAE → anexo do Simples, Fator R, vedação e grau de RAT, validada pelo contador, para a ficha sugerir o enquadramento.
+- **Rotina de atualização do `cnae.json`:** rodar `scripts/gerar-cnae.mjs` periodicamente e publicar no repositório.
+- **Carregar as tabelas oficiais** de vedação (Anexo VI da Resolução CGSN 140/2018) e RAT (Anexo V do Decreto 3.048/1999) em `fontes/`.
 - **Tabela de ISS do escritório:** município (código IBGE) × item da LC 116 → alíquota.
 
 ## Licença

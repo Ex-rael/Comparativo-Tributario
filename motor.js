@@ -9,7 +9,12 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  var VERSAO = '1.0.0';
+  /*
+   * Versão da ferramenta (SemVer), mostrada nas duas páginas. Sobe a cada commit, conforme o CHANGELOG.md:
+   * MAJOR muda o resultado para a mesma entrada ou quebra o formato dos JSON; MINOR traz função nova compatível;
+   * PATCH corrige erro, texto, layout ou documentação sem mudar resultado.
+   */
+  var VERSAO = '1.8.0';
   var REGIMES = ['simples', 'presumido', 'real'];
   var NOMES = { simples: 'Simples Nacional', presumido: 'Lucro Presumido', real: 'Lucro Real' };
   var ROTULOS = {

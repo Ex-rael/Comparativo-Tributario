@@ -131,6 +131,7 @@
     <nav class="nav" aria-label="Páginas">
       <a href="index.html">Comparativo</a>
       <a href="index.html#formulas">Fórmulas</a>
+      <span class="muted" id="versao" style="font: 12px var(--f-mono); align-self: center"></span>
     </nav>
   </header>
 
@@ -241,7 +242,8 @@
               <div class="field"><label for="f-prol">Pró-labore total</label><input type="text" id="f-prol" data-f="prol" data-n="1|12"></div>
               <div class="field"><label for="f-nsoc">Quantidade de sócios</label><input type="number" id="f-nsoc" data-f="nsoc" min="1"></div>
               <div class="field"><label for="f-folha12">Folha dos 12 meses anteriores <code>salários + pró-labore + FGTS</code></label><input type="text" id="f-folha12" data-f="folha12"></div>
-              <div class="field"><label for="f-rat">RAT ajustado, % <code>RAT x FAP</code></label><input type="text" id="f-rat" data-f="rat" inputmode="decimal"></div>
+              <div class="field"><label for="f-rat">RAT, % <code>atividade preponderante, sem FAP</code></label><input type="text" id="f-rat" data-f="rat" inputmode="decimal" placeholder="1, 2 ou 3"><div class="hint" id="h-rat"></div></div>
+              <div class="field"><label for="f-fap">FAP <code>FAPWeb, 0,5000 a 2,0000</code></label><input type="text" id="f-fap" data-f="fap" inputmode="decimal" placeholder="Ex.: 1,0000"></div>
               <div class="field"><label for="f-terc">Terceiros, % <code>conforme FPAS</code></label><input type="text" id="f-terc" data-f="terc" inputmode="decimal"></div>
               <div class="field"><label for="f-dist">Distribuição de lucros por sócio</label><input type="text" id="f-dist" data-f="dist" data-n="1|12"></div>
               <div class="field"><label for="f-iso">Isento (lucros apurados até 2025), por sócio</label><input type="text" id="f-iso" data-f="iso" data-n="1|12"></div>
@@ -369,7 +371,8 @@
       '<div class="field"><label>ICMS líquido %</label><input type="text" data-a="icms" inputmode="decimal" placeholder="Serviço: 0"></div>' +
       '<button class="btn" type="button" data-del-ativ aria-label="Remover atividade">Remover</button>' +
       '<div class="field span2"><label>Anexo do Simples</label><select data-a="anexo">' + OPC_ANEXO + '</select></div>' +
-      '<div class="field span2"><label>Tipo de presunção (Presumido)</label><select data-a="tipo"></select></div>';
+      '<div class="field span2"><label>Tipo de presunção (Presumido)</label><select data-a="tipo"></select></div>' +
+      '<div class="hint full" data-sug></div>';
     ativsEl.appendChild(d);
   }
   var OPC_ANEXO = '<option value="">Escolha</option>' + [['I', 'I · Comércio'], ['II', 'II · Indústria'], ['III', 'III · Serviços'], ['IV', 'IV · Serviços, CPP fora'], ['V', 'V · Serviços intelectuais'], ['III_ou_V_fator_r', 'III ou V pelo Fator R'], ['vedado', 'Vedado ao Simples']]
@@ -396,24 +399,83 @@
   /* ---------- consultas à API do IBGE (públicas, com CORS liberado) ---------- */
   var IBGE = 'https://servicodados.ibge.gov.br/api';
   var cacheCnae = {}, cacheMun = {};
+  /* cnae.json: gerado por scripts/gerar-cnae.mjs a partir do IBGE e das tabelas oficiais em fontes/. */
+  var TAB_CNAE = null;
+  var tabCnaePronta = fetch('cnae.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (j) { TAB_CNAE = j; return j; }, function () { return null; });
+  var NOME_ANEXO = { I: 'I (comércio)', II: 'II (indústria)' };
+
+  /* Sugere o enquadramento só quando a tabela permite. O que não dá para inferir vira escolha explícita do operador. */
+  function sugerir(row, d) {
+    var out = row.querySelector('[data-sug]'), sel = row.querySelector('[data-a="anexo"]');
+    var it = TAB_CNAE && TAB_CNAE.subclasses[d];
+    var semVedacao = TAB_CNAE && TAB_CNAE.metadata.fontes.cgsn140_anexo_vi === 'não carregada';
+    var msg = [], cls = 'hint full warn';
+    if (!it) {
+      msg.push('O anexo do Simples não pode ser inferido automaticamente' + (TAB_CNAE ? ' (CNAE fora da tabela)' : ' (tabela CNAE indisponível)') + '. Escolha no campo acima.');
+    } else if (it.simples === 'impeditivo') {
+      sel.value = 'vedado';
+      msg.push('CNAE impeditivo ao Simples Nacional (Resolução CGSN 140/2018, Anexo VI). Anexo marcado como "Vedado".');
+    } else if (it.simples === 'ambiguo') {
+      msg.push('CNAE ambíguo: abrange atividade permitida e atividade vedada ao Simples (Resolução CGSN 140/2018, Anexo VI). Não pode ser inferido automaticamente: escolha o anexo ou "Vedado".');
+    } else if (it.anexo) {
+      if (!sel.value) sel.value = it.anexo;
+      cls = 'hint full';
+      msg.push('Anexo ' + (NOME_ANEXO[it.anexo] || it.anexo) + ' sugerido pela divisão CNAE ' + it.v + '. Confirme.' + (semVedacao ? ' Vedação ao Simples não verificada: a tabela do Anexo VI ainda não foi carregada.' : ''));
+    } else {
+      msg.push('O anexo deste CNAE não pode ser inferido automaticamente (serviços dependem da atividade e, às vezes, do Fator R). Escolha no campo acima.' + (semVedacao ? ' Vedação ao Simples não verificada.' : ''));
+    }
+    if (!row.querySelector('[data-a="tipo"]').value) msg.push('Tipo de presunção: escolha pela natureza da receita; não é inferido pelo CNAE.');
+    if (it && it.rat) msg.push('RAT da tabela para este CNAE: ' + it.rat + '%.');
+    out.textContent = msg.join(' ');
+    out.className = cls;
+    sugerirRat();
+  }
+  /* RAT da 1ª atividade com RAT na tabela, como dica. A atividade preponderante (mais empregados) é decisão do operador. */
+  function sugerirRat() {
+    var h = $('h-rat');
+    if (!TAB_CNAE) { h.textContent = ''; return; }
+    var dica = '';
+    Array.prototype.some.call(ativsEl.querySelectorAll('[data-a="cnae"]'), function (inp) {
+      var it = TAB_CNAE.subclasses[inp.value.replace(/\D/g, '')];
+      if (it && it.rat) { dica = 'Tabela: ' + it.rat + '% para o CNAE ' + inp.value + '. Use o da atividade com mais empregados.'; return true; }
+      return false;
+    });
+    if (!dica && TAB_CNAE.metadata.fontes.decreto3048_anexo_v === 'não carregada') dica = 'Tabela de RAT por CNAE ainda não carregada: informe o RAT.';
+    h.textContent = dica;
+  }
   function consultarCnae(row) {
     var inp = row.querySelector('[data-a="cnae"]'), out = row.querySelector('[data-ibge]');
     var d = inp.value.replace(/\D/g, '');
+    row.querySelector('[data-sug]').textContent = '';
     if (!d) { out.textContent = ''; out.className = 'hint full'; return; }
     if (d.length !== 7) { out.textContent = 'Use os 7 dígitos da subclasse (ex.: 6201-5/01).'; out.className = 'hint full warn'; return; }
     inp.value = CTFicha.formatarCnae(d);
-    out.textContent = 'Consultando o IBGE...'; out.className = 'hint full';
-    var p = cacheCnae[d] || (cacheCnae[d] = fetch(IBGE + '/v2/cnae/subclasses/' + d).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }));
-    p.then(function (j) {
-      if (!j || !j.id) { out.textContent = 'CNAE ' + inp.value + ' não encontrado no IBGE (CNAE 2.3).'; out.className = 'hint full warn'; return; }
-      var c = j.classe || {}, sec = c.grupo && c.grupo.divisao && c.grupo.divisao.secao;
-      out.textContent = '✓ IBGE: ' + j.descricao + (sec ? ' · seção ' + sec.id + ' (' + sec.descricao.toLowerCase() + ')' : '');
-      out.className = 'hint full';
+    function preencherDesc(txt) {
       var desc = row.querySelector('[data-a="desc"]');
-      if (!desc.value.trim()) { desc.value = j.descricao.charAt(0) + j.descricao.slice(1).toLowerCase(); render('p2'); }
-    }, function () {
-      delete cacheCnae[d];
-      out.textContent = 'IBGE indisponível agora. O CNAE segue sem conferência.'; out.className = 'hint full warn';
+      if (!desc.value.trim()) { desc.value = txt.charAt(0) + txt.slice(1).toLowerCase(); }
+    }
+    tabCnaePronta.then(function () {
+      var it = TAB_CNAE && TAB_CNAE.subclasses[d];
+      if (it) {
+        out.textContent = '✓ CNAE 2.3 (tabela do IBGE): ' + it.d + ' · seção ' + it.s;
+        out.className = 'hint full';
+        preencherDesc(it.d); sugerir(row, d); render('p2');
+        return;
+      }
+      out.textContent = 'Consultando o IBGE...'; out.className = 'hint full';
+      var p = cacheCnae[d] || (cacheCnae[d] = fetch(IBGE + '/v2/cnae/subclasses/' + d).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }));
+      p.then(function (j) {
+        if (!j || !j.id) { out.textContent = 'CNAE ' + inp.value + ' não encontrado no IBGE (CNAE 2.3).'; out.className = 'hint full warn'; sugerir(row, d); return; }
+        var c = j.classe || {}, sec = c.grupo && c.grupo.divisao && c.grupo.divisao.secao;
+        out.textContent = '✓ IBGE: ' + j.descricao + (sec ? ' · seção ' + sec.id : '');
+        out.className = 'hint full';
+        preencherDesc(j.descricao); sugerir(row, d); render('p2');
+      }, function () {
+        delete cacheCnae[d];
+        out.textContent = 'IBGE indisponível agora. O CNAE segue sem conferência.'; out.className = 'hint full warn';
+        sugerir(row, d);
+      });
     });
   }
   function normNome(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
@@ -468,7 +530,7 @@
       hist: '118.000; 112.000; 121.000; 125.000; 130.000; 128.000; 135.000; 140.000; 138.000; 145.000; 160.000; 172.000',
       sim: '130.000; 124.000; 133.000; 138.000; 143.000; 141.000; 148.000; 154.000; 152.000; 160.000; 176.000; 190.000',
       cresc: '',
-      sal: '28.000', prol: '10.000', nsoc: '2', folha12: '482.880', rat: '1', terc: '5,8',
+      sal: '28.000', prol: '10.000', nsoc: '2', folha12: '482.880', rat: '1', fap: '1,0000', terc: '5,8',
       dist: '6.000', iso: '0',
       compras: '55.000', comprascred: '40.000', desp: '18.000', despcred: '6.000', prej: '0', ajustes: '0',
       obs: 'Empresa fictícia para demonstração. Comércio de informática (60% da receita) e assistência técnica (40%). Crédito de PIS/COFINS apurado pelo contador: insumos e despesas informados acima.'
@@ -566,7 +628,8 @@
     L.push('- Pró-labore total: ' + ni(nums('prol', '1|12')));
     L.push('- Quantidade de sócios: ' + ni(F('nsoc')));
     L.push('- Folha dos 12 meses anteriores (salários + pró-labore + FGTS, sem CPP), total: ' + ni(simples('folha12')));
-    L.push('- RAT ajustado (RAT x FAP), %: ' + (pctVal('rat') || 'não informado (IA deduz)'));
+    L.push('- RAT da atividade preponderante, %: ' + (pctVal('rat') || 'não informado (IA deduz)'));
+    L.push('- FAP: ' + ni(F('fap')));
     L.push('- Terceiros, % (conforme FPAS): ' + (pctVal('terc') || 'não informado (IA deduz)'));
     L.push('- Distribuição de lucros por sócio: ' + ni(nums('dist', '1|12')));
     L.push('- Isento por lucros apurados até 2025, por sócio: ' + (nums('iso', '1|12') || '0'));
@@ -652,7 +715,8 @@
     });
   });
   ativsEl.addEventListener('change', function (e) {
-    if (e.target.getAttribute('data-a') === 'cnae') consultarCnae(e.target.closest('.ativ'));
+    var a = e.target.getAttribute('data-a');
+    if (a === 'cnae' || a === 'tipo') consultarCnae(e.target.closest('.ativ'));
   });
   $('f-uf').addEventListener('change', conferirMunicipio);
   $('f-municipio').addEventListener('change', conferirMunicipio);
@@ -761,6 +825,7 @@
       Array.prototype.forEach.call(document.querySelectorAll('[data-key="' + k + '"]'), function (el) { if (!el.value) el.value = defaults[k]; });
     }, function (e) { erros.push(e.message); }));
   });
+  $('versao').textContent = 'Versão ' + CTEngine.versao;
   showTab();
   Promise.all(pedidos).then(function () {
     if (erros.length) {

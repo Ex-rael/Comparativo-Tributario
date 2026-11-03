@@ -508,10 +508,10 @@
   function metaLinha() {
     var el = $('metaLine');
     var a = state.aliq;
-    if (!a || !a.metadata) { el.textContent = 'Motor v' + E.versao; return; }
+    if (!a || !a.metadata) { el.textContent = 'Versão ' + E.versao; return; }
     var p = E.listarPendencias(a).length;
     var d = String(a.metadata.data_verificacao || '').split('-').reverse().join('/');
-    el.innerHTML = 'Motor v' + esc(E.versao) + '<br>Alíquotas verificadas em ' + esc(d) + ', ' + p + (p === 1 ? ' pendência' : ' pendências');
+    el.innerHTML = 'Versão ' + esc(E.versao) + '<br>Alíquotas verificadas em ' + esc(d) + ', ' + p + (p === 1 ? ' pendência' : ' pendências');
   }
 
   /* ---------- tabelas ---------- */

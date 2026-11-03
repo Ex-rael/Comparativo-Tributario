@@ -149,11 +149,22 @@
     } else P('receitas.simulacao_12_meses', 'Receita simulada: informe os 12 meses (ou o histórico, para repeti-lo)');
 
     /* ---------- folha e sócios ---------- */
+    /* RAT ajustado = RAT da atividade preponderante x FAP da empresa (Decreto 3.048/1999, art. 202-A). */
+    function ratAjustado() {
+      var rat = numero(e.rat, 'folha.rat_percentual', 'RAT % da atividade preponderante', true);
+      if (rat !== null && [1, 2, 3].indexOf(rat) < 0) avisos.push('RAT de ' + rat + '%: o RAT básico costuma ser 1%, 2% ou 3%. Informe o RAT sem o FAP.');
+      var fap = numero(e.fap, 'folha.fap', 'FAP (consulte o FAPWeb)', true);
+      if (fap !== null && (fap < 0.5 || fap > 2)) { P('folha.fap', 'FAP deve ficar entre 0,5000 e 2,0000 (veio ' + fap + ')'); fap = null; }
+      if (rat === null || fap === null) return null;
+      var aj = Math.round(rat * fap * 10000) / 10000;
+      meta['folha.rat_percentual'] = { origem: 'informado', confianca: 'alta', justificativa: 'RAT ' + rat + '% x FAP ' + fap + ' = ' + aj + '%.', fonte: 'Ficha do cliente' };
+      return aj;
+    }
     var usaFatorR = atividades.some(function (a) { return a.anexo_simples === 'III_ou_V_fator_r'; });
     var folha = {
       salarios_empregados_mensal: mensal(e.sal, 'folha.salarios_empregados_mensal', 'Salários dos empregados', true),
       prolabore_total_mensal: mensal(e.prol, 'folha.prolabore_total_mensal', 'Pró-labore total', true),
-      rat_percentual: numero(e.rat, 'folha.rat_percentual', 'RAT ajustado %', true),
+      rat_percentual: ratAjustado(),
       terceiros_percentual: numero(e.terc, 'folha.terceiros_percentual', 'Terceiros %', true),
       folha_historico_12m_fator_r: numero(e.folha12, 'folha.folha_historico_12m_fator_r', 'Folha dos 12 meses anteriores (Fator R)', ativa && usaFatorR)
     };
