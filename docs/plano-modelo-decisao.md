@@ -1,6 +1,6 @@
 # Plano: modelo de decisão no navegador para os enquadramentos ambíguos
 
-Status: **rascunho para decisão**, 2026-11-03. Nada aqui foi implementado.
+Status: **fase 0 em andamento**, atualizado em 2026-11-04. Decisões tomadas: download opcional de cerca de 400 MB aceito, com medição do tempo de carga; acerto mínimo de **80%**; ordem da fase 3 confirmada. Resultados na seção 9.
 
 **Estratégia adotada:** dividir o trabalho. O modelo entra onde o texto é livre ("a empresa faz X", objeto social, descrição vaga) e sugere o anexo ou o CNAE provável, com uma probabilidade. Código comum consulta as tabelas (`cnae.json`) e calcula o Fator R. Os casos incertos, quando o modelo não tem confiança ou diverge da tabela, vão para revisão humana. As seções 3 a 5 detalham como, com quatro ajustes.
 
@@ -13,7 +13,7 @@ Ajudar o operador nas escolhas que a ficha hoje não consegue inferir (anexo do 
 - **LAYA** ([ConvAI Innovations](https://www.llmreference.com/model-family/laya)): modelo de decisão "System 1", não autorregressivo. Recebe um *estado* e perguntas tipadas e devolve probabilidades calibradas para cada opção numa só passada. Segundo as fontes, tem cerca de 421M de parâmetros (encoder ModernBERT-large com cabeça de decisão), licença Apache 2.0 e foi treinado com RLCD (aprendizado por reforço com regras de pontuação próprias). Já existe conversão para o navegador: [onnx-community/laya-ONNX](https://huggingface.co/onnx-community/laya-ONNX) e [archevel/laya-web](https://huggingface.co/archevel/laya-web) (int8, WebGPU).
 - **JEV** ([MindStudio](https://www.mindstudio.ai/blog/jev-judgment-model-browser-agents/)): modelo de julgamento da mesma família de ideias, voltado a agentes de navegação. Não encontrei pesos prontos para o navegador. Fica como alternativa a avaliar, não como base.
 
-> Os números acima vêm de páginas públicas e **não foram medidos aqui**. A fase 0 existe para confirmá-los.
+> Os números acima vêm de páginas públicas. A seção 9 traz o que foi conferido e medido, e **corrige três pontos**: o tamanho, o idioma e o acerto sem ajuste fino.
 
 ## 3. Divisão do trabalho: o que o modelo pode e não pode decidir
 
@@ -121,7 +121,48 @@ Só se a fase 2 ficar abaixo da meta. Ajuste fino offline com a base rotulada, e
 - **Probabilidade alta não é garantia legal:** a sugestão nunca dispensa o aceite do operador.
 - **Dependência de terceiros:** os pesos estão no Hugging Face. Mitigação: fixar a revisão e guardar uma cópia em repositório próprio no Hugging Face.
 
-## 8. Decisões pendentes (do responsável pelo projeto)
-1. Um download opcional de cerca de 400 MB é aceitável, ou a meta é um modelo leve (até cerca de 100 MB)?
-2. Quem rotula a base de avaliação da fase 1, e qual a meta de acerto para liberar?
-3. A ordem da fase 3 (anexo de serviços, divergência de CNAE, sugestão de CNAE, tipo de presunção) está correta?
+## 8. Decisões (respondidas em 2026-11-04)
+1. **Download:** cerca de 400 MB opcionais é aceitável, com o tempo de carga medido e avaliado. A menor versão existente tem 637 MB (seção 9.2).
+2. **Base de avaliação:** buscar bases rotuladas e, sem elas, criar uma. **Acerto mínimo de 80%.** Bases criadas em `avaliacao/` (seção 9.3).
+3. **Ordem da fase 3:** confirmada.
+
+## 9. Resultados da fase 0 (2026-11-04)
+
+### 9.1 O que as páginas dos modelos dizem
+Lido em `onnx-community/laya-ONNX`, `archevel/laya-web` e `convaiinnovations/laya`:
+- **Idioma.** O checkpoint principal é **só inglês** ("English only on root"). Para outros idiomas, o próprio autor indica o `convaiinnovations/laya-multilingual` (mmBERT-base, 322M parâmetros, mais de 100 idiomas), que **não tem conversão para o navegador publicada**.
+- **Acerto sem ajuste fino.** A página do modelo diz que os checkpoints base ficam perto do acaso em decisões tipadas sem ajuste fino (0,362 no conjunto *typed-decisions*, contra 0,766 da versão ajustada). Para chegar a 80%, **o ajuste fino da fase 4 deixa de ser condicional**.
+- **Formato de entrada.** Uma sequência por pergunta, com limite de 512 tokens e de 48 tokens por opção: `[CLS] {tipo} question: {pergunta} [SEP] [MASK] opção … [SEP] estado [SEP]`. Os textos das opções tirados da lei precisam ser curtos.
+- **Licença:** Apache 2.0 nos três repositórios.
+
+### 9.2 Tempo de carga medido (`spike/laya-carga.html`)
+Modelo `archevel/laya-web` (int8, inglês), com ONNX Runtime Web 1.31.1, em Chrome 154 headless num notebook com 8 núcleos, 16 GB e GPU integrada Intel UHD:
+
+| Medida | Resultado |
+|---|---|
+| Tamanho real | **603,7 MB** (encoder de 596 MB e cabeça de 37 MB), acima dos 400 MB previstos |
+| Download, primeiro acesso | **44 s** a 13,7 MB/s |
+| Leitura do cache, acessos seguintes | 0,6 a 1,1 s |
+| Inicialização em WebGPU | 3,0 s |
+| Inicialização em WebAssembly | 1,4 a 3,1 s |
+| Total até pronto, com cache | 2,1 a 3,9 s |
+| Memória JS ocupada | cerca de 610 MB |
+
+Estimativa do primeiro acesso em outras conexões: cerca de 100 s a 50 Mbit/s e 8 min a 10 Mbit/s. **Ainda não medido:** latência por decisão e uso em celular, porque falta montar a sequência de entrada (próximo passo).
+
+Problemas encontrados e resolvidos no spike:
+- A versão 1.20.1 do ONNX Runtime Web falhava ao carregar o modelo. A 1.31.1 funciona.
+- No WebGPU, as duas sessões precisam ser criadas uma de cada vez.
+
+### 9.3 Bases rotuladas
+Não existe base pronta de "descrição de atividade → anexo do Simples". As de portais contábeis são secundárias e sem licença de reuso. Foram criadas em `avaliacao/`:
+- `anexo-lei.jsonl`: 50 itens com o texto e o rótulo dados pela LC 123/2006 (gabarito oficial).
+- `anexo-casos.jsonl`: 138 descrições de operador, com o rótulo herdado do inciso da lei, a validar pelo contador. Inclui 19 casos difíceis.
+- `cnae-ibge.jsonl`: 2.581 pares de atividade e CNAE do índice oficial do IBGE.
+
+**Linha de base sem modelo** (busca por palavras): 67,4% de acerto geral; com abstenção, responde 48,6% dos casos e acerta 85,1% deles. O modelo só se justifica se passar dos 80% respondendo mais casos que isso.
+
+### 9.4 Consequências para o plano
+1. **Modelo multilíngue.** Converter o `laya-multilingual` para ONNX int8 (fora do navegador, com Python) e publicar no Hugging Face. Pelo número de parâmetros, deve ficar perto dos 400 MB, o que ainda precisa ser medido.
+2. **Ajuste fino obrigatório.** Usar `anexo-lei` e os casos validados como treino e avaliação separados, sem misturar.
+3. **Próximo passo do spike:** montar a sequência de entrada no navegador (tokenizador e marcadores) e medir latência e acerto sem ajuste fino em `anexo-casos`, para ter o ponto de partida antes de treinar.

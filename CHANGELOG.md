@@ -10,6 +10,12 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.9.0 — 2026-11-04
+- `avaliacao/`: bases rotuladas para o modelo de decisão (50 itens da LC 123, 138 casos de operador a validar, 2.581 pares CNAE do IBGE) e linha de base sem modelo.
+- `fontes/lc123-art17-art18.txt`: texto atualizado dos arts. 17 e 18 da LC 123/2006 (Câmara dos Deputados).
+- `spike/laya-carga.html`: teste de tempo de carga do LAYA no navegador. Resultados no plano.
+- Scripts `gerar-base-cnae.mjs`, `gerar-casos-anexo.py` e `avaliar-baseline.mjs`.
+
 ## 1.8.1 — 2026-11-03
 - `docs/plano-modelo-decisao.md`: plano do modelo de decisão no navegador (LAYA), com a divisão modelo × regra × revisão humana em três níveis.
 

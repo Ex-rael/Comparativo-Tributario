@@ -69,6 +69,8 @@ Para ver o fluxo sem dados reais, use **Carregar exemplo** na aba Entradas.
 | `cnae.json` | Tabela CNAE 2.3 (IBGE) com anexo sugerido, vedação ao Simples e RAT, gerada por `scripts/gerar-cnae.mjs` |
 | `fontes/*.csv` | Tabelas oficiais que alimentam o `cnae.json`: Anexo VI da Resolução CGSN 140/2018 e Anexo V do Decreto 3.048/1999 |
 | `docs/avaliacao-apis.md` | Testes de viabilidade das APIs do IBGE (CNAE) e da NFS-e (ISS) |
+| `avaliacao/` | Bases rotuladas para avaliar o modelo de decisão, com a origem de cada rótulo |
+| `spike/laya-carga.html` | Teste descartável do tempo de carga do LAYA no navegador |
 | `CHANGELOG.md` | Histórico de versões |
 | `calculos.md` | Memória de cálculo em LaTeX |
 | `aliquotas.json` | Alíquotas, faixas, limites e vigências, cada bloco com `status` e `fontes` |
