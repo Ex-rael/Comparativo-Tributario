@@ -166,3 +166,33 @@ Não existe base pronta de "descrição de atividade → anexo do Simples". As d
 1. **Modelo multilíngue.** Converter o `laya-multilingual` para ONNX int8 (fora do navegador, com Python) e publicar no Hugging Face. Pelo número de parâmetros, deve ficar perto dos 400 MB, o que ainda precisa ser medido.
 2. **Ajuste fino obrigatório.** Usar `anexo-lei` e os casos validados como treino e avaliação separados, sem misturar.
 3. **Próximo passo do spike:** montar a sequência de entrada no navegador (tokenizador e marcadores) e medir latência e acerto sem ajuste fino em `anexo-casos`, para ter o ponto de partida antes de treinar.
+
+## 10. Conversão e primeiros treinos (2026-11-04)
+
+Ambiente local: `laya 0.4.22`, `torch 2.15`, CPU i7-10610U. Modelo: `laya-multilingual` (mmBERT-base, 322M), que já vem dentro de `convaiinnovations/laya` (pasta `multilingual`).
+
+### 10.1 Conversão para ONNX
+| Formato | Tamanho | Fidelidade ao PyTorch (188 frases das bases) | Tempo por decisão (CPU) |
+|---|---|---|---|
+| fp32 | 1,23 GB | 100% das escolhas iguais | ~270 ms |
+| **int8** (pesos de MatMul e embeddings) | **320 MB** | 89,9% das escolhas iguais | ~170 ms |
+| int8 por canal | 321 MB | 52,7% | ~220 ms |
+| int8 com a cabeça de decisão em fp32 | 352 MB | 89,4% | ~185 ms |
+
+- O int8 cabe nos 400 MB.
+- A fidelidade foi medida com o modelo sem treino, cujas probabilidades são quase planas, o que exagera as trocas de escolha. Ela precisa ser medida de novo no modelo treinado.
+- Se continuar baixa, a próxima tentativa é int8 só nos pesos (`MatMulNBits`), e é preciso conferir se o ONNX Runtime Web aceita esse formato.
+- Detalhe do export: a quantização falha na inferência de formas por causa do `value_info` gerado pelo exportador. Apagar o `value_info` antes de quantizar resolve.
+
+### 10.2 Acerto
+| Configuração | `anexo-lei` | `anexo-casos` |
+|---|---|---|
+| Sem ajuste fino | 18% | 16,7% (responde "vedado" em 113 de 138) |
+| Ajuste fino só da cabeça (codificador congelado), dobra 0 | — | 3,4% (sem ganho; perda parada perto do acaso) |
+
+Validação cruzada: 5 dobras de `anexo-casos`, agrupadas por inciso da lei. Treino de cada dobra:
+- `anexo-lei`;
+- 80 descritores do IBGE rotulados por regra: 40 de comércio (I) e 40 de indústria (II), sem o que o art. 17, VIII e X, pode vedar;
+- os casos das outras dobras.
+
+Congelar o codificador não basta: a cabeça não separa os anexos a partir das representações originais. **O ajuste fino precisa ser completo.** Em CPU, isso levaria de 3 a 4 h para as 5 dobras. Por isso o treino segue no Colab (GPU T4): `treino/laya-colab.ipynb`, gerado por `scripts/gerar-notebook-colab.py`.

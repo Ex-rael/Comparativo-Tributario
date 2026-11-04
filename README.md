@@ -71,6 +71,7 @@ Para ver o fluxo sem dados reais, use **Carregar exemplo** na aba Entradas.
 | `docs/avaliacao-apis.md` | Testes de viabilidade das APIs do IBGE (CNAE) e da NFS-e (ISS) |
 | `avaliacao/` | Bases rotuladas para avaliar o modelo de decisão, com a origem de cada rótulo |
 | `spike/laya-carga.html` | Teste descartável do tempo de carga do LAYA no navegador |
+| `treino/laya-colab.ipynb` | Ajuste fino do LAYA no Google Colab (GPU), com validação cruzada e export ONNX int8. Gerado por `scripts/gerar-notebook-colab.py` |
 | `CHANGELOG.md` | Histórico de versões |
 | `calculos.md` | Memória de cálculo em LaTeX |
 | `aliquotas.json` | Alíquotas, faixas, limites e vigências, cada bloco com `status` e `fontes` |
