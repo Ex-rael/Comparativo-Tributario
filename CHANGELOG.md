@@ -10,6 +10,11 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.9.2 — 2026-11-04
+- Plano, seções 10.3 e 11: o LAYA com ajuste fino completo acertou 60,9% (abaixo da linha de base). A busca semântica com BGE-M3, sem treino, acertou 71–75%, e cabe em 389 MB com int8 e vocabulário do português.
+- Scripts `bge-m3-podar.py` (poda do vocabulário e int8) e `bge-m3-avaliar.py` (acerto em `anexo-casos`).
+- Conversões locais do LAYA apagadas; o processo fica registrado no plano e em `treino/laya-colab.ipynb`.
+
 ## 1.9.1 — 2026-11-04
 - `treino/laya-colab.ipynb` (gerado por `scripts/gerar-notebook-colab.py`): ajuste fino completo do LAYA multilíngue no Colab, validação cruzada em 5 dobras e export ONNX int8.
 - Plano, seção 10: conversão para ONNX (int8 com 320 MB) e primeiros treinos (sem ajuste: 17%; codificador congelado: sem ganho).

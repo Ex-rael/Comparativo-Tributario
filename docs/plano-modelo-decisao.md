@@ -196,3 +196,31 @@ Validação cruzada: 5 dobras de `anexo-casos`, agrupadas por inciso da lei. Tre
 - os casos das outras dobras.
 
 Congelar o codificador não basta: a cabeça não separa os anexos a partir das representações originais. **O ajuste fino precisa ser completo.** Em CPU, isso levaria de 3 a 4 h para as 5 dobras. Por isso o treino segue no Colab (GPU T4): `treino/laya-colab.ipynb`, gerado por `scripts/gerar-notebook-colab.py`.
+
+### 10.3 Ajuste fino completo no Colab (GPU T4)
+Mesma validação cruzada da 10.2, agora treinando o modelo inteiro.
+
+| Medida | Resultado |
+|---|---|
+| Acerto geral (138 casos, incisos fora do treino) | **60,9%**, abaixo da linha de base (67,4%) |
+| Casos normais / difíceis | 63,0% / 50,0% |
+| Com confiança ≥ 0,9 | Responde 65% dos casos e acerta 66,7% |
+
+A confiança não serve para triagem. 40 dos 54 erros ficam entre III, Fator R e vedado: são fronteiras definidas por listas da lei, não por um conceito que o modelo possa aprender com poucos exemplos. **Conclusão: perguntar "qual anexo?" com 6 categorias abstratas não funciona com o LAYA.**
+
+## 11. Busca semântica com BGE-M3 (2026-11-04)
+
+Em vez de classificar, compara a descrição livre com o texto dos 50 itens da lei (`anexo-lei`). O rótulo vem do item mais parecido, e não há treino. Modelo: BGE-M3, o mesmo ONNX já usado no projeto `bgem3-rag`. Pontuação híbrida: denso + 0,3 × esparso.
+
+| Versão | Tamanho | Acerto geral | Normais / difíceis | Inciso certo entre os 3 / 10 primeiros | Respondendo 75% / 50% dos casos | Tempo por descrição (CPU, Python) |
+|---|---|---|---|---|---|---|
+| fp32 | 2,27 GB | 71,0% | 72% / 67% | 91% / 98% | 81% / 84% | 50 ms |
+| int8 | 543 MB | 71,7% | 71% / 78% | 88% / 96% | 79% / 88% | 29 ms |
+| **int8 com vocabulário do português** | **389 MB** | **74,6%** | 76% / 72% | 87% / 97% | 79% / 88% | 28 ms |
+
+- **Vocabulário do português.** Ficam só os 92.067 pedaços, de 250.002, escritos com letras do português, números e pontuação. A tokenização sai idêntica à original nos 2.771 textos das bases, porque o tokenizador (Unigram) só usa pedaços com caracteres presentes no texto. Caracteres de fora (ñ, ß, emoji) viram `<unk>`. Fidelidade ao fp32: cosseno médio de 0,981, mínimo de 0,963.
+- **As diferenças de acerto entre as três versões (até 5 casos) estão dentro do ruído da quantização.** O resultado é o mesmo.
+- Usar os casos sintéticos como chaves extras (1-NN, validação cruzada agrupada) **piorou**: 58,7%. As chaves devem ser o texto da lei.
+- O limite de abstenção foi escolhido nos mesmos dados, então os números com abstenção são um pouco otimistas.
+- **Desenho proposto:** o BGE-M3 sugere o inciso da lei. O anexo sai do inciso, por código. Quando a folga entre o 1º e o 2º colocado for pequena, o operador escolhe no select entre os 3 primeiros, que contêm o inciso certo em 87 a 91% dos casos. Pares conhecidos, como imóvel próprio × de terceiros e cessão de mão de obra × equipe própria, ganham uma pergunta explícita.
+- **Próximo passo:** página de teste no navegador (ONNX Runtime Web) com o int8 de 389 MB, para medir carga, tempo por descrição e acerto.

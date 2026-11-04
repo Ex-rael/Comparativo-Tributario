@@ -71,6 +71,7 @@ Para ver o fluxo sem dados reais, use **Carregar exemplo** na aba Entradas.
 | `docs/avaliacao-apis.md` | Testes de viabilidade das APIs do IBGE (CNAE) e da NFS-e (ISS) |
 | `avaliacao/` | Bases rotuladas para avaliar o modelo de decisão, com a origem de cada rótulo |
 | `spike/laya-carga.html` | Teste descartável do tempo de carga do LAYA no navegador |
+| `scripts/bge-m3-podar.py`, `scripts/bge-m3-avaliar.py` | Poda do vocabulário e int8 do BGE-M3 (389 MB); acerto da busca semântica em `avaliacao/` |
 | `treino/laya-colab.ipynb` | Ajuste fino do LAYA no Google Colab (GPU), com validação cruzada e export ONNX int8. Gerado por `scripts/gerar-notebook-colab.py` |
 | `CHANGELOG.md` | Histórico de versões |
 | `calculos.md` | Memória de cálculo em LaTeX |
