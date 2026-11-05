@@ -1,6 +1,6 @@
 # Histórico de versões
 
-A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`VERSAO`), mostrada no topo das duas páginas. **Sobe a cada commit**:
+A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`VERSAO`), mostrada no topo das páginas. **Sobe a cada commit**:
 
 | Parte | Quando sobe | Exemplo |
 |---|---|---|
@@ -9,6 +9,18 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 | **PATCH** (1.8.1) | Correção de erro, texto, layout ou documentação | Ajuste visual, README |
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
+
+## 1.11.0 — 2026-11-05
+- **Página de decisão** (`inicio.html`) no primeiro acesso: **Comparar regimes de um cliente** ou **Atualizar as alíquotas**. Cada modo mostra só a sua parte nas páginas (`modo.js`, `data-modo-so`). A escolha fica no navegador; **Trocar**, no topo, volta à escolha.
+  - Comparar regimes: ficha, entradas sem o texto do JSON de alíquotas, resultado.
+  - Atualizar alíquotas: prompt 1, JSON 1 e a tabela de alíquotas.
+- **Enviar para IA**, um botão em cada prompt: copia o prompt e abre o Claude (`claude.ai/new?q=`) numa nova aba com o prompt preenchido. Prompt longo demais para a URL (acima de 14.000 caracteres): abre o Claude vazio para colar.
+  - Os prompts mandam abrir os arquivos publicados (`aliquotas.json` e o modelo do JSON), em vez de colá-los inteiros, e cabem na URL: cerca de 6.400 caracteres no prompt 1 e 10.000 no prompt 2. A IA precisa de acesso à web.
+- `guia.html`: guia do fluxo completo, da escolha do modo à publicação das alíquotas aprovadas.
+- Selo **✦ IA interna** onde o BGE-M3 roda no navegador (`spike/bge-busca.html`, `data-ia="interna"`), no lugar de "IA no navegador".
+- `index.html` passa a ler o `aliquotas.json` publicado; a cópia embutida só vale aberta como arquivo. Publicar alíquotas aprovadas é trocar um arquivo só.
+- Textos revisados nas páginas e no README (privacidade, APIs externas, modos, páginas).
+- `spike/laya-carga.html` removido: o LAYA foi abandonado (resultados no plano, seção 9.2, e no histórico do git).
 
 ## 1.10.1 — 2026-11-05
 - `avaliacao/anexo-casos.jsonl`: os 138 casos foram validados pelo contador, sem mudança de rótulo (`status: validado_contador`). Os acertos medidos valem como estão.

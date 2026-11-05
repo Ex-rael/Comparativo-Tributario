@@ -35,9 +35,9 @@
 </head>
 <body>
 <main>
-  <h1>Spike BGE-M3: inciso da lei a partir da descrição <span class="ia" data-ia="local" title="Modelo BGE-M3 rodando no próprio navegador. Nada sai do computador.">IA no navegador</span></h1>
+  <h1>Spike BGE-M3: inciso da lei a partir da descrição <span class="ia" data-ia="interna" title="IA interna: o modelo BGE-M3 roda no próprio navegador. A descrição não sai do computador.">IA interna</span></h1>
   <p>Teste da fase 2 do <a href="../docs/plano-modelo-decisao.md">plano do modelo de decisão</a>. O BGE-M3 (int8, vocabulário do português, cerca de 389 MB) compara a descrição com os 50 itens dos arts. 17 e 18 da LC 123/2006. O anexo sai do item mais parecido. Não há treino, e o texto digitado não sai do navegador.</p>
-  <p><span class="ia" data-ia="local">IA no navegador</span> marca o que vem do modelo. A decisão continua sendo do contador.</p>
+  <p><span class="ia" data-ia="interna">IA interna</span> marca o que vem do modelo que roda nesta página, sem serviço externo (diferente de <b>IA externa</b>, em que você envia um prompt a um assistente). A decisão continua sendo do contador.</p>
   <div class="banner">Primeiro acesso: download de cerca de 390 MB, que fica no cache do navegador.</div>
 
   <div class="panel">
@@ -50,7 +50,7 @@
   </div>
 
   <div class="panel">
-    <h2>Sugerir pela descrição <span class="ia" data-ia="local">IA no navegador</span></h2>
+    <h2>Sugerir pela descrição <span class="ia" data-ia="interna">IA interna</span></h2>
     <label for="desc">Descreva a atividade como o cliente descreveria</label>
     <textarea id="desc" placeholder="Ex.: escritório de contabilidade para pequenas empresas"></textarea>
     <div class="row"><button id="sugerir" type="button" disabled>Sugerir</button><span id="tempo" class="n"></span></div>
@@ -166,7 +166,7 @@ async function sugerir() {
   $('tempo').textContent = ms.toFixed(0) + ' ms';
   const top = r.slice(0, 3), folga = top[0].p - top[1].p;
   const cab = folga >= MARGEM
-    ? `<div class="sug"><b>Sugestão: ${NOMES[top[0].x.rotulo]}</b> <span class="ia" data-ia="local">IA no navegador</span><br>${esc(top[0].x.fonte)}. Confira antes de usar.</div>`
+    ? `<div class="sug"><b>Sugestão: ${NOMES[top[0].x.rotulo]}</b> <span class="ia" data-ia="interna">IA interna</span><br>${esc(top[0].x.fonte)}. Confira antes de usar.</div>`
     : `<div class="sug amb"><b>Não pode ser inferido automaticamente</b> (folga ${folga.toFixed(3)} &lt; ${MARGEM}). Escolha o item que descreve a atividade:</div>
        <select>${top.map((o) => `<option>${esc(NOMES[o.x.rotulo])}: ${esc(o.x.fonte)}</option>`).join('')}<option>Nenhum destes</option></select>`;
   $('saida').innerHTML = cab + '<table>' + top.map((o, i) => `<tr><td class="n">${i + 1}º</td><td><b>${esc(NOMES[o.x.rotulo])}</b> · ${esc(o.x.fonte)}<br><small>${esc(o.x.texto.slice(0, 220))}</small></td><td class="n">${o.p.toFixed(3)}</td></tr>`).join('') + '</table>';

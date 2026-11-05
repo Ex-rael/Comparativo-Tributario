@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ficha e prompts - Comparativo Tributário</title>
+<script src="modo.js" data-exigir></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -123,27 +124,44 @@
   .ia { display: inline-block; font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--ia-bg); color: var(--ia); vertical-align: middle; white-space: nowrap; }
   .ia::before { content: "✦ "; }
   .ia-legenda { margin: 6px 0 0; font-size: 13px; color: var(--ink-2); }
+  /* Modo de uso (modo.js): cada modo mostra só a sua parte. */
+  html[data-modo="comparativo"] [data-modo-so="aliquotas"],
+  html[data-modo="aliquotas"] [data-modo-so="comparativo"],
+  html[data-modo] [data-modo-so="nenhum"] { display: none !important; }
+  .modo-barra { font-size: 13px; color: var(--ink-2); }
+  .btn.ia-btn { border-color: var(--ia); color: var(--ia); background: var(--ia-bg); font-weight: 600; }
+  .btn.ia-btn::before { content: "✦ "; }
+  .btn.ia-btn:hover { border-color: var(--ia); filter: brightness(0.97); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .msg.ia-msg { background: var(--ia-bg); color: var(--ia); }
+  .msg.ia-msg a { color: inherit; font-weight: 600; }
 </style>
 </head>
 <body>
 <div class="shell">
   <header class="top">
     <div>
-      <h1>Ficha e prompts</h1>
-      <p class="sub">Monte o dados-empresa.json a partir da ficha do cliente, sem IA, ou copie os prompts prontos.</p>
-      <p class="ia-legenda"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> marca onde a ferramenta pede IA: você cola o prompt num assistente e revisa a resposta. Sem selo, é código determinístico.</p>
+      <h1><span data-modo-so="comparativo">Ficha do cliente</span><span data-modo-so="aliquotas">Prompt de alíquotas</span><span data-modo-so="nenhum">Ficha e prompts</span></h1>
+      <p class="sub" data-modo-so="comparativo">Preencha os totais do cliente. O dados-empresa.json é gerado aqui mesmo, sem IA.</p>
+      <p class="sub" data-modo-so="aliquotas">Envie o prompt a uma IA com pesquisa na web. O contador revisa a resposta na tabela de alíquotas.</p>
+      <p class="sub" data-modo-so="nenhum">Monte o dados-empresa.json a partir da ficha do cliente, sem IA, ou use os prompts prontos.</p>
+      <p class="ia-legenda"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> marca onde a ferramenta pede IA: você envia o prompt a um assistente e revisa a resposta. Sem selo, é código determinístico.</p>
+      <p class="modo-barra" data-modo-barra></p>
     </div>
     <nav class="nav" aria-label="Páginas">
-      <a href="index.html">Comparativo</a>
+      <a href="index.html#resultado" data-modo-so="comparativo">Resultado</a>
+      <a href="index.html#entradas" data-modo-so="aliquotas">Revisar alíquotas</a>
+      <a href="index.html" data-modo-so="nenhum">Comparativo</a>
       <a href="index.html#formulas">Fórmulas</a>
+      <a href="guia.html">Guia</a>
       <span class="muted" id="versao" style="font: 12px var(--f-mono); align-self: center"></span>
     </nav>
   </header>
 
   <div class="banner" id="loadErr" hidden></div>
 
-  <nav class="tabs" role="tablist" aria-label="Prompts">
-    <button class="tab" role="tab" id="t-p1" data-tab="p1" aria-controls="tab-p1">1. Alíquotas e regras <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span></button>
+  <nav class="tabs" role="tablist" aria-label="Prompts" data-modo-so="nenhum">
+    <button class="tab" role="tab" id="t-p1" data-tab="p1" aria-controls="tab-p1">1. Alíquotas e regras <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span></button>
     <button class="tab" role="tab" id="t-p2" data-tab="p2" aria-controls="tab-p2">2. Dados da empresa (ficha)</button>
   </nav>
 
@@ -155,11 +173,11 @@
         <ol>
           <li>Confira a <b>data</b> e o <b>ano-calendário</b>. O <b>aliquotas.json</b> atual já vem carregado. Se o escritório tem uma versão própria, use <b>Carregar arquivo</b>.</li>
           <li>Veja no painel à direita o <b>prompt pronto</b>. Os campos em amarelo ainda estão vazios.</li>
-          <li>Clique em <b>Copiar prompt</b> e cole num assistente de IA <b>com acesso à web</b> (o prompt manda consultar fontes oficiais).</li>
-          <li>Copie o JSON que a IA devolver e salve como <code>aliquotas.json</code>, ou cole no campo 1 da aba <b>Entradas</b> do <a href="index.html#entradas">Comparativo</a>.</li>
-          <li>O contador valida os blocos marcados <code>a_confirmar</code> antes de usar o resultado.</li>
+          <li>Clique em <b>Enviar para IA</b>: o Claude abre numa nova aba com o prompt preenchido. <b>Ligue a pesquisa na web</b> antes de enviar, porque o prompt manda consultar fontes oficiais. Para outro assistente, use <b>Copiar prompt</b>.</li>
+          <li>Copie o JSON que a IA devolver e cole no campo 1 da aba <b>Entradas</b> do <a href="index.html#entradas">Comparativo</a>. Revise valor a valor na aba <b>Alíquotas</b>.</li>
+          <li>O contador resolve os blocos <code>a_confirmar</code> e aprova. O arquivo aprovado substitui o <code>aliquotas.json</code> publicado (veja o <a href="guia.html#publicar">guia</a>).</li>
         </ol>
-        <p class="note">Use quando uma norma mudar e a cada virada de ano. A IA só confere e atualiza valores; não calcula nada.</p>
+        <p class="note">A IA só confere e atualiza valores; não calcula nada. Na nova aba, o prompt vai para a sua conta no Claude: use só se o escritório aprovou o serviço.</p>
       </details>
       <div style="height:16px"></div>
       <div class="grid-2">
@@ -178,9 +196,10 @@
         </div>
         <div class="panel">
           <div class="panel-head sticky-copy">
-            <h2>Prompt pronto <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span></h2>
-            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+            <h2>Prompt pronto <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span></h2>
+            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn ia-btn" type="button" data-enviar-ia disabled title="Abre o Claude numa nova aba com o prompt preenchido. O prompt também é copiado.">Enviar para IA</button><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
           </div>
+          <div class="msg ia-msg" data-ia-msg hidden></div>
           <pre class="out" data-out></pre>
         </div>
       </div>
@@ -198,7 +217,7 @@
           <li>À direita, o <b>dados-empresa.json</b> é gerado na hora. Resolva o que aparecer em <b>Pendências</b>.</li>
           <li>Clique em <b>Usar no Comparativo</b> para abrir o resultado com esses dados, ou copie o JSON.</li>
         </ol>
-        <p class="note">Sem Lucro Real na comparação, os custos podem ficar em branco. O <b>Prompt para IA</b> continua disponível como alternativa. Planejado: preenchimento da ficha auxiliado por IA a partir dos documentos do cliente, com revisão do contador.</p>
+        <p class="note">Sem Lucro Real na comparação, os custos podem ficar em branco. O <b>Prompt para IA</b> é um caminho alternativo, em que um assistente externo monta o JSON; a ficha dispensa a IA. Planejado: preenchimento da ficha auxiliado por IA a partir dos documentos do cliente, com revisão do contador.</p>
       </details>
       <div style="height:16px"></div>
       <div class="grid-2">
@@ -290,7 +309,7 @@
           <div class="panel-head sticky-copy">
             <div class="seg" role="group" aria-label="Saída">
               <button type="button" data-view="json" aria-pressed="true">dados-empresa.json</button>
-              <button type="button" data-view="prompt" aria-pressed="false">Prompt para IA (opcional) <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span></button>
+              <button type="button" data-view="prompt" aria-pressed="false">Prompt para IA (opcional) <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span></button>
             </div>
           </div>
           <div id="v-json" class="stack" style="gap:12px">
@@ -305,8 +324,9 @@
             <pre class="out" id="j-out"></pre>
           </div>
           <div id="v-prompt" class="stack" style="gap:12px" hidden>
-            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
-            <p class="caption"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> Caminho alternativo: a IA monta o JSON a partir da ficha. Revise tudo o que ela devolver.</p>
+            <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn ia-btn" type="button" data-enviar-ia disabled title="Abre o Claude numa nova aba com o prompt preenchido. O prompt também é copiado.">Enviar para IA</button><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
+            <p class="caption"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> Caminho alternativo: a IA monta o JSON a partir da ficha. Vão para a IA só os totais e códigos da ficha, sem dados pessoais, para a sua conta no Claude: use só se o escritório aprovou o serviço. Revise tudo o que ela devolver.</p>
+            <div class="msg ia-msg" data-ia-msg hidden></div>
             <pre class="out" data-out></pre>
           </div>
         </div>
@@ -763,6 +783,53 @@
       t.textContent = fmtTok(tokens(el.value));
     });
     sec.querySelector('[data-total]').textContent = 'Total ' + fmtTok(tokens(plain));
+    var env = sec.querySelector('[data-enviar-ia]');
+    env.disabled = n > 0;
+    env.title = n ? 'Preencha os campos vazios (em amarelo) antes de enviar.' : 'Abre o Claude numa nova aba com o prompt preenchido. O prompt também é copiado.';
+  }
+
+  /* ---------- Enviar para IA: abre o Claude com o prompt preenchido (claude.ai/new?q=) ---------- */
+  var PARAMS = new URLSearchParams(location.search);
+  var CLAUDE_NOVO = 'https://claude.ai/new';
+  /* Tamanho máximo da URL. Acima disso o Claude abre vazio e o prompt fica na área de transferência.
+     Ajustável no teste: prompts.html?limite_url=20000 */
+  var LIMITE_URL = Number(PARAMS.get('limite_url')) || 14000;
+  /* Com os arquivos padrão e a página publicada (https), o prompt manda abrir os arquivos publicados
+     em vez de colá-los inteiros, e cabe na URL. Exige que a IA tenha acesso à web. */
+  var POR_LINK = {
+    p1: { COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL: 'aliquotas.json' },
+    p2: { COLE_O_ALIQUOTAS_JSON: 'aliquotas.json', COLE_O_TEMPLATE: 'dados-empresa.template.json' }
+  };
+  function textoParaEnviar(id) {
+    var P = PROMPTS[id], sec = $('tab-' + id), v = valores(sec), link = false;
+    var publicado = location.protocol === 'https:' || PARAMS.has('link_aliquotas');
+    if (publicado) Object.keys(POR_LINK[id]).forEach(function (k) {
+      var el = sec.querySelector('[data-key="' + k + '"]');
+      if (el.value.trim() !== (defaults[k] || '').trim()) return;
+      var arq = POR_LINK[id][k], url = new URL(arq, location.href).href;
+      v[k] = 'O ' + arq + ' está publicado em ' + url + ' . Abra esse link e use o conteúdo dele aqui. Se não conseguir abrir, pare e me peça para colar o arquivo.';
+      link = true;
+    });
+    return { texto: link ? P.texto.replace(PH, function (m, x) { return v[x] || m; }) : P.pronto, link: link };
+  }
+  function enviarIA(id, btn) {
+    render(id);
+    var sec = $('tab-' + id), msg = sec.querySelector('[data-ia-msg]');
+    var e = textoParaEnviar(id);
+    var url = CLAUDE_NOVO + '?q=' + encodeURIComponent(e.texto);
+    var cabe = url.length <= LIMITE_URL;
+    var alvo = cabe ? url : CLAUDE_NOVO;
+    copiarSilencioso(e.texto);
+    window.open(alvo, '_blank', 'noopener');
+    var dica = id === 'p1' || e.link ? ' Ligue a <b>pesquisa na web</b> no Claude antes de enviar' + (id === 'p1' ? '.' : ', para ele abrir os arquivos.') : '';
+    msg.innerHTML = (cabe
+      ? 'O Claude abriu numa nova aba com o prompt preenchido' + (e.link ? ' (com links para os arquivos publicados no lugar dos arquivos inteiros)' : '') + '. Confira e envie por lá.'
+      : 'O prompt é longo demais para ir pelo endereço (' + url.length.toLocaleString('pt-BR') + ' caracteres). O Claude abriu vazio e o prompt foi copiado: cole com <b>Ctrl+V</b> e envie.') +
+      dica + ' A aba não abriu? <a href="' + esc(alvo) + '" target="_blank" rel="noopener">Abrir o Claude</a>.';
+    msg.hidden = false;
+  }
+  function copiarSilencioso(texto) {
+    try { navigator.clipboard.writeText(texto).catch(function () {}); } catch (e) { /* o botão Copiar prompt continua disponível */ }
   }
 
   function copiar(texto, btn) {
@@ -778,9 +845,13 @@
     try { navigator.clipboard.writeText(texto).then(function () { fim('Copiado'); }, alt); } catch (e) { alt(); }
   }
 
+  /* Cada aba pertence a um modo (modo.js). Com modo escolhido, só a aba dele aparece. */
+  var MODO_DA_ABA = { p1: 'aliquotas', p2: 'comparativo' };
+  var MODO = window.CTModo && window.CTModo.atual;
   function showTab() {
     var h = (location.hash || '').replace('#', '');
-    if (TABS.indexOf(h) < 0) h = 'p1';
+    if (TABS.indexOf(h) < 0) h = MODO === 'comparativo' ? 'p2' : 'p1';
+    if (MODO && MODO_DA_ABA[h] !== MODO) h = MODO === 'comparativo' ? 'p2' : 'p1';
     TABS.forEach(function (t) {
       $('tab-' + t).hidden = t !== h;
       $('t-' + t).setAttribute('aria-selected', t === h ? 'true' : 'false');
@@ -808,6 +879,7 @@
       if (b.hasAttribute('data-add-ativ')) { novaAtividade(''); render(id); return; }
       if (b.hasAttribute('data-del-ativ')) { if (ativsEl.children.length > 1) b.closest('.ativ').remove(); render(id); return; }
       if (b.hasAttribute('data-copy-prompt')) { render(id); copiar(PROMPTS[id].pronto || '', b); }
+      if (b.hasAttribute('data-enviar-ia')) { enviarIA(id, b); return; }
       if (b.hasAttribute('data-reset')) {
         var k = b.getAttribute('data-reset');
         sec.querySelector('[data-key="' + k + '"]').value = defaults[k] || '';

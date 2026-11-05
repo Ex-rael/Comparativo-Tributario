@@ -1,6 +1,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Comparativo Tributário</title>
+<script src="modo.js" data-exigir></script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,6 +84,7 @@
 
   .stack { display: flex; flex-direction: column; gap: 20px; }
   .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+  html[data-modo="comparativo"] .panel:has(#taAliq) { align-self: start; }
   .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px; }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -163,7 +165,13 @@
   .src { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
   ul.plain { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
 
-  .nav-links { display: flex; gap: 14px; font-size: 14px; font-weight: 600; margin-top: 6px; }
+  .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 14px; font-size: 14px; font-weight: 600; margin-top: 6px; }
+  /* Modo de uso (modo.js): cada modo mostra só a sua parte. */
+  html[data-modo="comparativo"] [data-modo-so="aliquotas"],
+  html[data-modo="aliquotas"] [data-modo-so="comparativo"],
+  html[data-modo] [data-modo-so="nenhum"],
+  html[data-modo="comparativo"] [data-modo-so-nao="comparativo"] { display: none !important; }
+  .modo-barra { font-size: 13px; color: var(--ink-2); text-align: right; margin-top: 4px; }
   .md { max-width: 900px; }
   .md h1 { font-size: 26px; margin: 0 0 12px; }
   .md h2 { font-size: 20px; margin: 28px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
@@ -203,19 +211,27 @@
   <header class="top">
     <div>
       <h1>Comparativo Tributário</h1>
-      <p class="sub">Simples Nacional, Lucro Presumido e Lucro Real a partir de dois arquivos JSON.</p>
-      <p class="ia-legenda"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> marca onde a ferramenta pede IA: você cola o prompt num assistente e revisa a resposta. Sem selo, é código determinístico.</p>
+      <p class="sub" data-modo-so="comparativo">Simples Nacional, Lucro Presumido e Lucro Real para um cliente, com as alíquotas publicadas.</p>
+      <p class="sub" data-modo-so="aliquotas">Revisão das alíquotas: confira a resposta da IA valor a valor antes de aprovar.</p>
+      <p class="sub" data-modo-so="nenhum">Simples Nacional, Lucro Presumido e Lucro Real a partir de dois arquivos JSON.</p>
+      <p class="ia-legenda"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> marca onde a ferramenta pede IA: você envia o prompt a um assistente e revisa a resposta. Sem selo, é código determinístico.</p>
     </div>
     <div>
       <div class="meta-line" id="metaLine"></div>
-      <div class="nav-links"><a href="prompts.html">Ficha e prompts</a></div>
+      <div class="nav-links">
+        <a href="prompts.html#p2" data-modo-so="comparativo">Ficha do cliente</a>
+        <a href="prompts.html#p1" data-modo-so="aliquotas">Prompt de alíquotas</a>
+        <a href="prompts.html" data-modo-so="nenhum">Ficha e prompts</a>
+        <a href="guia.html">Guia</a>
+      </div>
+      <div class="modo-barra" data-modo-barra></div>
     </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Seções">
     <button class="tab" role="tab" id="t-entradas" data-tab="entradas" aria-controls="tab-entradas">Entradas</button>
-    <button class="tab" role="tab" id="t-aliquotas" data-tab="aliquotas" aria-controls="tab-aliquotas">Alíquotas</button>
-    <button class="tab" role="tab" id="t-resultado" data-tab="resultado" aria-controls="tab-resultado">Resultado</button>
+    <button class="tab" role="tab" id="t-aliquotas" data-modo-so="aliquotas" data-tab="aliquotas" aria-controls="tab-aliquotas">Alíquotas</button>
+    <button class="tab" role="tab" id="t-resultado" data-modo-so="comparativo" data-tab="resultado" aria-controls="tab-resultado">Resultado</button>
     <button class="tab" role="tab" id="t-formulas" data-tab="formulas" aria-controls="tab-formulas">Fórmulas</button>
     <button class="tab" role="tab" id="t-modelos" data-tab="modelos" aria-controls="tab-modelos">Modelos e divisão de tarefas</button>
   </nav>
@@ -223,28 +239,32 @@
   <main>
     <!-- ENTRADAS -->
     <section id="tab-entradas" role="tabpanel" aria-labelledby="t-entradas" class="stack" hidden>
-      <p class="muted">Cole ou carregue os dois JSON. O cálculo roda neste navegador e nada é enviado para fora da página. O resultado se atualiza ao editar.</p>
+      <p class="muted" data-modo-so="comparativo">Os dados do cliente chegam pela ficha (botão <b>Usar no Comparativo</b>), ou cole e carregue o JSON aqui. O cálculo roda neste navegador e nada é enviado para fora da página.</p>
+      <p class="muted" data-modo-so="aliquotas">Cole no campo 1 o JSON que a IA devolveu e confira a validação. Depois revise valor a valor na aba <a href="#aliquotas">Alíquotas</a>.</p>
+      <p class="muted" data-modo-so="nenhum">Cole ou carregue os dois JSON. O cálculo roda neste navegador e nada é enviado para fora da página. O resultado se atualiza ao editar.</p>
       <div class="grid-2">
         <div class="panel">
           <div class="panel-head">
             <h2>1. Alíquotas e regras</h2>
             <span class="chip ok" id="chipAliq">Válido</span>
           </div>
-          <p class="caption">Muda pouco. Gerado pelo prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> e validado pelo contador. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
+          <p class="caption" data-modo-so="comparativo">As mesmas para todo cliente: vêm do <code>aliquotas.json</code> publicado. Gerado pelo prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> e aprovado pelo contador; blocos ainda a confirmar aparecem nos avisos. Para atualizar, troque para o modo <a href="inicio.html">Atualizar alíquotas</a>.</p>
+          <p class="caption" data-modo-so="aliquotas">Cole aqui o JSON que o prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> devolveu. <b>Restaurar padrão</b> volta ao arquivo publicado. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
+          <p class="caption" data-modo-so="nenhum">Muda pouco. Gerado pelo prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> e validado pelo contador. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
           <div class="toolbar">
             <label class="btn">Carregar arquivo<input type="file" id="fileAliq" accept=".json,application/json"></label>
             <button class="btn" id="resetAliq" type="button">Restaurar padrão</button>
-            <button class="btn" id="copyAliq" type="button">Copiar</button>
+            <button class="btn" id="copyAliq" type="button" data-modo-so-nao="comparativo">Copiar</button>
           </div>
-          <textarea class="json" id="taAliq" spellcheck="false" aria-label="JSON de alíquotas e regras"></textarea>
+          <textarea class="json" id="taAliq" spellcheck="false" aria-label="JSON de alíquotas e regras" data-modo-so-nao="comparativo"></textarea>
           <div class="msgs" id="msgAliq"></div>
         </div>
-        <div class="panel">
+        <div class="panel" data-modo-so="comparativo">
           <div class="panel-head">
             <h2>2. Dados da empresa</h2>
             <span class="chip ok" id="chipDados">Válido</span>
           </div>
-          <p class="caption">Muda a cada cliente. Gerado pela ficha, sem IA, ou pelo prompt 2 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span>, e revisado pelo contador.</p>
+          <p class="caption">Muda a cada cliente. Gerado pela <a href="prompts.html#p2">ficha</a>, sem IA, ou pelo prompt 2 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span>, e revisado pelo contador.</p>
           <div class="toolbar">
             <label class="btn">Carregar arquivo<input type="file" id="fileDados" accept=".json,application/json"></label>
             <button class="btn" id="exDados" type="button">Carregar exemplo</button>
@@ -255,7 +275,8 @@
           <div class="msgs" id="msgDados"></div>
         </div>
       </div>
-      <div><a class="btn primary" href="#resultado" style="display:inline-block;text-decoration:none">Ver resultado</a></div>
+      <div data-modo-so="comparativo"><a class="btn primary" href="#resultado" style="display:inline-block;text-decoration:none">Ver resultado</a></div>
+      <div data-modo-so="aliquotas"><a class="btn primary" href="#aliquotas" style="display:inline-block;text-decoration:none">Revisar na tabela</a></div>
     </section>
 
     <!-- ALÍQUOTAS -->
@@ -295,9 +316,9 @@
             <thead><tr><th>Camada</th><th>O que contém</th><th>Quem executa</th><th>Risco principal</th></tr></thead>
             <tbody>
               <tr><td><b>Cálculo puro</b></td><td>RBT12, faixa e alíquota efetiva do Simples, Fator R, bases do Presumido e do Real, IRPJ, CSLL, PIS, COFINS, CPP, retenção sobre lucros, totais e sensibilidade</td><td>JavaScript desta página, sempre o mesmo resultado para a mesma entrada</td><td>Regra que o motor não modela. A aba Resultado lista as exclusões</td></tr>
-              <tr><td><b>Regras</b> (JSON 1)</td><td>Alíquotas, faixas, limites, percentuais de presunção, vigências</td><td><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> IA consulta fonte oficial e preenche. Contador valida. Revisão a cada mudança de norma</td><td>Valor desatualizado ou tirado de fonte secundária</td></tr>
+              <tr><td><b>Regras</b> (JSON 1)</td><td>Alíquotas, faixas, limites, percentuais de presunção, vigências</td><td><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> IA consulta fonte oficial e preenche. Contador valida. Revisão a cada mudança de norma</td><td>Valor desatualizado ou tirado de fonte secundária</td></tr>
               <tr><td><b>Classificação</b> (JSON 2)</td><td>CNAE, anexo do Simples, tipo de presunção, ISS do município, RAT e terceiros, crédito de PIS/COFINS</td><td>Contador escolhe na ficha. O CNAE e o município são conferidos na API pública do IBGE. Premissas fixas (ISS zero em comércio, ICMS zero em serviço, repetição do histórico) ficam registradas em <code>meta</code></td><td>Anexo ou presunção escolhidos errados</td></tr>
-              <tr><td><b>Dados do cliente</b> (JSON 2)</td><td>Receitas, folha, sócios, distribuição de lucros, custos</td><td>Totais digitados na ficha (Ficha e prompts). O <code>ficha.js</code> converte para o formato, sem IA. O prompt 2 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> continua como alternativa</td><td>Número digitado errado</td></tr>
+              <tr><td><b>Dados do cliente</b> (JSON 2)</td><td>Receitas, folha, sócios, distribuição de lucros, custos</td><td>Totais digitados na ficha (Ficha e prompts). O <code>ficha.js</code> converte para o formato, sem IA. O prompt 2 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> continua como alternativa</td><td>Número digitado errado</td></tr>
             </tbody>
           </table>
         </div>
@@ -350,9 +371,14 @@
 
   /* ---------- abas ---------- */
   var TABS = ['entradas', 'aliquotas', 'resultado', 'formulas', 'modelos'];
+  /* Abas de um modo só (modo.js). As demais valem nos dois. */
+  var MODO = window.CTModo && window.CTModo.atual;
+  var MODO_DA_ABA = { aliquotas: 'aliquotas', resultado: 'comparativo' };
   function showTab() {
     var h = (location.hash || '').replace('#', '');
-    if (TABS.indexOf(h) < 0) h = 'resultado';
+    var inicial = MODO === 'aliquotas' ? 'aliquotas' : 'resultado';
+    if (TABS.indexOf(h) < 0) h = inicial;
+    if (MODO && MODO_DA_ABA[h] && MODO_DA_ABA[h] !== MODO) h = inicial;
     TABS.forEach(function (t) {
       $('tab-' + t).hidden = t !== h;
       $('t-' + t).setAttribute('aria-selected', t === h ? 'true' : 'false');
@@ -955,5 +981,17 @@
   showTab();
   atualizar();
   if (importado) $('msgDados').insertAdjacentHTML('afterbegin', '<div class="msg info">Dados importados da ficha do cliente (compilada sem IA).</div>');
+  /* O padrão é o aliquotas.json publicado. A cópia embutida (ALIQ_TXT) só vale aberta como arquivo (file://),
+     onde o fetch é bloqueado. Assim, publicar alíquotas aprovadas é trocar um arquivo só. */
+  if (location.protocol !== 'file:') {
+    fetch('aliquotas.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.text() : null; }).then(function (t) {
+      if (!t || t === ALIQ_TXT) return;
+      try { JSON.parse(t); } catch (e) { return; }
+      var antes = ALIQ_TXT;
+      ALIQ_TXT = t;
+      $('preAliq').textContent = t;
+      if (ta.aliq.value === antes) { ta.aliq.value = t; agendar(0); }
+    }, function () {});
+  }
 })();
 </script>

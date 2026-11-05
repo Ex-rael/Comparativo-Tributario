@@ -135,7 +135,7 @@ Lido em `onnx-community/laya-ONNX`, `archevel/laya-web` e `convaiinnovations/lay
 - **Formato de entrada.** Uma sequência por pergunta, com limite de 512 tokens e de 48 tokens por opção: `[CLS] {tipo} question: {pergunta} [SEP] [MASK] opção … [SEP] estado [SEP]`. Os textos das opções tirados da lei precisam ser curtos.
 - **Licença:** Apache 2.0 nos três repositórios.
 
-### 9.2 Tempo de carga medido (`spike/laya-carga.html`)
+### 9.2 Tempo de carga medido (`spike/laya-carga.html`, removido na v1.11.0 com o abandono do LAYA; está no histórico do git)
 Modelo `archevel/laya-web` (int8, inglês), com ONNX Runtime Web 1.31.1, em Chrome 154 headless num notebook com 8 núcleos, 16 GB e GPU integrada Intel UHD:
 
 | Medida | Resultado |
@@ -244,6 +244,6 @@ Em vez de classificar, compara a descrição livre com o texto dos 50 itens da l
 - As 8 trocas de 1º item em relação ao Python vêm das diferenças numéricas do int8 entre o ONNX Runtime nativo e o Web. O acerto não piorou.
 - **Bases validadas:** os 138 casos foram conferidos pelo contador em 2026-11-05, sem mudança de rótulo, então os acertos desta seção e da 11 valem como medidos.
 - **Primeiro acesso pelo Hugging Face** (perfil limpo): download de 45,0 s a 8,6 MB/s e pronto em **47,5 s**. Depois, o modelo fica no cache do navegador. Na mesma execução: 237 / 350 ms por descrição e o mesmo acerto (76,8%).
-- **Selo de IA:** a sugestão leva o selo "✦ IA no navegador". Com folga pequena, a página mostra "não pode ser inferido automaticamente" e um select com os 3 primeiros itens.
+- **Selo de IA:** a sugestão leva o selo "✦ IA interna". Com folga pequena, a página mostra "não pode ser inferido automaticamente" e um select com os 3 primeiros itens.
 
 **Próximo passo (fase 3):** levar a sugestão para o campo de anexo da ficha (`prompts.html`), com o modelo baixado só quando o operador pedir.

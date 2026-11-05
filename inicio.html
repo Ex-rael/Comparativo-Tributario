@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparativo Tributário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script src="modo.js"></script>
+<style>
+  :root {
+    --bg: #eef2ee; --surface: #f8faf7; --surface-2: #e6ece7; --ink: #14231c; --ink-2: #47594f; --line: #cbd6cd;
+    --accent: #1d6b4f; --accent-ink: #ffffff; --accent-soft: #d9eadf; --ia: #5b3aa6; --ia-bg: #ebe4f7;
+    --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+    --f-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
+      --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e; --ia: #c3abf2; --ia-bg: #2a2140;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
+    --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e; --ia: #c3abf2; --ia-bg: #2a2140;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body);
+    padding-block: 32px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .shell { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  h1, h2 { font-family: var(--f-display); margin: 0; line-height: 1.15; text-wrap: balance; }
+  h1 { font-size: 32px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; }
+  p { margin: 0; max-width: 68ch; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .muted { color: var(--ink-2); }
+  .opcoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+  .opcao {
+    text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px; min-width: 0;
+  }
+  .opcao:hover { border-color: var(--accent); }
+  .opcao.atual { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .opcao .freq { font: 600 11px var(--f-body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
+  .opcao ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 3px; font-size: 14px; color: var(--ink-2); }
+  .opcao .ir { margin-top: auto; padding-top: 6px; font-weight: 600; color: var(--accent); }
+  .ia { display: inline-block; font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--ia-bg); color: var(--ia); vertical-align: middle; white-space: nowrap; }
+  .ia::before { content: "✦ "; }
+  .rodape { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink-2); }
+  .tag-atual { font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); padding: 2px 7px; border-radius: 3px; align-self: flex-start; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>Comparativo Tributário</h1>
+    <p class="muted" style="margin-top:6px">Simples Nacional, Lucro Presumido e Lucro Real. O que você vai fazer agora?</p>
+  </header>
+
+  <main class="opcoes">
+    <a class="opcao" href="prompts.html#p2" data-escolher="comparativo">
+      <span class="freq">Dia a dia · um cliente por vez</span>
+      <h2>Comparar regimes de um cliente</h2>
+      <p>Preencha a ficha com os totais do cliente e veja quanto ele pagaria em cada regime. Usa as alíquotas publicadas, sem mexer nelas.</p>
+      <ol>
+        <li>Ficha do cliente: totais e códigos, sem CNPJ nem nomes</li>
+        <li>Resolver as pendências da ficha</li>
+        <li>Ler o resultado e os avisos</li>
+      </ol>
+      <span class="ir">Abrir a ficha do cliente →</span>
+    </a>
+    <a class="opcao" href="prompts.html#p1" data-escolher="aliquotas">
+      <span class="freq">Raro · virada do ano ou mudança de norma</span>
+      <h2>Atualizar as alíquotas <span class="ia" data-ia="externa" title="Este fluxo usa um assistente de IA externo para pesquisar as fontes oficiais. O contador revisa e aprova.">IA externa</span></h2>
+      <p>Uma IA confere alíquotas, faixas e limites nas fontes oficiais. O contador revisa valor a valor e aprova antes de o arquivo ser publicado.</p>
+      <ol>
+        <li>Enviar o prompt de alíquotas para a IA</li>
+        <li>Revisar a resposta na tabela de alíquotas</li>
+        <li>Aprovar e publicar o <code>aliquotas.json</code></li>
+      </ol>
+      <span class="ir">Abrir o prompt de alíquotas →</span>
+    </a>
+  </main>
+
+  <div class="rodape">
+    <p>A escolha fica guardada neste navegador. Para trocar depois, use <b>Trocar</b>, no topo das páginas.</p>
+    <p>Primeira vez aqui? Leia o <a href="guia.html">guia do fluxo completo</a>.</p>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var atual = window.CTModo && window.CTModo.atual;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-escolher]'), function (b) {
+    var m = b.getAttribute('data-escolher');
+    if (m === atual) {
+      b.classList.add('atual');
+      b.insertAdjacentHTML('afterbegin', '<span class="tag-atual">Modo atual</span>');
+    }
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      var ok = window.CTModo && window.CTModo.escolher(m);
+      var ir = b.getAttribute('href'), i = ir.indexOf('#');
+      /* Sem localStorage, o modo segue na URL. */
+      location.href = ok ? ir : ir.slice(0, i) + '?modo=' + m + ir.slice(i);
+    });
+  });
+})();
+</script>
+</body>
+</html>
