@@ -151,7 +151,7 @@ for k,(b,d,dif) in enumerate(C,1):
     # a microcervejaria está na exceção do art. 17, X, c, 1: não é vedada; como indústria, Anexo II
     if b=='lc123-17-X' and dif=='dificil_excecao': rot='II'
     out.append({'id':'caso-%03d'%k,'texto':d,'rotulo':rot,'base_legal':L['fonte'],'inciso_lei':b,
-                'dificuldade':dif,'origem_texto':'sintetico_ia','status':'a_validar_contador'})
+                'dificuldade':dif,'origem_texto':'sintetico_ia','status':'validado_contador','validado_em':'2026-11-05'})
 with open('avaliacao/anexo-casos.jsonl','w') as f:
     for o in out: f.write(json.dumps(o,ensure_ascii=False)+'\n')
 from collections import Counter

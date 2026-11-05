@@ -10,6 +10,9 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.10.1 — 2026-11-05
+- `avaliacao/anexo-casos.jsonl`: os 138 casos foram validados pelo contador, sem mudança de rótulo (`status: validado_contador`). Os acertos medidos valem como estão.
+
 ## 1.10.0 — 2026-11-05
 - **Selo "✦ IA"** em todo ponto das páginas com IA: "IA externa" (prompt colado num assistente) e "IA no navegador" (modelo local), com legenda no topo. Para listar: `grep -n 'data-ia=' *.html spike/*.html`. README: seção "Onde a IA é usada".
 - `spike/bge-busca.html`: teste do BGE-M3 no navegador.

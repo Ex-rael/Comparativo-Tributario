@@ -157,7 +157,7 @@ Problemas encontrados e resolvidos no spike:
 ### 9.3 Bases rotuladas
 Não existe base pronta de "descrição de atividade → anexo do Simples". As de portais contábeis são secundárias e sem licença de reuso. Foram criadas em `avaliacao/`:
 - `anexo-lei.jsonl`: 50 itens com o texto e o rótulo dados pela LC 123/2006 (gabarito oficial).
-- `anexo-casos.jsonl`: 138 descrições de operador, com o rótulo herdado do inciso da lei, a validar pelo contador. Inclui 19 casos difíceis.
+- `anexo-casos.jsonl`: 138 descrições de operador, com o rótulo herdado do inciso da lei. Inclui 19 casos difíceis. **Validados pelo contador em 2026-11-05, sem mudança de rótulo.**
 - `cnae-ibge.jsonl`: 2.581 pares de atividade e CNAE do índice oficial do IBGE.
 
 **Linha de base sem modelo** (busca por palavras): 67,4% de acerto geral; com abstenção, responde 48,6% dos casos e acerta 85,1% deles. O modelo só se justifica se passar dos 80% respondendo mais casos que isso.
@@ -242,6 +242,7 @@ Em vez de classificar, compara a descrição livre com o texto dos 50 itens da l
 
 - **WebAssembly é o padrão.** Com int8, a WebGPU desta GPU integrada é 4,6 vezes mais lenta.
 - As 8 trocas de 1º item em relação ao Python vêm das diferenças numéricas do int8 entre o ONNX Runtime nativo e o Web. O acerto não piorou.
+- **Bases validadas:** os 138 casos foram conferidos pelo contador em 2026-11-05, sem mudança de rótulo, então os acertos desta seção e da 11 valem como medidos.
 - **Primeiro acesso pelo Hugging Face** (perfil limpo): download de 45,0 s a 8,6 MB/s e pronto em **47,5 s**. Depois, o modelo fica no cache do navegador. Na mesma execução: 237 / 350 ms por descrição e o mesmo acerto (76,8%).
 - **Selo de IA:** a sugestão leva o selo "✦ IA no navegador". Com folga pequena, a página mostra "não pode ser inferido automaticamente" e um select com os 3 primeiros itens.
 

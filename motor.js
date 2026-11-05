@@ -14,7 +14,7 @@
    * MAJOR muda o resultado para a mesma entrada ou quebra o formato dos JSON; MINOR traz função nova compatível;
    * PATCH corrige erro, texto, layout ou documentação sem mudar resultado.
    */
-  var VERSAO = '1.10.0';
+  var VERSAO = '1.10.1';
   var REGIMES = ['simples', 'presumido', 'real'];
   var NOMES = { simples: 'Simples Nacional', presumido: 'Lucro Presumido', real: 'Lucro Real' };
   var ROTULOS = {
