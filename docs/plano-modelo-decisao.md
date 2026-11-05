@@ -223,4 +223,26 @@ Em vez de classificar, compara a descrição livre com o texto dos 50 itens da l
 - Usar os casos sintéticos como chaves extras (1-NN, validação cruzada agrupada) **piorou**: 58,7%. As chaves devem ser o texto da lei.
 - O limite de abstenção foi escolhido nos mesmos dados, então os números com abstenção são um pouco otimistas.
 - **Desenho proposto:** o BGE-M3 sugere o inciso da lei. O anexo sai do inciso, por código. Quando a folga entre o 1º e o 2º colocado for pequena, o operador escolhe no select entre os 3 primeiros, que contêm o inciso certo em 87 a 91% dos casos. Pares conhecidos, como imóvel próprio × de terceiros e cessão de mão de obra × equipe própria, ganham uma pergunta explícita.
-- **Próximo passo:** página de teste no navegador (ONNX Runtime Web) com o int8 de 389 MB, para medir carga, tempo por descrição e acerto.
+- **Página de teste:** `spike/bge-busca.html`. Ver a 11.1.
+
+### 11.1 No navegador (`spike/bge-busca.html`, 2026-11-05)
+**Modelo publicado:** [`isreal01/bge-m3-pt-int8-onnx`](https://huggingface.co/isreal01/bge-m3-pt-int8-onnx), revisão `a54c0b4`, licença MIT.
+- A página carrega o modelo fixado nessa revisão.
+- Os vetores dos 50 itens da lei vêm prontos em `modelo/lei-vetores.json` (450 KB), gerados por `scripts/bge-m3-vetores-lei.py` com o mesmo modelo.
+- Tokenizador: `@huggingface/tokenizers` 0.2.0, de cerca de 36 KB.
+
+| Medida (Chrome 154 sem tela, i7-10610U) | WebAssembly | WebGPU (Intel UHD) |
+|---|---|---|
+| Pronto com o modelo em cache | **2,4 s** | — |
+| Tempo por descrição (mediana / p95) | **223 / 331 ms** | 1.028 / 1.262 ms |
+| Tokenização igual ao Python | 138/138 | 138/138 |
+| 1º item igual ao Python | 130/138 | 130/138 |
+| Acerto geral | **76,8%** | 76,1% |
+| Com folga ≥ 0,05 entre o 1º e o 2º item | Responde 53,6%, acerta **87,8%** | Responde 55,8%, acerta 84,4% |
+
+- **WebAssembly é o padrão.** Com int8, a WebGPU desta GPU integrada é 4,6 vezes mais lenta.
+- As 8 trocas de 1º item em relação ao Python vêm das diferenças numéricas do int8 entre o ONNX Runtime nativo e o Web. O acerto não piorou.
+- **Primeiro acesso pelo Hugging Face** (perfil limpo): download de 45,0 s a 8,6 MB/s e pronto em **47,5 s**. Depois, o modelo fica no cache do navegador. Na mesma execução: 237 / 350 ms por descrição e o mesmo acerto (76,8%).
+- **Selo de IA:** a sugestão leva o selo "✦ IA no navegador". Com folga pequena, a página mostra "não pode ser inferido automaticamente" e um select com os 3 primeiros itens.
+
+**Próximo passo (fase 3):** levar a sugestão para o campo de anexo da ficha (`prompts.html`), com o modelo baixado só quando o operador pedir.

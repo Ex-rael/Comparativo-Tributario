@@ -10,6 +10,15 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.10.0 — 2026-11-05
+- **Selo "✦ IA"** em todo ponto das páginas com IA: "IA externa" (prompt colado num assistente) e "IA no navegador" (modelo local), com legenda no topo. Para listar: `grep -n 'data-ia=' *.html spike/*.html`. README: seção "Onde a IA é usada".
+- `spike/bge-busca.html`: teste do BGE-M3 no navegador.
+  - Sugere o item da LC 123 e o anexo a partir da descrição; com folga pequena, mostra o select com os 3 primeiros itens.
+  - Avalia as bases: 76,8% de acerto e 223 ms por descrição em WebAssembly.
+- Modelo publicado no Hugging Face: `isreal01/bge-m3-pt-int8-onnx` (MIT).
+- `modelo/lei-vetores.json` e `scripts/bge-m3-vetores-lei.py`: vetores prontos dos 50 itens da lei.
+- Ficha: nomes de campo longos nas pendências quebram linha (não havia rolagem horizontal no celular).
+
 ## 1.9.2 — 2026-11-04
 - Plano, seções 10.3 e 11: o LAYA com ajuste fino completo acertou 60,9% (abaixo da linha de base). A busca semântica com BGE-M3, sem treino, acertou 71–75%, e cabe em 389 MB com int8 e vocabulário do português.
 - Scripts `bge-m3-podar.py` (poda do vocabulário e int8) e `bge-m3-avaliar.py` (acerto em `anexo-casos`).

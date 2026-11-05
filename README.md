@@ -17,6 +17,16 @@ O trabalho é dividido em camadas, para que o cálculo seja sempre o mesmo para 
 
 O `dados-empresa.json` sai da ficha por código determinístico: a mesma ficha gera sempre o mesmo JSON. A IA fica opcional, para pesquisar alíquotas e como alternativa à ficha.
 
+### Onde a IA é usada
+
+Nas páginas, todo ponto com IA leva o selo **✦ IA**. Sem selo, é código determinístico. No código, cada selo é um `<span class="ia" data-ia="...">`, e `grep -n 'data-ia=' *.html spike/*.html` lista todos.
+
+| Selo | `data-ia` | Onde | O que a IA faz | Quem confere |
+|---|---|---|---|---|
+| **IA externa** | `externa` | `prompts.html`: aba 1 (prompt de alíquotas) e "Prompt para IA (opcional)" da aba 2 | Você cola o prompt num assistente de IA, fora da página. Ele pesquisa alíquotas (prompt 1) ou monta o JSON a partir da ficha (prompt 2) | Contador |
+| **IA externa** | `externa` | `index.html`: legendas dos JSON 1 e 2, aba "Modelos" e campos com origem "Inferido por IA" na lista de revisão | Marca os valores que vieram de um prompt | Contador |
+| **IA no navegador** | `local` | `spike/bge-busca.html` (teste) | O BGE-M3 roda na própria página e sugere o item da lei (e o anexo) a partir da descrição da atividade. O texto não sai do navegador | Contador, no select, quando a folga é pequena |
+
 ## Páginas
 
 | Página | Para quê |
@@ -71,6 +81,8 @@ Para ver o fluxo sem dados reais, use **Carregar exemplo** na aba Entradas.
 | `docs/avaliacao-apis.md` | Testes de viabilidade das APIs do IBGE (CNAE) e da NFS-e (ISS) |
 | `avaliacao/` | Bases rotuladas para avaliar o modelo de decisão, com a origem de cada rótulo |
 | `spike/laya-carga.html` | Teste descartável do tempo de carga do LAYA no navegador |
+| `spike/bge-busca.html` | Teste do BGE-M3 no navegador: sugere o item da LC 123 e o anexo pela descrição e avalia as bases. Modelo em [huggingface.co/isreal01/bge-m3-pt-int8-onnx](https://huggingface.co/isreal01/bge-m3-pt-int8-onnx) |
+| `modelo/lei-vetores.json` | Vetores BGE-M3 dos 50 itens da LC 123, gerados por `scripts/bge-m3-vetores-lei.py` |
 | `scripts/bge-m3-podar.py`, `scripts/bge-m3-avaliar.py` | Poda do vocabulário e int8 do BGE-M3 (389 MB); acerto da busca semântica em `avaliacao/` |
 | `treino/laya-colab.ipynb` | Ajuste fino do LAYA no Google Colab (GPU), com validação cruzada e export ONNX int8. Gerado por `scripts/gerar-notebook-colab.py` |
 | `CHANGELOG.md` | Histórico de versões |
@@ -126,7 +138,7 @@ SemVer, com a versão em `motor.js` e no topo das páginas. Sobe a cada commit: 
 
 ## Próximos passos
 
-- **Modelo de decisão no navegador** (LAYA) para os enquadramentos ambíguos: plano em [`docs/plano-modelo-decisao.md`](docs/plano-modelo-decisao.md).
+- **Sugestão de anexo por IA no navegador** (BGE-M3, em teste em `spike/bge-busca.html`) no campo de anexo da ficha: plano em [`docs/plano-modelo-decisao.md`](docs/plano-modelo-decisao.md).
 - **Preenchimento da ficha auxiliado por IA:** a IA leria os documentos do cliente e proporia os valores da ficha, para o contador revisar antes de gerar o JSON. O JSON continuaria saindo do `ficha.js`, sem IA.
 - **Rotina de atualização do `cnae.json`:** rodar `scripts/gerar-cnae.mjs` periodicamente e publicar no repositório.
 - **Carregar as tabelas oficiais** de vedação (Anexo VI da Resolução CGSN 140/2018) e RAT (Anexo V do Decreto 3.048/1999) em `fontes/`.

@@ -23,7 +23,7 @@
     --bad: #a3322b;
     --bad-bg: #f6dedb;
     --info: #2b5d8a;
-    --info-bg: #dce9f5;
+    --info-bg: #dce9f5; --ia: #5b3aa6; --ia-bg: #ebe4f7;
     --c1: #2f7d63;
     --c2: #c58a1b;
     --c3: #3b6fa8;
@@ -36,7 +36,7 @@
     :root:not([data-theme="light"]) {
       --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
       --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
-      --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+      --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d; --ia: #c3abf2; --ia-bg: #2a2140;
       --c1: #5fc79b; --c2: #e0b04f; --c3: #78a8de; --c4: #c590b8;
       color-scheme: dark;
     }
@@ -44,7 +44,7 @@
   :root[data-theme="dark"] {
     --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
     --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
-    --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+    --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d; --ia: #c3abf2; --ia-bg: #2a2140;
     --c1: #5fc79b; --c2: #e0b04f; --c3: #78a8de; --c4: #c590b8;
     color-scheme: dark;
   }
@@ -193,6 +193,10 @@
   .aq-un { font: 12px var(--f-mono); color: var(--ink-2); white-space: nowrap; }
   .aq-in-wrap { display: flex; align-items: center; gap: 6px; }
   @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+  /* Selo de IA: marca cada ponto em que uma IA participa (ver README, "Onde a IA é usada"). Sem selo, é código determinístico. */
+  .ia { display: inline-block; font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--ia-bg); color: var(--ia); vertical-align: middle; white-space: nowrap; }
+  .ia::before { content: "✦ "; }
+  .ia-legenda { margin: 6px 0 0; font-size: 13px; color: var(--ink-2); }
 </style>
 
 <div class="shell">
@@ -200,6 +204,7 @@
     <div>
       <h1>Comparativo Tributário</h1>
       <p class="sub">Simples Nacional, Lucro Presumido e Lucro Real a partir de dois arquivos JSON.</p>
+      <p class="ia-legenda"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> marca onde a ferramenta pede IA: você cola o prompt num assistente e revisa a resposta. Sem selo, é código determinístico.</p>
     </div>
     <div>
       <div class="meta-line" id="metaLine"></div>
@@ -225,7 +230,7 @@
             <h2>1. Alíquotas e regras</h2>
             <span class="chip ok" id="chipAliq">Válido</span>
           </div>
-          <p class="caption">Muda pouco. Gerado pelo prompt 1 e validado pelo contador. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
+          <p class="caption">Muda pouco. Gerado pelo prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> e validado pelo contador. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
           <div class="toolbar">
             <label class="btn">Carregar arquivo<input type="file" id="fileAliq" accept=".json,application/json"></label>
             <button class="btn" id="resetAliq" type="button">Restaurar padrão</button>
@@ -239,7 +244,7 @@
             <h2>2. Dados da empresa</h2>
             <span class="chip ok" id="chipDados">Válido</span>
           </div>
-          <p class="caption">Muda a cada cliente. Gerado pelo prompt 2 e revisado pelo contador.</p>
+          <p class="caption">Muda a cada cliente. Gerado pela ficha, sem IA, ou pelo prompt 2 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span>, e revisado pelo contador.</p>
           <div class="toolbar">
             <label class="btn">Carregar arquivo<input type="file" id="fileDados" accept=".json,application/json"></label>
             <button class="btn" id="exDados" type="button">Carregar exemplo</button>
@@ -290,9 +295,9 @@
             <thead><tr><th>Camada</th><th>O que contém</th><th>Quem executa</th><th>Risco principal</th></tr></thead>
             <tbody>
               <tr><td><b>Cálculo puro</b></td><td>RBT12, faixa e alíquota efetiva do Simples, Fator R, bases do Presumido e do Real, IRPJ, CSLL, PIS, COFINS, CPP, retenção sobre lucros, totais e sensibilidade</td><td>JavaScript desta página, sempre o mesmo resultado para a mesma entrada</td><td>Regra que o motor não modela. A aba Resultado lista as exclusões</td></tr>
-              <tr><td><b>Regras</b> (JSON 1)</td><td>Alíquotas, faixas, limites, percentuais de presunção, vigências</td><td>IA consulta fonte oficial e preenche. Contador valida. Revisão a cada mudança de norma</td><td>Valor desatualizado ou tirado de fonte secundária</td></tr>
+              <tr><td><b>Regras</b> (JSON 1)</td><td>Alíquotas, faixas, limites, percentuais de presunção, vigências</td><td><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> IA consulta fonte oficial e preenche. Contador valida. Revisão a cada mudança de norma</td><td>Valor desatualizado ou tirado de fonte secundária</td></tr>
               <tr><td><b>Classificação</b> (JSON 2)</td><td>CNAE, anexo do Simples, tipo de presunção, ISS do município, RAT e terceiros, crédito de PIS/COFINS</td><td>Contador escolhe na ficha. O CNAE e o município são conferidos na API pública do IBGE. Premissas fixas (ISS zero em comércio, ICMS zero em serviço, repetição do histórico) ficam registradas em <code>meta</code></td><td>Anexo ou presunção escolhidos errados</td></tr>
-              <tr><td><b>Dados do cliente</b> (JSON 2)</td><td>Receitas, folha, sócios, distribuição de lucros, custos</td><td>Totais digitados na ficha (Ficha e prompts). O <code>ficha.js</code> converte para o formato, sem IA. O prompt 2 continua como alternativa</td><td>Número digitado errado</td></tr>
+              <tr><td><b>Dados do cliente</b> (JSON 2)</td><td>Receitas, folha, sócios, distribuição de lucros, custos</td><td>Totais digitados na ficha (Ficha e prompts). O <code>ficha.js</code> converte para o formato, sem IA. O prompt 2 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> continua como alternativa</td><td>Número digitado errado</td></tr>
             </tbody>
           </table>
         </div>
@@ -714,7 +719,7 @@
     var rev = E.listarRevisoes(dados);
     if (rev.length) {
       var rrows = rev.map(function (x) {
-        return [esc(x.campo), esc(ORIGEM_TXT[x.origem] || x.origem), esc(x.confianca || ''), esc(x.justificativa || ''), esc(x.fonte || '')];
+        return [esc(x.campo), x.origem === 'inferido_ia' ? '<span class="ia" data-ia="externa">' + esc(ORIGEM_TXT.inferido_ia) + '</span>' : esc(ORIGEM_TXT[x.origem] || x.origem), esc(x.confianca || ''), esc(x.justificativa || ''), esc(x.fonte || '')];
       });
       h.push('<div class="stack"><h2>Campos a revisar antes de confiar</h2><p class="muted">Valores que não vieram direto de documento do cliente.</p>' + tabela(['Campo', 'Origem', 'Confiança', 'Justificativa', 'Fonte'], rrows, [], false) + '</div>');
     }

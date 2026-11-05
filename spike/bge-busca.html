@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spike BGE-M3: busca na lei</title>
+<style>
+  :root { --bg: #eef2ee; --surface: #f8faf7; --ink: #14231c; --ink-2: #47594f; --line: #cbd6cd; --accent: #1d6b4f; --accent-ink: #fff; --accent-soft: #d9eadf; --warn: #8a5200; --warn-bg: #f8ecd3; --ia: #5b3aa6; --ia-bg: #ebe4f7; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0e1713; --surface: #15221c; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33; --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e; --warn: #e6b25c; --warn-bg: #3a2d12; --ia: #c3abf2; --ia-bg: #2a2140; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #0e1713; --surface: #15221c; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33; --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e; --warn: #e6b25c; --warn-bg: #3a2d12; --ia: #c3abf2; --ia-bg: #2a2140; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 system-ui, sans-serif; padding: 20px 16px 56px; }
+  main { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  h1 { margin: 0; font-size: 24px; } h2 { margin: 0 0 8px; font-size: 16px; }
+  p { margin: 0; color: var(--ink-2); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .banner { background: var(--warn-bg); color: var(--warn); padding: 10px 14px; border-radius: 4px; font-size: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font: 600 14px system-ui; padding: 9px 16px; border-radius: 4px; cursor: pointer; }
+  button.sec { background: transparent; color: var(--ink); border-color: var(--line); }
+  button:disabled { opacity: .5; cursor: default; }
+  textarea, select { width: 100%; font: 15px system-ui; padding: 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); }
+  textarea { min-height: 70px; resize: vertical; }
+  progress { width: 100%; height: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.n { font-family: ui-monospace, monospace; text-align: right; white-space: nowrap; }
+  pre { margin: 0; white-space: pre-wrap; font: 12px/1.5 ui-monospace, monospace; color: var(--ink-2); }
+  .sug { padding: 10px 12px; border-radius: 4px; background: var(--accent-soft); }
+  .sug.amb { background: var(--warn-bg); color: var(--warn); }
+  /* Selo de IA: marca cada ponto da página em que uma IA participa (ver README, "Onde a IA é usada"). */
+  .ia { display: inline-block; font: 600 11px system-ui; letter-spacing: .04em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--ia-bg); color: var(--ia); vertical-align: middle; white-space: nowrap; }
+  .ia::before { content: "✦ "; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Spike BGE-M3: inciso da lei a partir da descrição <span class="ia" data-ia="local" title="Modelo BGE-M3 rodando no próprio navegador. Nada sai do computador.">IA no navegador</span></h1>
+  <p>Teste da fase 2 do <a href="../docs/plano-modelo-decisao.md">plano do modelo de decisão</a>. O BGE-M3 (int8, vocabulário do português, cerca de 389 MB) compara a descrição com os 50 itens dos arts. 17 e 18 da LC 123/2006. O anexo sai do item mais parecido. Não há treino, e o texto digitado não sai do navegador.</p>
+  <p><span class="ia" data-ia="local">IA no navegador</span> marca o que vem do modelo. A decisão continua sendo do contador.</p>
+  <div class="banner">Primeiro acesso: download de cerca de 390 MB, que fica no cache do navegador.</div>
+
+  <div class="panel">
+    <div class="row">
+      <button id="carregar" type="button">Carregar modelo</button>
+      <button id="limpar" class="sec" type="button">Limpar cache do teste</button>
+      <a href="#auto-webgpu" onclick="setTimeout(function(){location.reload()},50)">Testar com WebGPU</a>
+    </div>
+    <progress id="bar" max="1" value="0"></progress><p id="st">Aguardando.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Sugerir pela descrição <span class="ia" data-ia="local">IA no navegador</span></h2>
+    <label for="desc">Descreva a atividade como o cliente descreveria</label>
+    <textarea id="desc" placeholder="Ex.: escritório de contabilidade para pequenas empresas"></textarea>
+    <div class="row"><button id="sugerir" type="button" disabled>Sugerir</button><span id="tempo" class="n"></span></div>
+    <div id="saida"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Avaliar nas bases</h2>
+    <p>Roda os 138 casos de <code>avaliacao/anexo-casos.jsonl</code> e compara com o gabarito do Python (<code>spike/bge-esperado.json</code>): tokenização, item escolhido, acerto e tempo.</p>
+    <div class="row"><button id="avaliar" type="button" disabled>Avaliar</button></div>
+    <table><tbody id="res"></tbody></table>
+  </div>
+  <div class="panel"><pre id="log"></pre></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/ort.webgpu.min.js"></script>
+<script type="module">
+import { Tokenizer } from 'https://cdn.jsdelivr.net/npm/@huggingface/tokenizers@0.2.0/dist/tokenizers.min.mjs';
+
+/* Modelo: repositório do Hugging Face fixado numa revisão; ?base=URL troca a origem (ex.: servidor local). */
+const PARAMS = new URLSearchParams(location.search);
+const BASE = PARAMS.get('base') || 'https://huggingface.co/isreal01/bge-m3-pt-int8-onnx/resolve/a54c0b4b83079efe1eefcc625a917b9bf0ccfe96/';
+const CACHE = 'spike-bge-v1';
+const MARGEM = 0.05; // folga mínima entre o 1º e o 2º item; nas bases, responde ~50% dos casos e acerta ~88%
+const ESPECIAIS = new Set([0, 1, 2, 3]);
+const $ = (id) => document.getElementById(id);
+const res = {};
+let tok, sess, lei, peso = 0.3;
+
+const log = (t) => { $('log').textContent += t + '\n'; };
+['warn', 'error'].forEach((k) => { const o = console[k]; console[k] = (...a) => { try { log(k + ': ' + a.join(' ').slice(0, 400)); } catch (e) {} return o.apply(console, a); }; });
+const linha = (k, v) => { res[k] = v; $('res').innerHTML = Object.entries(res).map(([a, b]) => `<tr><td>${a}</td><td class="n">${b}</td></tr>`).join(''); document.title = 'R|' + JSON.stringify(res); };
+const mb = (b) => (b / 1048576).toFixed(1) + ' MB';
+const seg = (ms) => (ms / 1000).toFixed(1) + ' s';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* Baixa com progresso e guarda no Cache API. */
+async function baixar(url, aoProgresso) {
+  const cache = ('caches' in window) ? await caches.open(CACHE).catch(() => null) : null;
+  const hit = cache && await cache.match(url);
+  if (hit) { const b = await hit.arrayBuffer(); aoProgresso(b.byteLength, b.byteLength); return { buf: b, cache: true }; }
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
+  const total = Number(r.headers.get('content-length')) || 0, leitor = r.body.getReader(), partes = [];
+  let recebido = 0;
+  for (;;) { const p = await leitor.read(); if (p.done) break; partes.push(p.value); recebido += p.value.length; aoProgresso(recebido, total); }
+  const buf = new Uint8Array(recebido); let o = 0; for (const c of partes) { buf.set(c, o); o += c.length; }
+  if (cache) cache.put(url, new Response(buf.slice().buffer)).catch((e) => log('cache: ' + e.message));
+  return { buf: buf.buffer, cache: false };
+}
+
+async function carregar() {
+  $('carregar').disabled = true;
+  try {
+    const gpu = !!navigator.gpu;
+    linha('Navegador', navigator.userAgent.replace(/^.*?\) /, '').slice(0, 60));
+    linha('WebGPU disponível', gpu ? 'sim' : 'não');
+    ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/';
+    const t0 = performance.now();
+    const [tj, tc, lv] = await Promise.all([
+      fetch(BASE + 'tokenizer.json').then((r) => r.json()), fetch(BASE + 'tokenizer_config.json').then((r) => r.json()),
+      fetch('../modelo/lei-vetores.json').then((r) => r.json())]);
+    tok = new Tokenizer(tj, tc); lei = lv.itens; peso = lv.metadata.peso_esparso;
+    lei.forEach((x) => { x.sm = new Map(Object.entries(x.s).map(([k, v]) => [Number(k), v])); });
+    const m = await baixar(BASE + 'model.onnx', (r, t) => { $('bar').value = t ? r / t : 0; $('st').textContent = 'Baixando ' + mb(r) + (t ? ' de ' + mb(t) : ''); });
+    const t1 = performance.now();
+    linha('Tamanho do modelo', mb(m.buf.byteLength));
+    linha(m.cache ? 'Leitura do cache' : 'Download', seg(t1 - t0) + (m.cache ? '' : ' (' + (m.buf.byteLength / 1048576 / ((t1 - t0) / 1000)).toFixed(1) + ' MB/s)'));
+    $('st').textContent = 'Inicializando o ONNX Runtime...';
+    /* WebAssembly por padrão: com int8, mediu 223 ms por descrição contra 1.028 ms na WebGPU (GPU integrada Intel). */
+    const prov = (gpu && /webgpu/.test(location.hash)) ? ['webgpu', 'wasm'] : ['wasm'];
+    sess = await ort.InferenceSession.create(m.buf, { executionProviders: prov });
+    const t2 = performance.now();
+    linha('Inicialização (' + prov[0] + ')', seg(t2 - t1));
+    linha('Total até pronto', seg(t2 - t0));
+    log('entradas ' + sess.inputNames.join(', ') + ' | saídas ' + sess.outputNames.join(', '));
+    $('st').textContent = 'Pronto.'; $('bar').value = 1;
+    $('sugerir').disabled = false; $('avaliar').disabled = false;
+  } catch (e) {
+    const msg = (e && e.message) || String(e);
+    linha('Erro', msg); log('erro: ' + msg + (e && e.stack ? '\n' + e.stack : '')); $('st').textContent = 'Falhou: ' + msg;
+    $('carregar').disabled = false;
+  }
+}
+
+/* Vetor denso (normalizado) e pesos esparsos por token, como em scripts/bge-m3-avaliar.py. */
+async function vetor(texto) {
+  let ids = tok.encode(texto).ids;
+  if (ids.length > 256) ids = ids.slice(0, 255).concat([2]);
+  const n = ids.length;
+  const out = await sess.run({
+    input_ids: new ort.Tensor('int64', BigInt64Array.from(ids, BigInt), [1, n]),
+    attention_mask: new ort.Tensor('int64', new BigInt64Array(n).fill(1n), [1, n]) }, ['dense', 'sparse']);
+  const d = out.dense.data, sp = out.sparse.data;
+  let nr = 0; for (let i = 0; i < d.length; i++) nr += d[i] * d[i]; nr = Math.sqrt(nr);
+  const w = new Map();
+  ids.forEach((t, i) => { const v = sp[i]; if (!ESPECIAIS.has(t) && v > 0) w.set(t, Math.max(w.get(t) || 0, v)); });
+  return { ids, d: Array.from(d, (v) => v / nr), w };
+}
+
+function ranquear(v) {
+  return lei.map((x) => {
+    let dn = 0; for (let i = 0; i < x.d.length; i++) dn += v.d[i] * x.d[i];
+    let es = 0; v.w.forEach((p, t) => { const q = x.sm.get(t); if (q) es += p * q; });
+    return { x, p: dn + peso * es };
+  }).sort((a, b) => b.p - a.p);
+}
+
+const NOMES = { I: 'Anexo I', II: 'Anexo II', III: 'Anexo III', IV: 'Anexo IV', III_ou_V_fator_r: 'Anexo III ou V (Fator R)', vedado: 'Vedado no Simples' };
+
+async function sugerir() {
+  const texto = $('desc').value.trim(); if (!texto) return;
+  const t = performance.now(); const r = ranquear(await vetor(texto)); const ms = performance.now() - t;
+  $('tempo').textContent = ms.toFixed(0) + ' ms';
+  const top = r.slice(0, 3), folga = top[0].p - top[1].p;
+  const cab = folga >= MARGEM
+    ? `<div class="sug"><b>Sugestão: ${NOMES[top[0].x.rotulo]}</b> <span class="ia" data-ia="local">IA no navegador</span><br>${esc(top[0].x.fonte)}. Confira antes de usar.</div>`
+    : `<div class="sug amb"><b>Não pode ser inferido automaticamente</b> (folga ${folga.toFixed(3)} &lt; ${MARGEM}). Escolha o item que descreve a atividade:</div>
+       <select>${top.map((o) => `<option>${esc(NOMES[o.x.rotulo])}: ${esc(o.x.fonte)}</option>`).join('')}<option>Nenhum destes</option></select>`;
+  $('saida').innerHTML = cab + '<table>' + top.map((o, i) => `<tr><td class="n">${i + 1}º</td><td><b>${esc(NOMES[o.x.rotulo])}</b> · ${esc(o.x.fonte)}<br><small>${esc(o.x.texto.slice(0, 220))}</small></td><td class="n">${o.p.toFixed(3)}</td></tr>`).join('') + '</table>';
+}
+
+async function avaliar() {
+  $('avaliar').disabled = true;
+  try {
+    const esp = (await fetch('bge-esperado.json').then((r) => r.json())).casos;
+    let tokOk = 0, topOk = 0, acerto = 0, resp = 0, respOk = 0, maxDif = 0; const tempos = [];
+    for (let i = 0; i < esp.length; i++) {
+      const c = esp[i]; $('st').textContent = `Avaliando ${i + 1} de ${esp.length}`;
+      const t = performance.now(); const v = await vetor(c.texto); const r = ranquear(v); tempos.push(performance.now() - t);
+      tokOk += v.ids.length === c.ids.length && v.ids.every((x, j) => x === c.ids[j]);
+      topOk += r[0].x.id === c.top3[0]; maxDif = Math.max(maxDif, Math.abs(r[0].p - c.pont[0]));
+      const ok = r[0].x.rotulo === c.rotulo; acerto += ok;
+      if (r[0].p - r[1].p >= MARGEM) { resp++; respOk += ok; }
+    }
+    tempos.sort((a, b) => a - b);
+    const n = esp.length, pc = (a, b) => (100 * a / b).toFixed(1) + '%';
+    linha('Tokenização igual ao Python', `${tokOk}/${n}`);
+    linha('1º item igual ao Python', `${topOk}/${n} (dif. máx. pontuação ${maxDif.toFixed(4)})`);
+    linha('Acerto geral', pc(acerto, n));
+    linha(`Com folga ≥ ${MARGEM}`, `responde ${pc(resp, n)}, acerta ${pc(respOk, resp)}`);
+    linha('Tempo por descrição (mediana / p95)', `${tempos[n >> 1].toFixed(0)} / ${tempos[Math.floor(n * 0.95)].toFixed(0)} ms`);
+    if (performance.memory) linha('Heap JS usado', mb(performance.memory.usedJSHeapSize));
+    $('st').textContent = 'Avaliação concluída.';
+  } catch (e) { const msg = (e && e.message) || String(e); linha('Erro', msg); log('erro: ' + msg); }
+  $('avaliar').disabled = false;
+}
+
+$('carregar').addEventListener('click', carregar);
+$('sugerir').addEventListener('click', sugerir);
+$('avaliar').addEventListener('click', avaliar);
+$('limpar').addEventListener('click', () => { if ('caches' in window) caches.delete(CACHE).then(() => log('cache apagado')); });
+/* #auto carrega e avalia sozinho; #auto-webgpu usa a WebGPU. */
+if (/^#auto/.test(location.hash)) carregar().then(() => sess && avaliar());
+</script>
+</body>
+</html>

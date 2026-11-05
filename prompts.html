@@ -11,7 +11,7 @@
   :root {
     --bg: #eef2ee; --surface: #f8faf7; --surface-2: #e6ece7; --ink: #14231c; --ink-2: #47594f; --line: #cbd6cd;
     --accent: #1d6b4f; --accent-ink: #ffffff; --accent-soft: #d9eadf;
-    --warn: #8a5200; --warn-bg: #f8ecd3; --bad: #a3322b; --bad-bg: #f6dedb; --info: #2b5d8a; --info-bg: #dce9f5;
+    --warn: #8a5200; --warn-bg: #f8ecd3; --bad: #a3322b; --bad-bg: #f6dedb; --info: #2b5d8a; --info-bg: #dce9f5; --ia: #5b3aa6; --ia-bg: #ebe4f7;
     --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
     --f-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
     --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
@@ -20,14 +20,14 @@
     :root:not([data-theme="light"]) {
       --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
       --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
-      --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+      --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d; --ia: #c3abf2; --ia-bg: #2a2140;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0e1713; --surface: #15221c; --surface-2: #1c2d25; --ink: #e3ece6; --ink-2: #9bb0a4; --line: #2b3d33;
     --accent: #5fc79b; --accent-ink: #06130d; --accent-soft: #1d3a2e;
-    --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d;
+    --warn: #e6b25c; --warn-bg: #3a2d12; --bad: #f0958b; --bad-bg: #3d1f1c; --info: #8dbbe6; --info-bg: #1b2c3d; --ia: #c3abf2; --ia-bg: #2a2140;
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
@@ -63,7 +63,7 @@
 
   .field { display: flex; flex-direction: column; gap: 4px; }
   .field label { font-weight: 600; font-size: 13.5px; }
-  .field label code { font: 500 11.5px var(--f-mono); color: var(--ink-2); font-weight: 400; }
+  .field label code { font: 500 11.5px var(--f-mono); color: var(--ink-2); font-weight: 400; overflow-wrap: anywhere; }
   input[type="text"], input[type="date"], input[type="number"], select, textarea {
     width: 100%; min-width: 0; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px;
     padding: 8px 10px; font: 14px var(--f-body);
@@ -107,7 +107,7 @@
   .checks { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
   .checks label { display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
   .pend { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
-  .pend code { font: 11.5px var(--f-mono); color: var(--ink-2); }
+  .pend code { font: 11.5px var(--f-mono); color: var(--ink-2); overflow-wrap: anywhere; }
   .msg { font-size: 13px; padding: 7px 10px; border-radius: 4px; }
   .msg.err { background: var(--bad-bg); color: var(--bad); }
   .msg.warn { background: var(--warn-bg); color: var(--warn); }
@@ -119,6 +119,10 @@
   .banner { padding: 10px 14px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); font-size: 14px; }
   .sticky-copy { position: sticky; top: 0; z-index: 2; background: var(--surface); padding-block: 4px; }
   @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+  /* Selo de IA: marca cada ponto em que uma IA participa (ver README, "Onde a IA é usada"). Sem selo, é código determinístico. */
+  .ia { display: inline-block; font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--ia-bg); color: var(--ia); vertical-align: middle; white-space: nowrap; }
+  .ia::before { content: "✦ "; }
+  .ia-legenda { margin: 6px 0 0; font-size: 13px; color: var(--ink-2); }
 </style>
 </head>
 <body>
@@ -127,6 +131,7 @@
     <div>
       <h1>Ficha e prompts</h1>
       <p class="sub">Monte o dados-empresa.json a partir da ficha do cliente, sem IA, ou copie os prompts prontos.</p>
+      <p class="ia-legenda"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> marca onde a ferramenta pede IA: você cola o prompt num assistente e revisa a resposta. Sem selo, é código determinístico.</p>
     </div>
     <nav class="nav" aria-label="Páginas">
       <a href="index.html">Comparativo</a>
@@ -138,7 +143,7 @@
   <div class="banner" id="loadErr" hidden></div>
 
   <nav class="tabs" role="tablist" aria-label="Prompts">
-    <button class="tab" role="tab" id="t-p1" data-tab="p1" aria-controls="tab-p1">1. Alíquotas e regras</button>
+    <button class="tab" role="tab" id="t-p1" data-tab="p1" aria-controls="tab-p1">1. Alíquotas e regras <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span></button>
     <button class="tab" role="tab" id="t-p2" data-tab="p2" aria-controls="tab-p2">2. Dados da empresa (ficha)</button>
   </nav>
 
@@ -173,7 +178,7 @@
         </div>
         <div class="panel">
           <div class="panel-head sticky-copy">
-            <h2>Prompt pronto</h2>
+            <h2>Prompt pronto <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span></h2>
             <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
           </div>
           <pre class="out" data-out></pre>
@@ -285,7 +290,7 @@
           <div class="panel-head sticky-copy">
             <div class="seg" role="group" aria-label="Saída">
               <button type="button" data-view="json" aria-pressed="true">dados-empresa.json</button>
-              <button type="button" data-view="prompt" aria-pressed="false">Prompt para IA (opcional)</button>
+              <button type="button" data-view="prompt" aria-pressed="false">Prompt para IA (opcional) <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span></button>
             </div>
           </div>
           <div id="v-json" class="stack" style="gap:12px">
@@ -301,7 +306,7 @@
           </div>
           <div id="v-prompt" class="stack" style="gap:12px" hidden>
             <div class="toolbar"><span class="tok-total" data-total></span><span class="chip ok" data-status></span><button class="btn primary" type="button" data-copy-prompt>Copiar prompt</button></div>
-            <p class="caption">Caminho alternativo: a IA monta o JSON a partir da ficha. Revise tudo o que ela devolver.</p>
+            <p class="caption"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você cola o prompt e revisa o que ele devolver.">IA externa</span> Caminho alternativo: a IA monta o JSON a partir da ficha. Revise tudo o que ela devolver.</p>
             <pre class="out" data-out></pre>
           </div>
         </div>
