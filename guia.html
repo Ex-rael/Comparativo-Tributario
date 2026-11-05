@@ -163,7 +163,7 @@
       <li><b>Abra o prompt de alíquotas</b>No modo <b>Atualizar alíquotas</b>, abra o <a href="prompts.html#p1">prompt de alíquotas</a>. Confira a data e o ano-calendário. O <code>aliquotas.json</code> publicado já vem carregado.</li>
       <li><b>Envie para a IA</b><span class="btnlike ia-b">Enviar para IA</span> abre o Claude numa nova aba com o prompt preenchido e também copia o prompt. <b>Ligue a pesquisa na web</b> antes de enviar: o prompt manda conferir cada valor no Planalto, na Receita Federal e no Portal do Simples. Se o prompt for longo demais para o endereço, o Claude abre vazio: cole com <b>Ctrl+V</b>. Para outro assistente com acesso à web, use <span class="btnlike">Copiar prompt</span>.</li>
       <li><b>Leve a resposta para o comparativo</b>A IA devolve o <code>aliquotas.json</code> completo e um resumo do que mudou. Copie o JSON e cole no campo 1 da aba <a href="index.html#entradas">Entradas</a>. A validação aponta chaves faltando ou faixas inconsistentes.</li>
-      <li><b>Revise valor a valor</b>Na aba <a href="index.html#aliquotas">Alíquotas</a>, cada bloco mostra o status, a base legal, a nota e as fontes. Edite direto na célula. A lista <b>Alterações desta sessão</b> mostra cada valor antigo e novo.</li>
+      <li><b>Revise valor a valor</b>Na aba <a href="index.html#aliquotas">Alíquotas</a>, cada bloco mostra o status, a base legal, a nota e as fontes. Faça essa revisão com o técnico que atualiza o sistema. Corrija direto no campo: o que mudou fica em amarelo, e a lista <b>Alterações ainda não aplicadas</b> mostra cada valor antigo e novo.</li>
     </ol>
     <div class="tablewrap">
       <table>
@@ -182,8 +182,8 @@
     <h2 id="publicar">5. Aprovar e publicar as alíquotas</h2>
     <ol class="passos">
       <li><b>Registre a aprovação</b>Na aba Alíquotas, bloco de metadados, preencha <b>Verificado por</b> (iniciais ou cargo bastam) e troque a <b>Situação geral</b> para indicar a aprovação. Resolva ou justifique todo bloco <code>a_confirmar</code>.</li>
-      <li><b>Copie o JSON aprovado</b>Clique em <span class="btnlike">Copiar JSON alterado</span>.</li>
-      <li><b>Publique</b>No GitHub do projeto, abra o arquivo <code>aliquotas.json</code>, clique no lápis (<i>Edit</i>), substitua todo o conteúdo pelo JSON copiado e confirme (<i>Commit changes</i>). Em um ou dois minutos o site publicado passa a usar as novas alíquotas em todo comparativo. Quem mantém o repositório registra a mudança no <code>CHANGELOG.md</code> e sobe a versão.</li>
+      <li><b>Aplique as alterações</b>Clique em <span class="btnlike">Aplicar alterações</span>. Cada mudança fica registrada no próprio arquivo, com a data, e o navegador baixa o arquivo <code>aliquotas-revisado-…json</code>. Sem nenhuma correção, use <span class="btnlike">Baixar sem alterar</span>.</li>
+      <li><b>Entregue ao técnico</b>O técnico substitui o <code>aliquotas.json</code> do repositório pelo arquivo baixado, registra a mudança no <code>CHANGELOG.md</code>, sobe a versão e publica. Em um ou dois minutos o site passa a usar as novas alíquotas em todo comparativo.</li>
       <li><b>Volte ao dia a dia</b>Troque para o modo <a href="inicio.html">Comparar regimes</a>.</li>
     </ol>
     <p class="nota">Enquanto o arquivo publicado não for trocado, os comparativos continuam usando as alíquotas anteriores. Isso é intencional: nada muda sem aprovação.</p>

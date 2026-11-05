@@ -190,16 +190,25 @@
   .aq-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
   .aq-meta { font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; }
   .aq-meta p { max-width: none; }
-  td.aq-c { padding: 4px 8px; }
+  /* Tabelas de alíquotas: colunas fixas e todo campo alinhado à esquerda, com a unidade no rótulo. */
+  table.aq-tab { table-layout: fixed; }
+  table.aq-tab.faixas, table.aq-tab.presuncao { min-width: 560px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  table.aq-tab td { vertical-align: middle; }
+  table.aq-tab.kv th:first-child { width: 46%; }
+  table.aq-tab.faixas th:first-child { width: 64px; }
+  table.aq-tab.presuncao th:first-child { width: 40%; }
+  td.aq-c { padding: 4px 10px; }
   input.aq-in, select.aq-in {
-    width: 100%; min-width: 96px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px;
-    padding: 6px 8px; font: 13px var(--f-mono); text-align: right; font-variant-numeric: tabular-nums;
+    width: 17ch; max-width: 100%; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px;
+    padding: 5px 8px; font: 13px var(--f-mono); text-align: left; font-variant-numeric: tabular-nums;
   }
-  select.aq-in, input.aq-in.txt { text-align: left; font-family: var(--f-body); }
+  input.aq-in.txt { width: 34ch; font-family: var(--f-body); }
+  select.aq-in { width: auto; min-width: 17ch; font-family: var(--f-body); }
   .aq-in.edit { background: var(--warn-bg); border-color: var(--warn); }
   .aq-in.bad { border-color: var(--bad); outline: 1px solid var(--bad); }
-  .aq-un { font: 12px var(--f-mono); color: var(--ink-2); white-space: nowrap; }
-  .aq-in-wrap { display: flex; align-items: center; gap: 6px; }
+  .aq-un { font-weight: 400; color: var(--ink-2); }
+  .aq-aplicado { display: flex; flex-direction: column; gap: 4px; }
   @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
   /* Selo de IA: marca cada ponto em que uma IA participa (ver README, "Onde a IA é usada"). Sem selo, é código determinístico. */
   .ia { display: inline-block; font: 600 11px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--ia-bg); color: var(--ia); vertical-align: middle; white-space: nowrap; }
@@ -282,16 +291,18 @@
     <!-- ALÍQUOTAS -->
     <section id="tab-aliquotas" role="tabpanel" aria-labelledby="t-aliquotas" class="stack" hidden>
       <div class="panel-head">
-        <p class="muted">Valores do aliquotas.json carregado em Entradas, em tabela. Edite direto na célula: o JSON e o resultado se atualizam na hora. Percentuais aparecem em %, valores em R$.</p>
+        <p class="muted">Revise cada valor com o técnico que atualiza o sistema. Corrija direto no campo: o que mudou fica destacado em amarelo. No fim, <b>Aplicar alterações</b> registra as mudanças e baixa o arquivo de alíquotas para o técnico publicar.</p>
       </div>
       <div class="toolbar sticky-bar">
-        <button class="btn primary" id="aqCopiar" type="button">Copiar JSON alterado</button>
+        <button class="btn primary" id="aqAplicar" type="button" disabled>Aplicar alterações</button>
         <button class="btn" id="aqDesfazer" type="button">Desfazer alterações</button>
+        <button class="btn" id="aqBaixar" type="button" title="Baixa o arquivo como está, sem registrar alterações. Use para aprovar a resposta da IA sem mudanças.">Baixar sem alterar</button>
         <span class="chip ok" id="aqChip">Sem alterações</span>
         <span class="chip warn" id="aqPend" hidden></span>
       </div>
       <div class="msgs" id="aqMsgs"></div>
-      <details id="aqLog" hidden><summary>Alterações desta sessão</summary><div class="det-body"><ul class="plain" id="aqLogList"></ul></div></details>
+      <div class="msg ok aq-aplicado" id="aqAplicado" hidden></div>
+      <details id="aqLog" hidden open><summary>Alterações ainda não aplicadas</summary><div class="det-body"><ul class="plain" id="aqLogList"></ul></div></details>
       <div id="aqTabelas" class="stack"></div>
     </section>
 
@@ -494,6 +505,14 @@
   function parse(txt) {
     try { return { v: JSON.parse(txt) }; } catch (e) { return { err: e.message }; }
   }
+  /* O aviso do motor sobre blocos a confirmar aponta para a lista do Resultado. Onde o Resultado
+     não aparece (modo Atualizar alíquotas e a própria aba Alíquotas), o texto aponta para o status de cada bloco. */
+  var PEND_RESULTADO = 'Ver lista de pendências.';
+  var PEND_ENTRADAS = 'O status de cada bloco aparece na aba Alíquotas.';
+  var PEND_TABELA = 'O status aparece no topo de cada bloco, abaixo; mude no campo "Status do bloco" depois de conferir.';
+  function avisoPendencias(list, txt) {
+    return list.map(function (m) { return m.x.indexOf(PEND_RESULTADO) >= 0 ? { t: m.t, x: m.x.replace(PEND_RESULTADO, txt) } : m; });
+  }
   function msgsHtml(list) {
     return list.map(function (m) { return '<div class="msg ' + m.t + '">' + esc(m.x) + '</div>'; }).join('');
   }
@@ -527,7 +546,7 @@
       }
     }
     state.erros = mA.concat(mD).filter(function (m) { return m.t === 'err'; }).length;
-    $('msgAliq').innerHTML = msgsHtml(mA);
+    $('msgAliq').innerHTML = msgsHtml(MODO === 'aliquotas' ? avisoPendencias(mA, PEND_ENTRADAS) : mA);
     $('msgDados').innerHTML = msgsHtml(mD);
     chip($('chipAliq'), mA);
     chip($('chipDados'), mD);
@@ -844,10 +863,10 @@
     if (t === 'bool') {
       return '<select class="' + cls + '" data-aq="' + id + '" data-t="bool" aria-label="' + id + '"><option value="true"' + (v === true ? ' selected' : '') + '>Sim</option><option value="false"' + (v !== true ? ' selected' : '') + '>Não</option></select>';
     }
-    var un = t === 'pct' ? '%' : t === 'brl' ? 'R$' : '';
-    var inp = '<input class="' + cls + (t === 'txt' ? ' txt' : '') + '" data-aq="' + id + '" data-t="' + t + '" value="' + esc(fmtCel(v, t)) + '" inputmode="' + (t === 'txt' ? 'text' : 'decimal') + '" aria-label="' + id + '">';
-    return '<div class="aq-in-wrap">' + (un === 'R$' ? '<span class="aq-un">R$</span>' : '') + inp + (un === '%' ? '<span class="aq-un">%</span>' : '') + '</div>';
+    return '<input class="' + cls + (t === 'txt' ? ' txt' : '') + '" data-aq="' + id + '" data-t="' + t + '" value="' + esc(fmtCel(v, t)) + '" inputmode="' + (t === 'txt' ? 'text' : 'decimal') + '" aria-label="' + id + '">';
   }
+  /* Unidade no rótulo, não no campo: assim todos os campos começam na mesma coluna. */
+  function un(t) { return t === 'pct' ? ' <span class="aq-un">(%)</span>' : t === 'brl' ? ' <span class="aq-un">(R$)</span>' : ''; }
   function statusChip(s) {
     if (!s) return '';
     var ok = String(s).indexOf('conferido_fonte_oficial') === 0;
@@ -875,9 +894,9 @@
       bl.linhas.forEach(function (l) {
         var path = [bl.k].concat(l[0].split('.'));
         if (getPath(A, path) === undefined) return;
-        rows.push([esc(l[1]), celula(path, l[2])]);
+        rows.push([esc(l[1]) + un(l[2]), celula(path, l[2])]);
       });
-      p.push(tabelaAq(['Item', 'Valor'], rows));
+      p.push(tabelaAq(['Item', 'Valor'], rows, 'kv'));
       if (bl.anexos && B.anexos) {
         Object.keys(B.anexos).forEach(function (an) {
           var X = B.anexos[an];
@@ -886,8 +905,8 @@
             return [String(i + 1), celula(base.concat('ate'), 'brl'), celula(base.concat('aliquota'), 'pct'), celula(base.concat('deduzir'), 'brl')];
           });
           p.push('<h3>Anexo ' + esc(an) + (X.nome ? ' · <span class="muted" style="font-weight:500">' + esc(X.nome) + '</span>' : '') + '</h3>');
-          p.push(tabelaAq(['Faixa', 'Receita em 12 meses até', 'Alíquota nominal', 'Parcela a deduzir'], fr));
-          if (X.cpp_incluida_no_das !== undefined) p.push(tabelaAq(['Item', 'Valor'], [['CPP incluída no DAS', celula([bl.k, 'anexos', an, 'cpp_incluida_no_das'], 'bool')]]));
+          p.push(tabelaAq(['Faixa', 'Receita em 12 meses até (R$)', 'Alíquota nominal (%)', 'Parcela a deduzir (R$)'], fr, 'faixas'));
+          if (X.cpp_incluida_no_das !== undefined) p.push(tabelaAq(['Item', 'Valor'], [['CPP incluída no DAS', celula([bl.k, 'anexos', an, 'cpp_incluida_no_das'], 'bool')]], 'kv'));
         });
       }
       if (bl.presuncao && B.presuncao) {
@@ -896,7 +915,7 @@
           return [esc(X.descricao || tp) + '<small class="muted">' + esc(tp) + '</small>', celula(base.concat('irpj'), 'pct'), celula(base.concat('csll'), 'pct'), X.status !== undefined ? celula(base.concat('status'), 'status') : ''];
         });
         p.push('<h3>Percentuais de presunção</h3>');
-        p.push(tabelaAq(['Atividade', 'IRPJ', 'CSLL', 'Status'], pr));
+        p.push(tabelaAq(['Atividade', 'IRPJ (%)', 'CSLL (%)', 'Status'], pr, 'presuncao'));
       }
       p.push(blocoMeta(B));
       if (B.acrescimo_presuncao) p.push(blocoMeta(B.acrescimo_presuncao));
@@ -906,8 +925,8 @@
     box.innerHTML = html.join('');
     aqResumo();
   }
-  function tabelaAq(heads, rows) {
-    return '<div class="tablewrap"><table><thead><tr>' + heads.map(function (x) { return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+  function tabelaAq(heads, rows, tipo) {
+    return '<div class="tablewrap"><table class="aq-tab ' + tipo + '"><thead><tr>' + heads.map(function (x) { return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       rows.map(function (r) { return '<tr>' + r.map(function (c, i) { return '<td' + (i ? ' class="aq-c"' : '') + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
   }
   function aqResumo() {
@@ -916,15 +935,16 @@
     c.className = 'chip ' + (n ? 'warn' : 'ok');
     c.textContent = n ? n + (n === 1 ? ' alteração' : ' alterações') : 'Sem alterações';
     $('aqLog').hidden = !n;
+    $('aqAplicar').disabled = !n;
     $('aqLogList').innerHTML = Object.keys(aq.edits).map(function (k) {
       var e = aq.edits[k];
-      return '<li><code>' + esc(k) + '</code>: ' + esc(JSON.stringify(e.de)) + ' → ' + esc(JSON.stringify(e.para)) + '</li>';
+      return '<li>' + esc(e.rotulo) + ': <b>' + esc(valorLegivel(e.de, e.t)) + '</b> → <b>' + esc(valorLegivel(e.para, e.t)) + '</b></li>';
     }).join('');
     var pend = state.aliq ? E.listarPendencias(state.aliq).length : 0;
     var pc = $('aqPend');
     pc.hidden = !pend;
     pc.textContent = pend + (pend === 1 ? ' bloco a confirmar' : ' blocos a confirmar');
-    $('aqMsgs').innerHTML = $('msgAliq').innerHTML;
+    $('aqMsgs').innerHTML = $('msgAliq').innerHTML.replace(PEND_RESULTADO, PEND_TABELA).replace(PEND_ENTRADAS, PEND_TABELA);
   }
   /* Chamado a cada atualização. Só redesenha a tabela quando o JSON mudou por fora dela (arquivo, colagem, restaurar). */
   function sincronizarAliquotas() {
@@ -954,17 +974,96 @@
     setPath(state.aliq, path, r.v);
     var orig = getPath(aq.base, path);
     if (JSON.stringify(orig) === JSON.stringify(r.v)) { delete aq.edits[k]; el.classList.remove('edit'); }
-    else { aq.edits[k] = { de: orig, para: r.v }; el.classList.add('edit'); }
+    else { aq.edits[k] = { de: orig, para: r.v, t: t, rotulo: rotuloDe(path) }; el.classList.add('edit'); }
+    $('aqAplicado').hidden = true;
     if (t !== 'txt' && t !== 'status' && t !== 'bool') el.value = fmtCel(r.v, t);
     ta.aliq.value = JSON.stringify(state.aliq, null, 2) + '\n';
     aq.ultimoTxt = ta.aliq.value;
     agendar(0);
   });
-  $('aqCopiar').addEventListener('click', function (e) { copyText(ta.aliq.value, e.currentTarget, ta.aliq); });
+  /* Nome do item em português, para a lista de alterações. */
+  var CAMPO_FAIXA = { ate: 'receita até', aliquota: 'alíquota nominal', deduzir: 'parcela a deduzir' };
+  function rotuloDe(path) {
+    var bl = AQ_BLOCOS.filter(function (b) { return b.k === path[0]; })[0];
+    var tit = bl ? bl.titulo : String(path[0]), resto = path.slice(1);
+    if (resto.length === 1 && resto[0] === 'status') return tit + ' · status do bloco';
+    if (resto[0] === 'anexos') {
+      if (resto[2] === 'faixas') return tit + ' · Anexo ' + resto[1] + ' · faixa ' + (resto[3] + 1) + ' · ' + (CAMPO_FAIXA[resto[4]] || resto[4]);
+      return tit + ' · Anexo ' + resto[1] + ' · CPP incluída no DAS';
+    }
+    if (resto[0] === 'presuncao') {
+      var X = state.aliq[path[0]].presuncao[resto[1]] || {};
+      return tit + ' · presunção · ' + (X.descricao || resto[1]) + ' · ' + (resto[2] === 'status' ? 'status' : resto[2].toUpperCase());
+    }
+    var l = bl && bl.linhas.filter(function (x) { return x[0] === resto.join('.'); })[0];
+    return tit + ' · ' + (l ? l[1] : resto.join('.'));
+  }
+  function valorLegivel(v, t) {
+    if (v === undefined || v === null || v === '') return '(vazio)';
+    if (t === 'pct') return fmtCel(v, t) + '%';
+    if (t === 'brl') return 'R$ ' + fmtCel(v, t);
+    if (t === 'bool') return v ? 'Sim' : 'Não';
+    if (t === 'status') return STATUS[v] || v;
+    return String(v);
+  }
+  function hojeIso() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  /* Baixa o JSON como arquivo. O nome leva data e hora, para o técnico saber qual é o mais recente. */
+  function baixarAliquotas(txt) {
+    var d = new Date();
+    var nome = 'aliquotas-revisado-' + hojeIso() + '-' + ('0' + d.getHours()).slice(-2) + ('0' + d.getMinutes()).slice(-2) + '.json';
+    var url = URL.createObjectURL(new Blob([txt], { type: 'application/json' }));
+    var a = document.createElement('a');
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    return nome;
+  }
+  function avisoAplicado(titulo, nome, itens) {
+    var box = $('aqAplicado');
+    box.className = 'msg ok aq-aplicado';
+    box.innerHTML = '<b>' + esc(titulo) + '</b><span>Arquivo baixado: <code>' + esc(nome) + '</code>. Entregue ao técnico: ele substitui o <code>aliquotas.json</code> do repositório e publica.</span>' +
+      (itens.length ? '<ul class="plain">' + itens.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' : '');
+    box.hidden = false;
+  }
+  /* Aplicar: grava cada alteração em metadata.alteracoes (o mesmo formato do prompt 1), torna o resultado
+     a nova base da revisão e baixa o arquivo para o técnico publicar. */
+  $('aqAplicar').addEventListener('click', function () {
+    var ks = Object.keys(aq.edits);
+    if (!ks.length || !state.aliq) return;
+    var A = state.aliq, dia = hojeIso();
+    if (!A.metadata) A.metadata = {};
+    if (!Array.isArray(A.metadata.alteracoes)) A.metadata.alteracoes = [];
+    var itens = ks.map(function (k) {
+      var e = aq.edits[k];
+      A.metadata.alteracoes.push(k + ': ' + JSON.stringify(e.de) + ' -> ' + JSON.stringify(e.para) + ' (revisão do contador em ' + dia + ')');
+      return esc(e.rotulo) + ': ' + esc(valorLegivel(e.de, e.t)) + ' → ' + esc(valorLegivel(e.para, e.t));
+    });
+    var txt = JSON.stringify(A, null, 2) + '\n';
+    ta.aliq.value = txt;
+    aq.ultimoTxt = null;
+    sincronizarAliquotas();
+    agendar(0);
+    avisoAplicado(ks.length + (ks.length === 1 ? ' alteração aplicada.' : ' alterações aplicadas.'), baixarAliquotas(txt), itens);
+  });
+  $('aqBaixar').addEventListener('click', function () {
+    if (Object.keys(aq.edits).length) {
+      var box = $('aqAplicado');
+      box.className = 'msg warn aq-aplicado';
+      box.innerHTML = '<b>Há alterações não aplicadas.</b><span>Clique em <b>Aplicar alterações</b> ou em <b>Desfazer alterações</b> antes de baixar.</span>';
+      box.hidden = false;
+      return;
+    }
+    if (!state.aliq) return;
+    avisoAplicado('Arquivo baixado sem alterações.', baixarAliquotas(ta.aliq.value), []);
+  });
   $('aqDesfazer').addEventListener('click', function () {
     if (!Object.keys(aq.edits).length) return;
     ta.aliq.value = aq.baseTxt;
     aq.ultimoTxt = null;
+    $('aqAplicado').hidden = true;
     agendar(0);
   });
 

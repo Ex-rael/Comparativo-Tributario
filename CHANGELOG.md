@@ -10,6 +10,14 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.12.0 — 2026-11-05
+- Aba **Alíquotas**:
+  - **Aplicar alterações** no lugar de "Copiar JSON alterado". O botão registra cada mudança em `metadata.alteracoes`, com a data, e baixa o arquivo `aliquotas-revisado-AAAA-MM-DD-HHMM.json` para o técnico publicar no repositório.
+  - **Baixar sem alterar**, para aprovar a resposta da IA sem mudanças.
+  - A lista de alterações mostra o nome do item e os valores em português (ex.: "Simples Nacional · Anexo I · faixa 1 · alíquota nominal: 4% → 4,5%").
+  - Campos menores e todos alinhados à esquerda, na mesma coluna. A unidade (R$ ou %) passa para o rótulo.
+- Aviso de blocos a confirmar: no modo Atualizar alíquotas e na aba Alíquotas, aponta para o status de cada bloco, em vez da lista do Resultado, que ali não aparece.
+
 ## 1.11.0 — 2026-11-05
 - **Página de decisão** (`inicio.html`) no primeiro acesso: **Comparar regimes de um cliente** ou **Atualizar as alíquotas**. Cada modo mostra só a sua parte nas páginas (`modo.js`, `data-modo-so`). A escolha fica no navegador; **Trocar**, no topo, volta à escolha.
   - Comparar regimes: ficha, entradas sem o texto do JSON de alíquotas, resultado.

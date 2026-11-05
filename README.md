@@ -50,9 +50,10 @@ O controle está em `modo.js`: cada elemento de um modo só leva `data-modo-so="
 
 ### Aba Alíquotas
 - Mostra o `aliquotas.json` carregado em tabelas por bloco: Simples (com as 6 faixas de cada anexo), Presumido (com a tabela de presunção), Real, encargos de folha, lucros distribuídos e reforma do consumo.
-- Percentuais aparecem em %, valores em R$. Cada bloco traz o status, a base legal, a nota e as fontes.
-- **Edite direto na célula.** O JSON e o resultado se atualizam na hora, sem enviar formulário. Células alteradas ficam destacadas e a lista "Alterações desta sessão" mostra cada valor antigo e novo.
-- **Copiar JSON alterado** leva o arquivo completo para a área de transferência. **Desfazer alterações** volta ao JSON carregado.
+- Percentuais aparecem em %, valores em R$, com a unidade no rótulo. Todo campo fica alinhado à esquerda, na mesma coluna. Cada bloco traz o status, a base legal, a nota e as fontes.
+- **Edite direto no campo.** Campos alterados ficam destacados e a lista "Alterações ainda não aplicadas" mostra cada item, com o valor antigo e o novo, em português.
+- **Aplicar alterações** grava cada mudança em `metadata.alteracoes` (`caminho: antes -> depois (revisão do contador em AAAA-MM-DD)`) e baixa o arquivo `aliquotas-revisado-AAAA-MM-DD-HHMM.json`. A revisão é feita com o técnico, que substitui o `aliquotas.json` do repositório por esse arquivo e publica.
+- **Baixar sem alterar** baixa o arquivo como está, para aprovar a resposta da IA sem mudanças. **Desfazer alterações** volta ao último arquivo aplicado ou carregado.
 
 ### Aba Resultado
 - Cartões com a carga total e o percentual da receita de cada regime, destacando o de menor carga entre os elegíveis.
