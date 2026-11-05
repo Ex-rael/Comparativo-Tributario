@@ -43,7 +43,7 @@ Atualizar alíquotas é raro (virada do ano, mudança de norma); comparar client
 
 | Modo | `prompts.html` | `index.html` |
 |---|---|---|
-| **Comparar regimes** (`comparativo`) | Só a ficha (aba 2) | Entradas (alíquotas recolhidas, sem o texto do JSON), Resultado, Fórmulas, Modelos |
+| **Comparar regimes** (`comparativo`) | Só a ficha (aba 2), sem os campos de alíquotas e modelo, que vêm dos arquivos publicados | Só Resultado e Fórmulas. Sem JSON: os dados vêm da ficha, e as alíquotas são as publicadas |
 | **Atualizar alíquotas** (`aliquotas`) | Só o prompt 1 | Entradas (só o JSON 1), Alíquotas, Fórmulas, Modelos |
 
 O controle está em `modo.js`: cada elemento de um modo só leva `data-modo-so="comparativo|aliquotas"`. `?modo=comparativo` ou `?modo=aliquotas` na URL também escolhe. Sem `localStorage`, as páginas mostram tudo.
@@ -69,10 +69,11 @@ Toda a aritmética do motor está descrita em [`calculos.md`](calculos.md), em M
 - **Enquadramento:** o anexo do Simples só é sugerido quando há regra objetiva (comércio: Anexo I; indústria: Anexo II). CNAE ambíguo, impeditivo ou de serviço mostra a mensagem de que não pode ser inferido automaticamente, e o operador escolhe no select. O tipo de presunção é sempre escolha do operador.
 - **RAT e FAP** são informados separados. O JSON recebe RAT × FAP.
 - **Premissas fixas**, sempre registradas em `meta`: ISS em branco vira 0 em comércio, ICMS em branco vira 0 em serviço, e sem receita simulada repete-se o histórico (com o crescimento informado, se houver).
-- **Usar no Comparativo** abre o `index.html` já com os dados. **Copiar JSON** é a alternativa.
+- **Usar no Comparativo** abre direto o **Resultado** do cliente. **Editar na ficha**, no topo do resultado, volta à ficha preenchida: a ficha e os dados ficam no `sessionStorage` da aba e somem ao fechá-la. **Copiar JSON** é a alternativa técnica.
+- **Alíquotas estáticas:** a ficha e os prompts sempre usam o `aliquotas.json` publicado, aprovado na revisão com o técnico. Os campos para carregar outro arquivo só aparecem sem modo escolhido.
 - **Preencher com exemplo** carrega uma empresa fictícia. CPF, CNPJ e e-mail digitados em texto livre são mascarados localmente.
 - **Prompt 1** (alíquotas e regras): use quando uma norma mudar e a cada virada de ano. Exige um assistente com acesso à web.
-- **Prompt 2** (dados da empresa): alternativa à ficha, em que a IA monta o JSON. Mostra uma estimativa de tokens por campo e no total.
+- **Prompt 2** (dados da empresa): alternativa à ficha, em que a IA monta o JSON. A resposta é colada na própria ficha, em **Resposta da IA**: o motor confere o JSON e **Usar resposta no Comparativo** abre o resultado, marcado com o selo de IA externa. Mostra uma estimativa de tokens por campo e no total.
 - **Enviar para IA**, um botão em cada prompt: copia o prompt e abre `https://claude.ai/new?q=<prompt>` numa nova aba, com o prompt preenchido. Fica desativado enquanto houver campo vazio.
   - Acima de 14.000 caracteres de URL, o Claude abre vazio e o operador cola com Ctrl+V. O limite é testável com `prompts.html?limite_url=N`.
   - Com os arquivos padrão e a página em `https`, o prompt manda a IA abrir os arquivos publicados (`aliquotas.json` e, no prompt 2, `dados-empresa.template.json`) em vez de colá-los inteiros. A URL cai de 26.500 para cerca de 6.400 caracteres no prompt 1, e de 33.000 para cerca de 10.000 no prompt 2 (com a ficha de exemplo). A IA precisa de acesso à web para abrir os links. Para testar localmente: `prompts.html?link_aliquotas=1`.
@@ -84,7 +85,7 @@ O passo a passo para o operador está em [`guia.html`](guia.html). Em resumo:
 
 1. **Alíquotas** (modo Atualizar alíquotas, raro). Envie o prompt 1 a uma IA com acesso à web. O contador confere e ajusta os valores na aba **Alíquotas**, aprova e copia o JSON final, que substitui o `aliquotas.json` do repositório. O `index.html` lê esse arquivo; a cópia embutida no código só vale quando a página é aberta direto do arquivo (`file://`).
 2. **Dados da empresa** (modo Comparar regimes). Em `prompts.html`, aba 2, preencha a ficha e resolva as pendências.
-3. **Comparar.** Clique em **Usar no Comparativo**, ou cole o JSON no campo 2 da aba **Entradas** do `index.html`.
+3. **Comparar.** Clique em **Usar no Comparativo**: o resultado abre direto.
 4. **Revisar.** Revise as premissas em `meta` e os avisos. Só então leia a aba **Resultado**.
 
 Para ver o fluxo sem dados reais, use **Preencher com exemplo** na ficha ou **Carregar exemplo** na aba Entradas.
@@ -135,7 +136,7 @@ Em **Settings → Pages**, escolha a branch `main` e a raiz do repositório. Nã
 - **Copiar prompt** leva o texto para a área de transferência: o que vai para a IA é o que você colar.
 - **Enviar para IA** abre o Claude com o prompt no endereço (`claude.ai/new?q=`), ou vazio com o prompt copiado. O texto vai para a conta do operador no Claude: use só se o escritório aprovou o serviço. O prompt 2 leva só os totais e códigos da ficha.
 - A ficha pede só totais e códigos e mascara CPF, CNPJ e e-mail digitados em texto livre. Evite documentos inteiros, nomes e endereço.
-- A escolha de modo e a passagem da ficha para o comparativo usam o `localStorage` do navegador.
+- A escolha de modo fica no `localStorage` do navegador. A ficha e os dados do cliente ficam só no `sessionStorage` da aba, apagado ao fechá-la.
 
 ## Limitações
 

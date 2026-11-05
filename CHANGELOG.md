@@ -10,6 +10,13 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.13.0 — 2026-11-05
+- Modo **Comparar regimes** sem JSON para o operador:
+  - **Usar no Comparativo** abre direto o Resultado do cliente; o comparativo mostra só Resultado e Fórmulas (Entradas, Alíquotas e Modelos ficam no modo Atualizar alíquotas).
+  - **Editar na ficha**, no topo do resultado, volta à ficha preenchida. Ficha e dados ficam no `sessionStorage` da aba e somem ao fechá-la.
+  - A resposta do prompt 2 é colada na própria ficha (**Resposta da IA**), conferida pelo motor e levada ao resultado com o selo de IA externa.
+- **Alíquotas estáticas:** a ficha e o prompt 1 sempre usam o `aliquotas.json` publicado. Os campos de carregar outro arquivo de alíquotas ou de modelo só aparecem sem modo escolhido.
+
 ## 1.12.0 — 2026-11-05
 - Aba **Alíquotas**:
   - **Aplicar alterações** no lugar de "Copiar JSON alterado". O botão registra cada mudança em `metadata.alteracoes`, com a data, e baixa o arquivo `aliquotas-revisado-AAAA-MM-DD-HHMM.json` para o técnico publicar no repositório.

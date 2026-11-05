@@ -84,7 +84,6 @@
 
   .stack { display: flex; flex-direction: column; gap: 20px; }
   .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
-  html[data-modo="comparativo"] .panel:has(#taAliq) { align-self: start; }
   .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px; }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -238,17 +237,16 @@
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Seções">
-    <button class="tab" role="tab" id="t-entradas" data-tab="entradas" aria-controls="tab-entradas">Entradas</button>
+    <button class="tab" role="tab" id="t-entradas" data-modo-so-nao="comparativo" data-tab="entradas" aria-controls="tab-entradas">Entradas</button>
     <button class="tab" role="tab" id="t-aliquotas" data-modo-so="aliquotas" data-tab="aliquotas" aria-controls="tab-aliquotas">Alíquotas</button>
     <button class="tab" role="tab" id="t-resultado" data-modo-so="comparativo" data-tab="resultado" aria-controls="tab-resultado">Resultado</button>
     <button class="tab" role="tab" id="t-formulas" data-tab="formulas" aria-controls="tab-formulas">Fórmulas</button>
-    <button class="tab" role="tab" id="t-modelos" data-tab="modelos" aria-controls="tab-modelos">Modelos e divisão de tarefas</button>
+    <button class="tab" role="tab" id="t-modelos" data-modo-so-nao="comparativo" data-tab="modelos" aria-controls="tab-modelos">Modelos e divisão de tarefas</button>
   </nav>
 
   <main>
     <!-- ENTRADAS -->
     <section id="tab-entradas" role="tabpanel" aria-labelledby="t-entradas" class="stack" hidden>
-      <p class="muted" data-modo-so="comparativo">Os dados do cliente chegam pela ficha (botão <b>Usar no Comparativo</b>), ou cole e carregue o JSON aqui. O cálculo roda neste navegador e nada é enviado para fora da página.</p>
       <p class="muted" data-modo-so="aliquotas">Cole no campo 1 o JSON que a IA devolveu e confira a validação. Depois revise valor a valor na aba <a href="#aliquotas">Alíquotas</a>.</p>
       <p class="muted" data-modo-so="nenhum">Cole ou carregue os dois JSON. O cálculo roda neste navegador e nada é enviado para fora da página. O resultado se atualiza ao editar.</p>
       <div class="grid-2">
@@ -257,18 +255,17 @@
             <h2>1. Alíquotas e regras</h2>
             <span class="chip ok" id="chipAliq">Válido</span>
           </div>
-          <p class="caption" data-modo-so="comparativo">As mesmas para todo cliente: vêm do <code>aliquotas.json</code> publicado. Gerado pelo prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> e aprovado pelo contador; blocos ainda a confirmar aparecem nos avisos. Para atualizar, troque para o modo <a href="inicio.html">Atualizar alíquotas</a>.</p>
           <p class="caption" data-modo-so="aliquotas">Cole aqui o JSON que o prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> devolveu. <b>Restaurar padrão</b> volta ao arquivo publicado. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
           <p class="caption" data-modo-so="nenhum">Muda pouco. Gerado pelo prompt 1 <span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> e validado pelo contador. Para conferir e editar em tabela, use a aba <a href="#aliquotas">Alíquotas</a>.</p>
           <div class="toolbar">
             <label class="btn">Carregar arquivo<input type="file" id="fileAliq" accept=".json,application/json"></label>
             <button class="btn" id="resetAliq" type="button">Restaurar padrão</button>
-            <button class="btn" id="copyAliq" type="button" data-modo-so-nao="comparativo">Copiar</button>
+            <button class="btn" id="copyAliq" type="button">Copiar</button>
           </div>
-          <textarea class="json" id="taAliq" spellcheck="false" aria-label="JSON de alíquotas e regras" data-modo-so-nao="comparativo"></textarea>
+          <textarea class="json" id="taAliq" spellcheck="false" aria-label="JSON de alíquotas e regras"></textarea>
           <div class="msgs" id="msgAliq"></div>
         </div>
-        <div class="panel" data-modo-so="comparativo">
+        <div class="panel" data-modo-so="nenhum">
           <div class="panel-head">
             <h2>2. Dados da empresa</h2>
             <span class="chip ok" id="chipDados">Válido</span>
@@ -284,7 +281,7 @@
           <div class="msgs" id="msgDados"></div>
         </div>
       </div>
-      <div data-modo-so="comparativo"><a class="btn primary" href="#resultado" style="display:inline-block;text-decoration:none">Ver resultado</a></div>
+      <div data-modo-so="nenhum"><a class="btn primary" href="#resultado" style="display:inline-block;text-decoration:none">Ver resultado</a></div>
       <div data-modo-so="aliquotas"><a class="btn primary" href="#aliquotas" style="display:inline-block;text-decoration:none">Revisar na tabela</a></div>
     </section>
 
@@ -384,12 +381,14 @@
   var TABS = ['entradas', 'aliquotas', 'resultado', 'formulas', 'modelos'];
   /* Abas de um modo só (modo.js). As demais valem nos dois. */
   var MODO = window.CTModo && window.CTModo.atual;
-  var MODO_DA_ABA = { aliquotas: 'aliquotas', resultado: 'comparativo' };
+  /* Abas escondidas em cada modo. Em Comparar regimes, o operador não vê JSON: os dados vêm da ficha
+     e as alíquotas são as publicadas. */
+  var ESCONDIDAS = { comparativo: ['entradas', 'aliquotas', 'modelos'], aliquotas: ['resultado'] };
   function showTab() {
     var h = (location.hash || '').replace('#', '');
     var inicial = MODO === 'aliquotas' ? 'aliquotas' : 'resultado';
     if (TABS.indexOf(h) < 0) h = inicial;
-    if (MODO && MODO_DA_ABA[h] && MODO_DA_ABA[h] !== MODO) h = inicial;
+    if (MODO && ESCONDIDAS[MODO].indexOf(h) >= 0) h = inicial;
     TABS.forEach(function (t) {
       $('tab-' + t).hidden = t !== h;
       $('t-' + t).setAttribute('aria-selected', t === h ? 'true' : 'false');
@@ -676,7 +675,9 @@
     var box = $('resultado');
     var res = state.res;
     if (!res) {
-      box.innerHTML = (state.cbsIbs ? barraCbsIbs() : '') + '<div class="empty"><h2>Entradas com erro</h2><p class="muted">Há ' + state.erros + (state.erros === 1 ? ' erro' : ' erros') + ' nos JSON ou no cálculo. Corrija na aba Entradas para ver o comparativo.</p><a class="btn primary" href="#entradas" style="text-decoration:none">Ir para Entradas</a></div>';
+      box.innerHTML = (state.cbsIbs ? barraCbsIbs() : '') + (MODO === 'comparativo'
+        ? '<div class="empty"><h2>Dados do cliente com erro</h2><p class="muted">O comparativo não pode ser calculado com os dados recebidos. Volte à ficha e resolva o que estiver marcado.</p><div class="msgs" style="text-align:left">' + $('msgDados').innerHTML + '</div><a class="btn primary" href="prompts.html#p2" style="text-decoration:none">Voltar à ficha</a></div>'
+        : '<div class="empty"><h2>Entradas com erro</h2><p class="muted">Há ' + state.erros + (state.erros === 1 ? ' erro' : ' erros') + ' nos JSON ou no cálculo. Corrija na aba Entradas para ver o comparativo.</p><a class="btn primary" href="#entradas" style="text-decoration:none">Ir para Entradas</a></div>');
       return;
     }
     var dados = state.dados;
@@ -686,7 +687,11 @@
     var isEx = ta.dados.value.trim() === EX_TXT.trim();
     var h = [barraCbsIbs()];
 
-    if (isEx) {
+    if (MODO === 'comparativo') {
+      h.push(isEx
+        ? '<div class="banner"><span><b>Exemplo fictício.</b> Para ver um cliente, preencha a ficha dele.</span><a href="prompts.html#p2">Abrir a ficha</a></div>'
+        : '<div class="banner"><span>' + (origemDados === 'ia' ? 'Dados do cliente montados por um assistente a partir da ficha <span class="ia" data-ia="externa">IA externa</span>. Confira os campos a revisar.' : 'Dados da ficha do cliente, compilados sem IA.') + '</span><a href="prompts.html#p2">Editar na ficha</a></div>');
+    } else if (isEx) {
       h.push('<div class="banner"><span><b>Exemplo fictício carregado.</b> Troque os dados na aba Entradas.</span><a href="#entradas">Editar dados</a></div>');
     }
     var emp = (dados.empresa || {});
@@ -1074,12 +1079,17 @@
   ta.aliq.value = ALIQ_TXT;
   ta.dados.value = EX_TXT;
   // Dados vindos da ficha (prompts.html, botão "Usar no Comparativo"). Lido uma vez e apagado.
-  var importado = null;
-  try { importado = localStorage.getItem('ct:dados-importar'); localStorage.removeItem('ct:dados-importar'); } catch (e) { importado = null; }
+  /* Dados vindos da ficha (prompts.html, "Usar no Comparativo"), guardados na sessão desta aba:
+     recarregar a página mantém o cliente, e fechar a aba apaga. */
+  var importado = null, origemDados = 'ficha';
+  try {
+    importado = sessionStorage.getItem('ct:dados-cliente');
+    origemDados = sessionStorage.getItem('ct:dados-origem') || 'ficha';
+  } catch (e) { importado = null; }
   if (importado) ta.dados.value = importado;
   showTab();
   atualizar();
-  if (importado) $('msgDados').insertAdjacentHTML('afterbegin', '<div class="msg info">Dados importados da ficha do cliente (compilada sem IA).</div>');
+  if (importado) $('msgDados').insertAdjacentHTML('afterbegin', '<div class="msg info">' + (origemDados === 'ia' ? 'Dados montados pela IA a partir da ficha do cliente.' : 'Dados importados da ficha do cliente (compilada sem IA).') + '</div>');
   /* O padrão é o aliquotas.json publicado. A cópia embutida (ALIQ_TXT) só vale aberta como arquivo (file://),
      onde o fetch é bloqueado. Assim, publicar alíquotas aprovadas é trocar um arquivo só. */
   if (location.protocol !== 'file:') {

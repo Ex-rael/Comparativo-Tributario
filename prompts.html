@@ -171,7 +171,7 @@
       <details class="guia" open>
         <summary>Como usar, em 5 passos</summary>
         <ol>
-          <li>Confira a <b>data</b> e o <b>ano-calendário</b>. O <b>aliquotas.json</b> atual já vem carregado. Se o escritório tem uma versão própria, use <b>Carregar arquivo</b>.</li>
+          <li>Confira a <b>data</b> e o <b>ano-calendário</b>. O <b>aliquotas.json</b> publicado, aprovado na última revisão, entra no prompt automaticamente.</li>
           <li>Veja no painel à direita o <b>prompt pronto</b>. Os campos em amarelo ainda estão vazios.</li>
           <li>Clique em <b>Enviar para IA</b>: o Claude abre numa nova aba com o prompt preenchido. <b>Ligue a pesquisa na web</b> antes de enviar, porque o prompt manda consultar fontes oficiais. Para outro assistente, use <b>Copiar prompt</b>.</li>
           <li>Copie o JSON que a IA devolver e cole no campo 1 da aba <b>Entradas</b> do <a href="index.html#entradas">Comparativo</a>. Revise valor a valor na aba <b>Alíquotas</b>.</li>
@@ -185,7 +185,8 @@
           <h2>Campos</h2>
           <div class="field"><label for="p1-DATA_DE_HOJE">Data de hoje <code>[[DATA_DE_HOJE]]</code></label><input type="date" id="p1-DATA_DE_HOJE" data-key="DATA_DE_HOJE"></div>
           <div class="field"><label for="p1-ANO_CALENDARIO">Ano-calendário <code>[[ANO_CALENDARIO]]</code></label><input type="number" id="p1-ANO_CALENDARIO" data-key="ANO_CALENDARIO" min="2000" max="2100"></div>
-          <div class="field">
+          <p class="caption" data-modo-so="aliquotas">O <b>aliquotas.json</b> publicado entra no prompt automaticamente. As alíquotas só mudam pela revisão com o técnico.</p>
+          <div class="field" data-modo-so="nenhum">
             <label for="p1-COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL">aliquotas.json atual <code>[[COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL]]</code></label>
             <textarea class="big" id="p1-COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL" data-key="COLE_AQUI_O_ALIQUOTAS_JSON_ATUAL" spellcheck="false"></textarea>
             <div class="toolbar">
@@ -288,7 +289,7 @@
           </fieldset>
 
           <div class="field"><label for="f-obs">Observações do contador <code>opcional</code></label><textarea id="f-obs" data-f="obs" data-free spellcheck="false" placeholder="Premissas ou pontos de atenção que não cabem nos campos acima. Sem nomes, CPF ou CNPJ."></textarea></div>
-          <div class="field">
+          <div class="field" data-modo-so="nenhum">
             <label for="p2-COLE_O_ALIQUOTAS_JSON">aliquotas.json <code>[[COLE_O_ALIQUOTAS_JSON]]</code></label>
             <textarea id="p2-COLE_O_ALIQUOTAS_JSON" data-key="COLE_O_ALIQUOTAS_JSON" spellcheck="false"></textarea>
             <div class="toolbar">
@@ -296,7 +297,7 @@
               <button class="btn" type="button" data-reset="COLE_O_ALIQUOTAS_JSON">Restaurar padrão</button>
             </div>
           </div>
-          <div class="field">
+          <div class="field" data-modo-so="nenhum">
             <label for="p2-COLE_O_TEMPLATE">Modelo dados-empresa.template.json <code>[[COLE_O_TEMPLATE]]</code></label>
             <textarea id="p2-COLE_O_TEMPLATE" data-key="COLE_O_TEMPLATE" spellcheck="false"></textarea>
             <div class="toolbar">
@@ -318,7 +319,7 @@
               <button class="btn primary" type="button" id="j-usar">Usar no Comparativo</button>
               <button class="btn" type="button" id="j-copiar">Copiar JSON</button>
             </div>
-            <p class="caption">Gerado pelo <code>ficha.js</code>, sem IA: a mesma ficha gera sempre o mesmo JSON.</p>
+            <p class="caption">Gerado pela ficha, sem IA: a mesma ficha gera sempre o mesmo resultado. <b>Usar no Comparativo</b> abre o resultado deste cliente.</p>
             <div id="j-pend"></div>
             <div class="msgs" id="j-val"></div>
             <pre class="out" id="j-out"></pre>
@@ -328,6 +329,12 @@
             <p class="caption"><span class="ia" data-ia="externa" title="Este passo usa um assistente de IA externo: você envia o prompt e revisa o que ele devolver.">IA externa</span> Caminho alternativo: a IA monta o JSON a partir da ficha. Vão para a IA só os totais e códigos da ficha, sem dados pessoais, para a sua conta no Claude: use só se o escritório aprovou o serviço. Revise tudo o que ela devolver.</p>
             <div class="msg ia-msg" data-ia-msg hidden></div>
             <pre class="out" data-out></pre>
+            <div class="field">
+              <label for="r-ia">Resposta da IA <code>cole o bloco de JSON que ela devolveu</code></label>
+              <textarea id="r-ia" spellcheck="false" placeholder="{ &quot;schema_version&quot;: &quot;1.0&quot;, ... }"></textarea>
+              <div class="toolbar"><button class="btn primary" type="button" id="r-usar">Usar resposta no Comparativo</button></div>
+              <div class="msgs" id="r-msg"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -591,6 +598,40 @@
     conferirMunicipio();
   }
 
+  /* A ficha fica guardada na sessão desta aba: voltar do comparativo ("Editar na ficha") ou recarregar
+     não perde o que foi digitado. Fechar a aba apaga. */
+  var CHAVE_FICHA = 'ct:ficha', fichaPronta = false;
+  function lerFicha() {
+    var sec = $('tab-p2'), campos = {}, regimes = {};
+    Array.prototype.forEach.call(sec.querySelectorAll('[data-f]'), function (el) { campos[el.getAttribute('data-f')] = el.value; });
+    Array.prototype.forEach.call(sec.querySelectorAll('[data-reg]'), function (c) { regimes[c.getAttribute('data-reg')] = c.checked; });
+    return {
+      situacao: sec.querySelector('[data-key="ATIVA ou EM_ABERTURA"]').value,
+      ano: sec.querySelector('[data-key="ANO_CALENDARIO"]').value,
+      regimes: regimes, campos: campos,
+      atividades: Array.prototype.map.call(ativsEl.querySelectorAll('.ativ'), function (row) {
+        var a = {};
+        ['cnae', 'desc', 'pct', 'iss', 'icms', 'anexo', 'tipo'].forEach(function (k) { a[k] = row.querySelector('[data-a="' + k + '"]').value; });
+        return a;
+      })
+    };
+  }
+  function guardarFicha() {
+    if (!fichaPronta) return;
+    try { sessionStorage.setItem(CHAVE_FICHA, JSON.stringify(lerFicha())); } catch (e) { /* sem sessão, a ficha só vive nesta página */ }
+  }
+  function restaurarFicha() {
+    var f = null;
+    try { f = JSON.parse(sessionStorage.getItem(CHAVE_FICHA) || 'null'); } catch (e) { f = null; }
+    if (f && f.campos && f.atividades && f.atividades.length) {
+      preencherFicha(f);
+      var sec = $('tab-p2');
+      Array.prototype.forEach.call(sec.querySelectorAll('[data-reg]'), function (c) { var r = f.regimes && f.regimes[c.getAttribute('data-reg')]; c.checked = r !== false; });
+      if (f.ano) sec.querySelector('[data-key="ANO_CALENDARIO"]').value = f.ano;
+    }
+    fichaPronta = true;
+  }
+
   function fichaTexto() {
     var fSec = $('tab-p2'), falt = 0, avisos = [];
     mascarados = 0;
@@ -723,13 +764,37 @@
   $('j-copiar').addEventListener('click', function (e) { copiar(renderJson(), e.currentTarget); });
   $('j-usar').addEventListener('click', function (e) {
     var txt = renderJson();
+    abrirComparativo(txt, 'ficha', e.currentTarget);
+  });
+  /* Passa os dados ao comparativo pela sessão desta aba (somem ao fechá-la) e abre o resultado. */
+  function abrirComparativo(txt, origem, btn) {
     try {
-      localStorage.setItem('ct:dados-importar', txt);
-      location.href = 'index.html#entradas';
+      sessionStorage.setItem('ct:dados-cliente', txt);
+      sessionStorage.setItem('ct:dados-origem', origem);
+      location.href = 'index.html#resultado';
     } catch (err) {
-      copiar(txt, e.currentTarget);
+      copiar(txt, btn);
       alert('O navegador bloqueou a passagem direta. O JSON foi copiado: cole no campo 2 da aba Entradas do Comparativo.');
     }
+  }
+  /* Caminho alternativo: a resposta do prompt 2 é conferida pelo motor antes de ir ao comparativo. */
+  $('r-usar').addEventListener('click', function (e) {
+    var out = $('r-msg'), txt = $('r-ia').value.trim();
+    var m = txt.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (m) txt = m[1].trim();
+    var d;
+    try { d = JSON.parse(txt); } catch (err) {
+      out.innerHTML = '<div class="msg err">A resposta não é um JSON válido. Copie só o bloco de código que a IA devolveu.</div>';
+      return;
+    }
+    var A = aliqAtual();
+    var val = A ? CTEngine.validar(A, d) : { erros: ['Alíquotas indisponíveis nesta página.'], avisos: [] };
+    if (val.erros.length) {
+      out.innerHTML = val.erros.map(function (x) { return '<div class="msg err">' + esc(x) + '</div>'; }).join('');
+      return;
+    }
+    out.innerHTML = '';
+    abrirComparativo(JSON.stringify(d, null, 2) + '\n', 'ia', e.currentTarget);
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
     b.addEventListener('click', function () {
@@ -756,7 +821,7 @@
 
   function render(id) {
     var P = PROMPTS[id], sec = $('tab-' + id);
-    if (id === 'p2') renderJson();
+    if (id === 'p2') { renderJson(); guardarFicha(); }
     if (!P.texto) return;
     var v = valores(sec), faltando = {};
     var plain = P.texto.replace(PH, function (m, k) {
@@ -911,6 +976,7 @@
       b.textContent = 'Não foi possível carregar: ' + erros.join(', ') + '. Abra esta página por um servidor (GitHub Pages ou "python3 -m http.server"), não direto do arquivo.';
     }
     atualizarTipos();
+    restaurarFicha();
     TABS.forEach(render);
   });
 })();
