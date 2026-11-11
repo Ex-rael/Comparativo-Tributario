@@ -3,7 +3,7 @@
   "metadata": {
     "descricao": "Alíquotas e regras vigentes lidas pelo motor de cálculo. Percentuais em fração decimal (0.04 = 4%). Valores em R$. Atualizar somente quando a norma mudar.",
     "ano_calendario": 2026,
-    "data_verificacao": "2026-10-29",
+    "data_verificacao": "2026-11-11",
     "verificado_por": "",
     "status_geral": "rascunho_a_validar_pelo_contador",
     "legenda_status": {
@@ -11,7 +11,10 @@
       "conferido_fonte_secundaria": "Valor encontrado em pelo menos uma fonte secundária (artigo técnico, portal contábil). Ainda não aberto na norma primária.",
       "conhecimento_previo_a_confirmar": "Valor de conhecimento geral, não localizado nas fontes desta verificação. Confirmar na norma.",
       "a_confirmar": "Ponto novo, controvertido ou com divergência entre fontes. Exige validação do contador antes do uso."
-    }
+    },
+    "alteracoes": [
+      "simples_nacional.anexos.III.faixas.1.aliquota: 0.112 -> 0.115 (atualização automática em 2026-11-11, fonte: https://www.in.gov.br/web/dou/-/teste)"
+    ]
   },
 
   "simples_nacional": {
@@ -51,7 +54,7 @@
         "cpp_incluida_no_das": true,
         "faixas": [
           { "ate": 180000, "aliquota": 0.06, "deduzir": 0 },
-          { "ate": 360000, "aliquota": 0.112, "deduzir": 9360 },
+          { "ate": 360000, "aliquota": 0.115, "deduzir": 9360 },
           { "ate": 720000, "aliquota": 0.135, "deduzir": 17640 },
           { "ate": 1800000, "aliquota": 0.16, "deduzir": 35640 },
           { "ate": 3600000, "aliquota": 0.21, "deduzir": 125640 },
@@ -87,7 +90,8 @@
       "Anexos I, III e V: https://agilize.com.br/artigos/tabela-anexos-simples-nacional-2026/",
       "Anexos II e IV: https://www.contabilizei.com.br/contabilidade-online/tabela-simples-nacional/",
       "Limite e sublimite 2026: https://noticias.iob.com.br/?p=423",
-      "Oficial para conferir: Portal do Simples Nacional (www8.receita.fazenda.gov.br/simplesnacional) e LC 123/2006 no Planalto"
+      "Oficial para conferir: Portal do Simples Nacional (www8.receita.fazenda.gov.br/simplesnacional) e LC 123/2006 no Planalto",
+      "Teste, art. 1: https://www.in.gov.br/web/dou/-/teste (acessado em 2026-11-06)"
     ]
   },
 

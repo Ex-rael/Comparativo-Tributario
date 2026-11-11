@@ -10,6 +10,10 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 1.13.1 — 2026-11-11
+- Alíquotas atualizadas pela rotina automática:
+  - Simples Nacional · Anexo III · faixa 2 · alíquota nominal: 11,2% → 11,5%
+
 ## 1.13.0 — 2026-11-05
 - Modo **Comparar regimes** sem JSON para o operador:
   - **Usar no Comparativo** abre direto o Resultado do cliente; o comparativo mostra só Resultado e Fórmulas (Entradas, Alíquotas e Modelos ficam no modo Atualizar alíquotas).
