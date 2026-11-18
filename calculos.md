@@ -283,9 +283,13 @@ CBS e IBS ainda não têm alíquotas definidas. Por isso entram no cálculo **so
 
 **Parâmetros** (todos do `aliquotas.json`, bloco `reforma_consumo`, nunca digitados na página): $a_{\text{CBS}}$ = `cbs_aplicar.aliquota`, $a_{\text{IBS}}$ = `ibs_aplicar.aliquota` (frações entre 0 e 1) e a chave `simples_por_fora_do_das.aplicar`. Se `cbs_aplicar` ou `ibs_aplicar` faltarem, o motor usa `cbs_teste` e `ibs_teste` e avisa. Os campos novos nascem com status `a_confirmar`, valor inicial igual aos de teste (0,9% e 0,1%).
 
-**Base e fórmulas.** Base de cálculo = receita bruta mensal, sem créditos, exclusões ou reduções de base:
+**Base e fórmulas.** No Presumido e no Real, a base é a receita bruta mensal menos os tributos "por dentro" listados em `base_regime_regular.deduz`, cada um só nos anos do seu intervalo (`de_ano` a `ate_ano`). Hoje: PIS e COFINS em 2026, ICMS e ISS de 2026 a 2032. É a regra da base unificada da calculadora oficial da Receita (`ElementoBaseCalculo`, repositório `ReceitaFederal/calculadora-rtc-regime-regular`). Sem créditos sobre compras e sem reduções de alíquota:
 
-$$\text{CBS}_m = a_{\text{CBS}}\,R_m \qquad \text{IBS}_m = a_{\text{IBS}}\,R_m \qquad \text{CBS}=\sum_m\text{CBS}_m,\quad \text{IBS}=\sum_m\text{IBS}_m$$
+$$B_m = \Big[R_m - \delta_{\text{PIS}}\,\text{PIS}^{\text{deb}}_m - \delta_{\text{COFINS}}\,\text{COFINS}^{\text{deb}}_m - \delta_{\text{ICMS}}\,\text{ICMS}_m - \delta_{\text{ISS}}\,\text{ISS}_m\Big]^+$$
+
+$$\text{CBS}_m = a_{\text{CBS}}\,B_m \qquad \text{IBS}_m = a_{\text{IBS}}\,B_m \qquad \text{CBS}=\sum_m\text{CBS}_m,\quad \text{IBS}=\sum_m\text{IBS}_m$$
+
+$\delta = 1$ quando o tributo é deduzido no ano simulado. PIS e COFINS entram pelo valor destacado (débito, $R_m\times$ alíquota), sem os créditos do Real, como na nota fiscal. O ICMS é o líquido estimado da ficha (a calculadora deduz o ICMS destacado; com o líquido, a base fica um pouco maior). Sem o bloco `base_regime_regular` no JSON, $B_m = R_m$ e o motor avisa.
 
 **Presumido.** CBS e IBS somam à carga da empresa. Não alteram a base de IRPJ e CSLL ($R\times$ presunção):
 
@@ -297,12 +301,13 @@ $$\text{LAIR}_m \mathrel{-}= \text{CBS}_m + \text{IBS}_m \qquad \text{Carga}^{\t
 
 Como o LAIR cai, IRPJ e CSLL caem; o efeito líquido do CBS/IBS na carga do Real é menor que o valor bruto.
 
-**Simples.** Se `simples_por_fora_do_das.aplicar = false` (padrão), o regime **não recebe** CBS/IBS e o motor avisa (a tabela mostra traço). Se `true`, a mesma base e as mesmas alíquotas são somadas por fora do DAS (sem alterar o DAS). Esse campo só deve ser ligado se houver regra clara de cobrança.
+**Simples.** Se `simples_por_fora_do_das.aplicar = false` (padrão), o regime **não recebe** CBS/IBS e o motor avisa (a tabela mostra traço). É o que faz a calculadora oficial do Simples (NT 2026.005): no Simples comum, CBS e IBS estão **dentro do DAS**, com alíquotas efetivas ($p_{\text{CBS}}^{SN}$, $p_{\text{IBS}}^{SN}$) calculadas pelo PGDAS-D, e o comprador se credita desses valores. Eles só saem do DAS se a empresa optar pelo regime regular de IBS/CBS (o "Simples híbrido"), ainda não modelado. Se `true`, a receita bruta (sem deduções, como a base do Simples na calculadora) é multiplicada pelas mesmas alíquotas e somada por fora do DAS, sem alterar o DAS.
 
 **Limitações deste modo (suposições a validar pelo contador).**
 
-- Sem compensação: PIS, COFINS, ICMS e ISS continuam calculados integralmente e CBS/IBS entram por cima, o que pode **superestimar** a carga (dupla contagem na transição).
-- Sem créditos de CBS/IBS sobre insumos, sem regimes específicos, reduções de alíquota, cashback ou split payment.
+- Sem compensação: PIS, COFINS, ICMS e ISS continuam calculados integralmente e CBS/IBS entram por cima, o que pode **superestimar** a carga (dupla contagem na transição). A base já desconta esses tributos, mas eles continuam somados à carga.
+- Sem créditos de CBS/IBS sobre compras, sem regimes específicos, reduções de alíquota por cClassTrib, cashback ou split payment.
+- Sem o Imposto Seletivo, que a partir de 2027 entra na base da CBS e do IBS.
 - Alíquotas aplicadas uniformemente em qualquer ano-calendário, sem o cronograma de transição; no ano de teste, as fontes dizem que não há carga adicional, então o resultado é uma simulação hipotética.
 - Dedutibilidade no Real e ausência de efeito na base do Presumido são hipóteses, não conferidas em norma.
 
@@ -335,7 +340,11 @@ Usa o arquivo `dados-empresa.exemplo.json` (empresa fictícia de software, 100% 
 
 **Totais do ano na carga da empresa** (arredondados): Simples R\$ 55.524,96 · Presumido R\$ 137.323,50 · Real R\$ 149.460,42. A retenção sobre lucros é zero no exemplo (distribuição de R\$ 4.000 por sócio/mês, abaixo do limite de R\$ 50.000).
 
-**Com CBS 0,9% e IBS 0,1% ligados** (seção 10): $\text{CBS}_1 = 0{,}009\times 42.000 = 378$ e $\text{IBS}_1 = 0{,}001\times 42.000 = 42$ em janeiro; no ano, CBS $= 4.995$ e IBS $= 555$. Presumido $= 137.323,50 + 5.550 = \mathbf{142.873,50}$. Real: $\text{LAIR}_1 = 5.264 - 420 = 4.844$ e a carga vai a **153.678,42** (soma de 5.550 menos a queda de IRPJ/CSLL, 25.900,92 para 24.568,92). Simples inalterado em 55.524,96 (sem CBS/IBS por fora do DAS).
+**Com CBS 0,9% e IBS 0,1% ligados** (seção 10, ano 2026, base sem PIS, COFINS, ICMS e ISS):
+
+- Presumido, janeiro: $B_1 = 42.000 - 273 - 1.260 - 1.260 - 0 = 39.207$, logo $\text{CBS}_1 = 352{,}86$ e $\text{IBS}_1 = 39{,}21$. No ano, CBS $= 4.662{,}83$ e IBS $= 518{,}09$. Presumido $= 137.323,50 + 5.180,92 = \mathbf{142.504,42}$.
+- Real, janeiro: $B_1 = 42.000 - 693 - 3.192 - 1.260 - 0 = 36.855$ (PIS e COFINS pelo débito, $0{,}0165$ e $0{,}076$ de 42.000), logo $\text{CBS}_1 = 331{,}69$ e $\text{IBS}_1 = 36{,}86$; $\text{LAIR}_1 = 5.264 - 368{,}55 = 4.895{,}45$. No ano, CBS $= 4.383{,}11$ e IBS $= 487{,}01$; IRPJ e CSLL caem de 25.900,92 para 24.732,09 e a carga vai a **153.161,71**.
+- Simples inalterado em 55.524,96 (CBS e IBS dentro do DAS).
 
 ---
 
@@ -345,7 +354,8 @@ Usa o arquivo `dados-empresa.exemplo.json` (empresa fictícia de software, 100% 
 - ICMS-ST, produtos monofásicos, exportação, incentivos fiscais, JCP, parcelamentos e retenções na fonte sobre serviços.
 - Tributação do pró-labore (igual nos três regimes, portanto fora da comparação) e IRPFM (tributação mínima de altas rendas), que só gera aviso.
 - Saldo credor de PIS/COFINS acumulado entre meses.
-- CBS e IBS da reforma do consumo, por padrão (aviso informativo em 2026; a partir de 2027 o motor avisa que os resultados podem estar defasados). Só entram se o operador ligar "Aplicar CBS e IBS", e então de forma simplificada (seção 10): sem compensação com PIS/COFINS/ICMS/ISS, sem créditos, sem cronograma de transição e sem CBS/IBS no Simples, salvo `simples_por_fora_do_das.aplicar = true`.
+- CBS e IBS da reforma do consumo, por padrão (aviso informativo em 2026; a partir de 2027 o motor avisa que os resultados podem estar defasados). Só entram se o operador ligar "Aplicar CBS e IBS", e então de forma simplificada (seção 10): base sem PIS/COFINS/ICMS/ISS, mas sem compensação com esses tributos, sem créditos sobre compras, sem cronograma de alíquotas e sem CBS/IBS no Simples, salvo `simples_por_fora_do_das.aplicar = true`.
+- Simples híbrido (opção do optante pelo regime regular de IBS/CBS, com créditos e CBS/IBS fora do DAS).
 - Lucro Real com apuração anual por estimativa.
 
 Cada limitação acima também aparece na aba **Resultado** da ferramenta, para o contador ver junto ao número.

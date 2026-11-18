@@ -11,7 +11,13 @@
       "conferido_fonte_secundaria": "Valor encontrado em pelo menos uma fonte secundária (artigo técnico, portal contábil). Ainda não aberto na norma primária.",
       "conhecimento_previo_a_confirmar": "Valor de conhecimento geral, não localizado nas fontes desta verificação. Confirmar na norma.",
       "a_confirmar": "Ponto novo, controvertido ou com divergência entre fontes. Exige validação do contador antes do uso."
-    }
+    },
+    "alteracoes": [
+      "reforma_consumo.base_regime_regular: (novo) -> deduz PIS e COFINS em 2026 e ICMS e ISS de 2026 a 2032 (conferência com a calculadora oficial da Receita em 2026-11-18)",
+      "reforma_consumo.ibs_teste_partilha: (novo) -> {\"estadual\":0.001,\"municipal\":0} (conferência com a calculadora oficial da Receita em 2026-11-18)",
+      "reforma_consumo.cbs_aplicar.base_calculo: \"receita_bruta\" -> \"ver base_regime_regular\" (conferência com a calculadora oficial da Receita em 2026-11-18)",
+      "reforma_consumo.ibs_aplicar.base_calculo: \"receita_bruta\" -> \"ver base_regime_regular\" (conferência com a calculadora oficial da Receita em 2026-11-18)"
+    ]
   },
 
   "simples_nacional": {
@@ -176,35 +182,56 @@
     "ano_teste": 2026,
     "cbs_teste": 0.009,
     "ibs_teste": 0.001,
+    "ibs_teste_partilha": { "estadual": 0.001, "municipal": 0 },
     "gera_carga_adicional_no_ano_teste": false,
     "cronograma": "2026 teste (CBS 0,9% + IBS 0,1% informados nas notas). 2027 CBS passa a valer e PIS/COFINS são extintos. 2029 a 2032 transição do IBS substitui ICMS e ISS.",
-    "nota": "Por padrão o motor não aplica CBS/IBS. Só os aplica quando o operador liga o botão 'Aplicar CBS e IBS' (usa cbs_aplicar, ibs_aplicar e simples_por_fora_do_das abaixo). Alíquota cheia depende de resolução do Senado.",
+    "nota": "Por padrão o motor não aplica CBS/IBS. Só os aplica quando o operador liga o botão 'Aplicar CBS e IBS' (usa cbs_aplicar, ibs_aplicar, base_regime_regular e simples_por_fora_do_das abaixo). Alíquota cheia depende de resolução do Senado. A calculadora oficial da Receita (base de dados de 28/08/2026, migração V0053) só tem alíquotas de referência de 2026 (CBS 0,90%, IBS estadual 0,10%, IBS municipal 0,00%) e removeu as de 2027 em diante até a definição oficial.",
     "cbs_aplicar": {
       "status": "a_confirmar",
       "aliquota": 0.009,
-      "base_calculo": "receita_bruta",
-      "nota": "Alíquota de CBS usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: receita bruta mensal, sem créditos nem exclusões. Valor inicial copiado de cbs_teste.",
+      "base_calculo": "ver base_regime_regular",
+      "nota": "Alíquota de CBS usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: ver base_regime_regular (Presumido e Real) e simples_por_fora_do_das. Sem créditos sobre compras. Valor inicial copiado de cbs_teste.",
       "fontes": [
-        "https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf"
+        "https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf",
+        "Calculadora oficial da Receita Federal, tabela ALIQUOTA_REFERENCIA (só 2026; 2027 em diante removidas na migração V0053 de 2026-08-28): https://github.com/ReceitaFederal/calculadora-rtc-regime-regular (acessado em 2026-11-18)"
       ]
     },
     "ibs_aplicar": {
       "status": "a_confirmar",
       "aliquota": 0.001,
-      "base_calculo": "receita_bruta",
-      "nota": "Alíquota de IBS usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: receita bruta mensal, sem créditos nem exclusões. Valor inicial copiado de ibs_teste.",
+      "base_calculo": "ver base_regime_regular",
+      "nota": "Alíquota de IBS (estadual + municipal) usada quando o operador liga 'Aplicar CBS e IBS'. Ainda em definição: ajustar aqui quando houver valor oficial. Base: ver base_regime_regular (Presumido e Real) e simples_por_fora_do_das. Sem créditos sobre compras. Valor inicial copiado de ibs_teste.",
       "fontes": [
-        "https://investnews.com.br/guias/ibs-e-cbs/"
+        "https://investnews.com.br/guias/ibs-e-cbs/",
+        "Calculadora oficial da Receita Federal, tabela ALIQUOTA_REFERENCIA (IBSUF 0,10% e IBSMun 0,00% em 2026): https://github.com/ReceitaFederal/calculadora-rtc-regime-regular (acessado em 2026-11-18)"
       ]
+    },
+    "base_regime_regular": {
+      "status": "a_confirmar",
+      "deduz": {
+        "pis": { "de_ano": 2026, "ate_ano": 2026 },
+        "cofins": { "de_ano": 2026, "ate_ano": 2026 },
+        "icms": { "de_ano": 2026, "ate_ano": 2032 },
+        "iss": { "de_ano": 2026, "ate_ano": 2032 }
+      },
+      "nota": "Base de CBS e IBS no Presumido e no Real: receita bruta menos os tributos 'por dentro' listados, em cada ano do intervalo. Segue a base unificada da calculadora oficial (vPIS e vCOFINS deduzidos só em 2026; vICMS, vFCP e vISSQN de 2026 a 2032; vIS somado a partir de 2027, não modelado). O motor deduz o PIS e a COFINS destacados (débito, sem créditos), o ICMS líquido estimado da ficha e o ISS. Na base do Simples (simples_por_fora_do_das) nada é deduzido, como na calculadora.",
+      "fontes": [
+        "Calculadora oficial da Receita Federal, ElementoBaseCalculo (base unificada RG/IS/SN por ano): https://github.com/ReceitaFederal/calculadora-rtc-regime-regular (acessado em 2026-11-18)"
+      ],
+      "a_confirmar_na_norma": "Artigo da LC 214/2025 que exclui PIS, COFINS, ICMS e ISS da base na transição."
     },
     "simples_por_fora_do_das": {
       "status": "a_confirmar",
       "aplicar": false,
-      "nota": "false: CBS e IBS não são somados ao Simples (o motor avisa e aplica só ao Presumido e ao Real). Mude para true somente se houver regra clara de cobrança por fora do DAS; então a mesma alíquota sobre a receita é somada ao Simples."
+      "nota": "false: CBS e IBS não são somados ao Simples (o motor avisa e aplica só ao Presumido e ao Real). Coerente com a calculadora oficial do Simples (NT 2026.005): no Simples comum (CRT 1), CBS e IBS estão dentro do DAS, com as alíquotas efetivas pCBSSN e pIBSSN calculadas pelo PGDAS-D a partir da receita dos 12 meses; o comprador se credita desses valores. Só saem do DAS se a empresa optar pelo regime regular de IBS/CBS (tpRegimeIBSCBS = 1, o 'Simples híbrido'), que exige cálculo próprio com créditos e ainda não é modelado. Mude para true somente se houver regra clara de cobrança por fora do DAS.",
+      "fontes": [
+        "Calculadora oficial da Receita Federal, Simples Nacional (NT 2026.005, SimplesNacionalCalculoService e ROADMAP): https://github.com/ReceitaFederal/calculadora-rtc-simples-nacional (acessado em 2026-11-18)"
+      ]
     },
     "fontes": [
       "https://agenciasebrae.com.br/wp-content/uploads/2026/01/FAQ_Reforma_Tributaria.pdf",
-      "https://investnews.com.br/guias/ibs-e-cbs/"
+      "https://investnews.com.br/guias/ibs-e-cbs/",
+      "Calculadoras oficiais da Receita Federal (regime regular e Simples Nacional, release 15, outubro de 2026): https://github.com/ReceitaFederal/calculadora-rtc-regime-regular e https://github.com/ReceitaFederal/calculadora-rtc-simples-nacional (acessado em 2026-11-18)"
     ]
   }
 }

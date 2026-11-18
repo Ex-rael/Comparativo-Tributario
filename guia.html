@@ -183,7 +183,7 @@
     <ol class="passos">
       <li><b>Registre a aprovação</b>Na aba Alíquotas, bloco de metadados, preencha <b>Verificado por</b> (iniciais ou cargo bastam) e troque a <b>Situação geral</b> para indicar a aprovação. Resolva ou justifique todo bloco <code>a_confirmar</code>.</li>
       <li><b>Aplique as alterações</b>Clique em <span class="btnlike">Aplicar alterações</span>. Cada mudança fica registrada no próprio arquivo, com a data, e o navegador baixa o arquivo <code>aliquotas-revisado-…json</code>. Sem nenhuma correção, use <span class="btnlike">Baixar sem alterar</span>.</li>
-      <li><b>Entregue ao técnico</b>O técnico substitui o <code>aliquotas.json</code> do repositório pelo arquivo baixado, registra a mudança no <code>CHANGELOG.md</code>, sobe a versão e publica. Em um ou dois minutos o site passa a usar as novas alíquotas em todo comparativo.</li>
+      <li><b>Entregue ao técnico</b>O técnico substitui o <code>aliquotas.json</code> do repositório pelo arquivo baixado, roda <code>node scripts/embutir-aliquotas.mjs</code> (atualiza a cópia embutida na página), registra a mudança no <code>CHANGELOG.md</code>, sobe a versão e publica. Em um ou dois minutos o site passa a usar as novas alíquotas em todo comparativo.</li>
       <li><b>Volte ao dia a dia</b>Troque para o modo <a href="inicio.html">Comparar regimes</a>.</li>
     </ol>
     <p class="nota">Enquanto o arquivo publicado não for trocado, os comparativos continuam usando as alíquotas anteriores. Isso é intencional: nada muda sem aprovação.</p>

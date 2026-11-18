@@ -16,7 +16,7 @@ ENTRADAS
 FONTES PERMITIDAS, em ordem de prioridade
 1. Planalto: planalto.gov.br/ccivil_03 (leis, leis complementares, decretos, emendas).
 2. Receita Federal: gov.br/receitafederal, normas.receita.fazenda.gov.br e o Portal do Simples Nacional (www8.receita.fazenda.gov.br/simplesnacional).
-3. Para CBS e IBS: consumo.tributos.gov.br e cgibs.gov.br.
+3. Para CBS e IBS: consumo.tributos.gov.br e cgibs.gov.br. Também a base de dados das calculadoras oficiais da Receita Federal no GitHub (github.com/ReceitaFederal/calculadora-rtc-regime-regular, pasta flyway/sql, e github.com/ReceitaFederal/calculadora-rtc-simples-nacional): alíquotas de referência por ano (tabela ALIQUOTA_REFERENCIA), reduções por cClassTrib (PERCENTUAL_REDUCAO) e base de cálculo por ano (ElementoBaseCalculo). Ano sem linha em ALIQUOTA_REFERENCIA significa alíquota ainda não definida: não invente valor.
 Artigos, blogs, portais de contabilidade e simuladores servem só como pista de onde procurar. Nunca use um deles como única base de um valor marcado como conferido na fonte oficial.
 
 O QUE CONFERIR
@@ -25,7 +25,7 @@ O QUE CONFERIR
 3. lucro_real: alíquotas de IRPJ, adicional, CSLL, PIS e COFINS não cumulativos e limite de compensação de prejuízo.
 4. encargos_folha: CPP patronal, FGTS e a dispensa de contribuições a terceiros no Simples.
 5. dividendos: alíquota de retenção, limite mensal por beneficiário, vigência, transição de lucros apurados até 2025 e se o Simples Nacional está sujeito. Registre a controvérsia, não a resolva.
-6. reforma_consumo: alíquotas de teste (cbs_teste, ibs_teste), cronograma e o que muda em [[ANO_CALENDARIO]]. Confira também os campos usados pelo botão "Aplicar CBS e IBS" da página: cbs_aplicar.aliquota e ibs_aplicar.aliquota (alíquotas em definição que o operador pode aplicar; cada um com status, nota e fontes; se ainda não houver valor oficial, mantenha o valor atual, status a_confirmar e explique na nota) e simples_por_fora_do_das.aplicar (true somente se norma clara mandar cobrar CBS/IBS por fora do DAS; caso contrário false, com a controvérsia na nota). Não remova esses campos.
+6. reforma_consumo: alíquotas de teste (cbs_teste, ibs_teste), cronograma e o que muda em [[ANO_CALENDARIO]]. Confira também os campos usados pelo botão "Aplicar CBS e IBS" da página: cbs_aplicar.aliquota e ibs_aplicar.aliquota (alíquotas em definição que o operador pode aplicar; cada um com status, nota e fontes; se ainda não houver valor oficial, mantenha o valor atual, status a_confirmar e explique na nota), base_regime_regular.deduz (até que ano PIS, COFINS, ICMS e ISS saem da base de CBS e IBS no Presumido e no Real) e simples_por_fora_do_das.aplicar (true somente se norma clara mandar cobrar CBS/IBS por fora do DAS no Simples comum; no Simples comum eles ficam dentro do DAS e só saem com a opção pelo regime regular de IBS/CBS; caso contrário false, com a explicação na nota). Não remova esses campos.
 
 REGRAS
 1. Nunca preencha número de memória. Abra a fonte e confira cada valor, inclusive os que já estão no JSON.

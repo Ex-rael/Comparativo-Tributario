@@ -14,7 +14,7 @@
    * MAJOR muda o resultado para a mesma entrada ou quebra o formato dos JSON; MINOR traz função nova compatível;
    * PATCH corrige erro, texto, layout ou documentação sem mudar resultado.
    */
-  var VERSAO = '1.13.0';
+  var VERSAO = '2.0.0';
   var REGIMES = ['simples', 'presumido', 'real'];
   var NOMES = { simples: 'Simples Nacional', presumido: 'Lucro Presumido', real: 'Lucro Real' };
   var ROTULOS = {
@@ -110,20 +110,25 @@
   /* CBS e IBS (opcional, alíquotas em definição)                         */
   /*                                                                      */
   /* Mecânica adotada (hipótese a validar pelo contador; ver calculos.md): */
-  /*  - Base de cálculo: receita bruta mensal, sem créditos nem exclusões. */
-  /*  - CBS = receita x cbs_aplicar.aliquota; IBS = receita x ibs_aplicar.aliquota. */
+  /*  - Base no Presumido e no Real: receita bruta mensal menos os tributos */
+  /*    "por dentro" listados em reforma_consumo.base_regime_regular.deduz, */
+  /*    cada um até o ano indicado (PIS/COFINS até 2026; ICMS/ISS até 2032, */
+  /*    como a base unificada da calculadora oficial da Receita). Sem créditos. */
+  /*    Sem o bloco no JSON, a base é a receita bruta e o motor avisa.      */
+  /*  - CBS = base x cbs_aplicar.aliquota; IBS = base x ibs_aplicar.aliquota. */
   /*  - Alíquotas só vêm do aliquotas.json (reforma_consumo). Se cbs_aplicar */
   /*    ou ibs_aplicar faltarem, usa cbs_teste / ibs_teste e avisa.         */
   /*  - Presumido e Real: CBS e IBS somam à carga. No Real também reduzem   */
   /*    o lucro antes do IR (como PIS, COFINS, ISS e ICMS). No Presumido     */
   /*    não alteram a base de IRPJ e CSLL (receita x presunção).             */
   /*  - Simples: só recebe CBS/IBS se simples_por_fora_do_das.aplicar for    */
-  /*    true no JSON; senão o regime fica sem CBS/IBS e o motor avisa.       */
+  /*    true no JSON (base = receita bruta, como a base do Simples na        */
+  /*    calculadora oficial); senão fica sem CBS/IBS e o motor avisa.        */
   /*  - Compensação com PIS, COFINS, ICMS e ISS na transição NÃO é modelada: */
   /*    esses tributos seguem calculados integralmente (pode haver dupla     */
   /*    contagem) e o motor avisa.                                           */
   /* ------------------------------------------------------------------ */
-  function paramsCbsIbs(aliq) {
+  function paramsCbsIbs(aliq, ano) {
     var RC = aliq.reforma_consumo || {};
     var avisos = [], origem = 'cbs_aplicar e ibs_aplicar';
     function le(campo, teste, nome) {
@@ -141,7 +146,29 @@
     var cbs = le('cbs_aplicar', 'cbs_teste', 'CBS');
     var ibs = le('ibs_aplicar', 'ibs_teste', 'IBS');
     var sp = RC.simples_por_fora_do_das;
-    return { cbs: cbs, ibs: ibs, simples: !!(sp && sp.aplicar === true), origem: origem, avisos: avisos };
+    // Tributos deduzidos da base no Presumido e no Real, vigentes no ano simulado.
+    var deduz = { pis: false, cofins: false, icms: false, iss: false };
+    var br = RC.base_regime_regular;
+    if (br && br.deduz && typeof br.deduz === 'object') {
+      Object.keys(deduz).forEach(function (k) {
+        var d = br.deduz[k];
+        if (d && typeof d === 'object') deduz[k] = ano >= num(d.de_ano, 0) && ano <= num(d.ate_ano, 0);
+      });
+    } else {
+      avisos.push('Alíquotas: "reforma_consumo.base_regime_regular" ausente; CBS e IBS aplicados sobre a receita bruta, sem deduzir PIS, COFINS, ICMS e ISS.');
+    }
+    return { cbs: cbs, ibs: ibs, simples: !!(sp && sp.aplicar === true), deduz: deduz, origem: origem, avisos: avisos };
+  }
+  // Base de CBS/IBS do mês no Presumido e no Real: receita menos os tributos "por dentro" vigentes.
+  function baseCbsIbs(pc, rec, t) {
+    var b = rec;
+    ['pis', 'cofins', 'icms', 'iss'].forEach(function (k) { if (pc.deduz[k]) b -= t[k]; });
+    return Math.max(0, b);
+  }
+  function deduzTxt(pc) {
+    var n = { pis: 'PIS', cofins: 'COFINS', icms: 'ICMS', iss: 'ISS' };
+    var l = Object.keys(n).filter(function (k) { return pc.deduz[k]; }).map(function (k) { return n[k]; });
+    return l.length ? l.join(', ').replace(/, ([^,]*)$/, ' e $1') : '';
   }
   function pctTxt(v) { return (v * 100).toFixed(2).replace('.', ',') + '%'; }
 
@@ -246,7 +273,7 @@
         itens.ibs = receitaAnual * c.cbsIbs.ibs;
         cbsIbsTot = itens.cbs + itens.ibs;
       } else {
-        avisos.push('CBS e IBS NÃO somados ao Simples: o aliquotas.json não traz regra clara para cobrança por fora do DAS (reforma_consumo.simples_por_fora_do_das.aplicar). Valem só para Presumido e Real.');
+        avisos.push('CBS e IBS NÃO somados ao Simples: no Simples comum eles já estão dentro do DAS (calculadora oficial da Receita, NT 2026.005). Só sairiam do DAS com a opção pelo regime regular de IBS/CBS (Simples híbrido), ainda não modelada. Valem só para Presumido e Real.');
       }
     }
     return {
@@ -296,7 +323,10 @@
         iss: rec * issPct, icms: rec * icmsPct,
         cpp: e.cpp + e.rat, terceiros: e.terc
       };
-      if (c.cbsIbs) { mp.cbs = rec * c.cbsIbs.cbs; mp.ibs = rec * c.cbsIbs.ibs; }
+      if (c.cbsIbs) {
+        mp.base_cbs_ibs = baseCbsIbs(c.cbsIbs, rec, mp);
+        mp.cbs = mp.base_cbs_ibs * c.cbsIbs.cbs; mp.ibs = mp.base_cbs_ibs * c.cbsIbs.ibs;
+      }
       meses.push(mp);
       cumPrev = cumNow;
     }
@@ -371,13 +401,15 @@
       var folhaCusto = e.sal + e.prol + e.fgts + e.cpp + e.rat + e.terc;
       var ajuste = mv(c.lreal.ajustes_adicoes_exclusoes_mensal, i);
       var lucro = rec - pis - cof - iss - icms - compras - desp - folhaCusto + ajuste;
-      var cbsM = c.cbsIbs ? rec * c.cbsIbs.cbs : 0, ibsM = c.cbsIbs ? rec * c.cbsIbs.ibs : 0;
+      // PIS e COFINS saem da base pelo valor destacado (débito), sem os créditos, como na nota fiscal.
+      var baseCI = c.cbsIbs ? baseCbsIbs(c.cbsIbs, rec, { pis: pisDeb, cofins: cofDeb, icms: icms, iss: iss }) : 0;
+      var cbsM = c.cbsIbs ? baseCI * c.cbsIbs.cbs : 0, ibsM = c.cbsIbs ? baseCI * c.cbsIbs.ibs : 0;
       if (c.cbsIbs) lucro = lucro - cbsM - ibsM; // CBS e IBS são dedutíveis como os demais tributos sobre a receita (hipótese)
       var mr = {
         mes: i, receita: rec, pis: pis, cofins: cof, iss: iss, icms: icms,
         cpp: e.cpp + e.rat, terceiros: e.terc, folha_custo: folhaCusto, lucro_antes_ir: lucro
       };
-      if (c.cbsIbs) { mr.cbs = cbsM; mr.ibs = ibsM; }
+      if (c.cbsIbs) { mr.base_cbs_ibs = baseCI; mr.cbs = cbsM; mr.ibs = ibsM; }
       meses.push(mr);
     }
     var prej = num(c.lreal.prejuizo_fiscal_acumulado);
@@ -478,9 +510,9 @@
     var c = normalizar(dados);
     var receitaAnual = sum(c.sim);
     var res = { versao: VERSAO, ano: c.ano, receita_anual: receitaAnual, regimes: {}, avisos: [], ranking: [] };
-    var pc = (opcoes && opcoes.aplicarCbsIbs === true) ? paramsCbsIbs(aliq) : null;
+    var pc = (opcoes && opcoes.aplicarCbsIbs === true) ? paramsCbsIbs(aliq, c.ano) : null;
     c.cbsIbs = pc;
-    if (pc) res.cbs_ibs = { aplicado: true, cbs: pc.cbs, ibs: pc.ibs, simples_incluido: pc.simples, origem: pc.origem };
+    if (pc) res.cbs_ibs = { aplicado: true, cbs: pc.cbs, ibs: pc.ibs, simples_incluido: pc.simples, deduz: pc.deduz, origem: pc.origem };
     var calcs = { simples: calcSimples, presumido: calcPresumido, real: calcReal };
     c.regimes.forEach(function (k) {
       if (calcs[k]) res.regimes[k] = fechar(aliq, c, calcs[k](aliq, c), receitaAnual);
@@ -494,8 +526,8 @@
     var RC = aliq.reforma_consumo || {};
     if (pc) {
       pc.avisos.forEach(function (t) { res.avisos.push({ nivel: 'atencao', texto: t }); });
-      res.avisos.push({ nivel: 'atencao', texto: 'CBS ' + pctTxt(pc.cbs) + ' e IBS ' + pctTxt(pc.ibs) + ' aplicados sobre a receita bruta, com valores AINDA EM DEFINIÇÃO (hipótese do operador, lidos de reforma_consumo no aliquotas.json). ' + (pc.simples ? 'Também somados ao Simples, conforme o aliquotas.json.' : 'Somados apenas ao Presumido e ao Real; o Simples fica sem CBS/IBS por falta de regra clara no aliquotas.json.') });
-      res.avisos.push({ nivel: 'atencao', texto: 'Compensação na transição não modelada: PIS, COFINS, ICMS e ISS continuam calculados integralmente e CBS/IBS entram por cima, sem créditos nem exclusões de base. Pode haver dupla contagem e carga superestimada.' });
+      res.avisos.push({ nivel: 'atencao', texto: 'CBS ' + pctTxt(pc.cbs) + ' e IBS ' + pctTxt(pc.ibs) + ' aplicados sobre ' + (deduzTxt(pc) ? 'a receita bruta menos ' + deduzTxt(pc) + ' no Presumido e no Real' : 'a receita bruta') + ', com valores AINDA EM DEFINIÇÃO (hipótese do operador, lidos de reforma_consumo no aliquotas.json). ' + (pc.simples ? 'Também somados ao Simples, conforme o aliquotas.json.' : 'Somados apenas ao Presumido e ao Real; no Simples comum eles já estão dentro do DAS.') });
+      res.avisos.push({ nivel: 'atencao', texto: 'Compensação na transição não modelada: PIS, COFINS, ICMS e ISS continuam calculados integralmente e CBS/IBS entram por cima, sem créditos sobre compras. Pode haver dupla contagem e carga superestimada.' });
       if (c.ano === num(RC.ano_teste, 2026) && RC.gera_carga_adicional_no_ano_teste === false) {
         res.avisos.push({ nivel: 'info', texto: 'Segundo as fontes do aliquotas.json, em ' + c.ano + ' (ano de teste) não há carga adicional de CBS/IBS. Este modo é uma simulação hipotética.' });
       }

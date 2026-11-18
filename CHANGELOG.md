@@ -10,6 +10,23 @@ A versão segue [SemVer](https://semver.org/lang/pt-BR/) e fica em `motor.js` (`
 
 Mudança de valor no `aliquotas.json` (alíquota, faixa, limite) é dado, não código, e entra como PATCH, com a alteração descrita abaixo.
 
+## 2.0.0 — 2026-11-18
+Conferência com as calculadoras oficiais da Receita Federal (`calculadora-rtc-regime-regular` e `calculadora-rtc-simples-nacional`, release 15). Detalhes em [`docs/conferencia-calculadoras-rfb.md`](docs/conferencia-calculadoras-rfb.md).
+
+- **Resultado muda com "Aplicar CBS e IBS" ligado** (por isso MAJOR). No Presumido e no Real, a base da CBS e do IBS passa a ser a receita menos PIS e COFINS (só em 2026) e ICMS e ISS (2026 a 2032), como a base unificada da calculadora oficial. Antes era a receita bruta.
+  - No exemplo: Presumido de 142.873,50 para 142.504,42 e Real de 153.678,42 para 153.161,71.
+  - Com o botão desligado, nada muda.
+- `aliquotas.json`, bloco `reforma_consumo`. Todas as mudanças estão registradas em `metadata.alteracoes`, e nenhum status mudou:
+  - novo `base_regime_regular`: tributos deduzidos e anos, editável na aba Alíquotas. Sem ele, o motor volta à receita bruta e avisa;
+  - novo `ibs_teste_partilha`: IBS de 2026 é 0,1% estadual e 0% municipal;
+  - notas e fontes oficiais: a calculadora só tem alíquotas de referência de 2026, e as de 2027 em diante foram removidas até a definição oficial. No Simples comum, CBS e IBS ficam dentro do DAS.
+- Avisos e textos do Simples: CBS e IBS não somam ao Simples porque já estão dentro do DAS, e não mais "por falta de regra clara". O Simples híbrido aparece como ainda não modelado.
+- Prompt 1: a base de dados das calculadoras da Receita entra como fonte oficial de CBS e IBS. O prompt passa a conferir também `base_regime_regular`.
+- Novo `scripts/embutir-aliquotas.mjs`: regrava a cópia embutida do `aliquotas.json` no `index.html` (`--conferir` só confere).
+- Novo `fontes/rfb-cclasstrib.csv`: classificação tributária oficial, com reduções de alíquota, crédito do comprador e tipo de receita no Simples. É a base para o desenho dos créditos e do Simples híbrido.
+- Novo `docs/perguntas-contador.md`: as 38 perguntas ao contador sobre créditos e Simples híbrido, com o que já foi decidido, o que a Receita responde e o que segue aberto.
+- `calculos.md` (seção 10 e exemplo), README e guia atualizados.
+
 ## 1.13.0 — 2026-11-05
 - Modo **Comparar regimes** sem JSON para o operador:
   - **Usar no Comparativo** abre direto o Resultado do cliente; o comparativo mostra só Resultado e Fórmulas (Entradas, Alíquotas e Modelos ficam no modo Atualizar alíquotas).

@@ -58,7 +58,7 @@ O controle está em `modo.js`: cada elemento de um modo só leva `data-modo-so="
 ### Aba Resultado
 - Cartões com a carga total e o percentual da receita de cada regime, destacando o de menor carga entre os elegíveis.
 - Tabela comparativa por tributo, memória de cálculo mensal e trimestral e análise de sensibilidade (receita ±10%, pró-labore ±20%).
-- Botão **Aplicar CBS e IBS**: inclui a CBS e o IBS da reforma do consumo, com as alíquotas do `aliquotas.json` (ainda em definição). Desligado, o cálculo é o modo anterior, sem CBS e IBS.
+- Botão **Aplicar CBS e IBS**: inclui a CBS e o IBS da reforma do consumo, com as alíquotas do `aliquotas.json` (ainda em definição). No Presumido e no Real, a base é a receita menos PIS e COFINS (2026) e ICMS e ISS (até 2032), como na calculadora oficial da Receita; no Simples comum, CBS e IBS já estão dentro do DAS. Desligado, o cálculo é o modo anterior, sem CBS e IBS.
 
 ### Aba Fórmulas e `calculos.md`
 Toda a aritmética do motor está descrita em [`calculos.md`](calculos.md), em Markdown com LaTeX, para o contador validar sem abrir o código. O arquivo renderiza no GitHub e na aba **Fórmulas**. Inclui um exemplo numérico conferível à mão.
@@ -83,7 +83,7 @@ Toda a aritmética do motor está descrita em [`calculos.md`](calculos.md), em M
 
 O passo a passo para o operador está em [`guia.html`](guia.html). Em resumo:
 
-1. **Alíquotas** (modo Atualizar alíquotas, raro). Envie o prompt 1 a uma IA com acesso à web. O contador confere e ajusta os valores na aba **Alíquotas**, aprova e copia o JSON final, que substitui o `aliquotas.json` do repositório. O `index.html` lê esse arquivo; a cópia embutida no código só vale quando a página é aberta direto do arquivo (`file://`).
+1. **Alíquotas** (modo Atualizar alíquotas, raro). Envie o prompt 1 a uma IA com acesso à web. O contador confere e ajusta os valores na aba **Alíquotas**, aprova e clica em **Aplicar alterações**, que baixa o arquivo revisado. O técnico substitui o `aliquotas.json` do repositório e roda `node scripts/embutir-aliquotas.mjs`, que atualiza a cópia embutida no `index.html` (só usada quando a página é aberta direto do arquivo, `file://`).
 2. **Dados da empresa** (modo Comparar regimes). Em `prompts.html`, aba 2, preencha a ficha e resolva as pendências.
 3. **Comparar.** Clique em **Usar no Comparativo**: o resultado abre direto.
 4. **Revisar.** Revise as premissas em `meta` e os avisos. Só então leia a aba **Resultado**.
@@ -102,6 +102,10 @@ Para ver o fluxo sem dados reais, use **Preencher com exemplo** na ficha ou **Ca
 | `modo.js` | Modo de uso (comparar regimes ou atualizar alíquotas), compartilhado pelas páginas |
 | `cnae.json` | Tabela CNAE 2.3 (IBGE) com anexo sugerido, vedação ao Simples e RAT, gerada por `scripts/gerar-cnae.mjs` |
 | `fontes/*.csv` | Tabelas oficiais que alimentam o `cnae.json`: Anexo VI da Resolução CGSN 140/2018 e Anexo V do Decreto 3.048/1999 |
+| `fontes/rfb-cclasstrib.csv` | Classificação tributária do IBS e da CBS (cClassTrib) da calculadora oficial da Receita: reduções de alíquota, crédito do comprador e tipo de receita no Simples. Base para o desenho dos créditos |
+| `docs/conferencia-calculadoras-rfb.md` | Conferência do motor e do `aliquotas.json` com as calculadoras oficiais da Receita (regime regular e Simples Nacional) |
+| `docs/perguntas-contador.md` | Perguntas ao contador sobre créditos de IBS/CBS e Simples híbrido, com o que já está decidido ou respondido pela Receita |
+| `scripts/embutir-aliquotas.mjs` | Regrava a cópia embutida do `aliquotas.json` no `index.html` (`--conferir` só confere) |
 | `docs/avaliacao-apis.md` | Testes de viabilidade das APIs do IBGE (CNAE) e da NFS-e (ISS) |
 | `avaliacao/` | Bases rotuladas para avaliar o modelo de decisão, com a origem de cada rótulo |
 | `spike/bge-busca.html` | Teste do BGE-M3 no navegador: sugere o item da LC 123 e o anexo pela descrição e avalia as bases. Modelo em [huggingface.co/isreal01/bge-m3-pt-int8-onnx](https://huggingface.co/isreal01/bge-m3-pt-int8-onnx) |
